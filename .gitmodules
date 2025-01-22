@@ -1,0 +1,6 @@
+[submodule "exactcolors"]
+	path = exactcolors
+	url = git@github.com:heldstephan/exactcolors.git
+[submodule "hglib"]
+	path = hglib
+	url = https://gitlab.inria.fr/kirikomics/hglib.git
