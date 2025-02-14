@@ -1,121 +1,137 @@
 #include "lp.hpp"
 
+#include <boost/graph/copy.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <cfloat>
 
-// Column::Column(int n_best, const nodepnt *best_sol) {}
+LP::LP(const Graph &graph) : LP(Graph{graph}){};
 
-LP::LP(const HyperGraph &hg, const ConflictGraph &cg, double start_t)
-    : hg(hg), cg(cg), ecount(static_cast<int>(num_edges(cg))), elist(NULL),
-      nrows(hg.nbHyperedges() + hg.nbVertices()), start_t(start_t),
-      Xenv(IloEnv()), Xmodel(Xenv), Xvars(Xenv), Xrestr(Xenv),
-      Xobj(Xenv) /*, vars(Xenv)*/ {
-  vcount = num_vertices(cg);
-  vlist = new CGVertex[vcount];
-  size_t index = 0;
-  for (auto v : boost::make_iterator_range(vertices(cg)))
-    vlist[index++] = v;
-  index = 0;
-  elist = new int[2 * ecount];
-  auto [it, end] = edges(cg);
-  for (; it != end; ++it) {
-    elist[index++] = source(*it, cg);
-    elist[index++] = target(*it, cg);
+LP::LP(const Graph &&graph) : graph(graph), mapA(), mapB(){};
+
+// LP::LP(const HyperGraph &hg, const ConflictGraph &cg, double start_t)
+//     : hg(hg), cg(cg), ecount(static_cast<int>(num_edges(cg))), elist(NULL),
+//       nrows(hg.nbHyperedges() + hg.nbVertices()), start_t(start_t),
+//       Xenv(IloEnv()), Xmodel(Xenv), Xvars(Xenv), Xrestr(Xenv),
+//       Xobj(Xenv) /*, vars(Xenv)*/ {
+//   vcount = num_vertices(cg);
+//   vlist = new CGVertex[vcount];
+//   size_t index = 0;
+//   for (auto v : boost::make_iterator_range(vertices(cg)))
+//     vlist[index++] = v;
+//   index = 0;
+//   elist = new int[2 * ecount];
+//   auto [it, end] = edges(cg);
+//   for (; it != end; ++it) {
+//     elist[index++] = source(*it, cg);
+//     elist[index++] = target(*it, cg);
+//   }
+// };
+
+// LP::LP(const HyperGraph &hg, const ConflictGraph &cg, int vcount,
+//        CGVertex *vlist, int ecount, int *elist, double start_t)
+//     : hg(hg), cg(cg), ecount(ecount), elist(elist),
+//       nrows(hg.nbHyperedges() + hg.nbVertices()), vcount(vcount),
+//       vlist(vlist), start_t(start_t), Xenv(IloEnv()), Xmodel(Xenv),
+//       Xvars(Xenv), Xrestr(Xenv), Xobj(Xenv) /*, vars(Xenv)*/ {};
+
+// LP::~LP() {
+//   // vars.end();
+//   Xrestr.end();
+//   Xvars.end();
+//   Xobj.end();
+//   Xmodel.end();
+//   Xenv.end();
+//   if (vlist != NULL)
+//     delete[] vlist;
+//   delete[] elist;
+// }
+
+void LP::initialize(CplexEnv &cenv) {
+
+  // Fill mapA and mapB
+  size_t iA = 0, iB = 0; // indices
+  for (auto v : boost::make_iterator_range(vertices(graph))) {
+    auto [a, b] = graph[v];
+    if (mapA.insert({a, iA}).second)
+      iA++;
+    if (mapB.insert({b, iB}).second)
+      iB++;
   }
-};
 
-LP::LP(const HyperGraph &hg, const ConflictGraph &cg, int vcount,
-       CGVertex *vlist, int ecount, int *elist, double start_t)
-    : hg(hg), cg(cg), ecount(ecount), elist(elist),
-      nrows(hg.nbHyperedges() + hg.nbVertices()), vcount(vcount), vlist(vlist),
-      start_t(start_t), Xenv(IloEnv()), Xmodel(Xenv), Xvars(Xenv), Xrestr(Xenv),
-      Xobj(Xenv) /*, vars(Xenv)*/ {};
+  // Add constraints
+  // Add ">= 1" constraints, one for each a \in A
+  while (iA--)
+    cenv.Xrestr.add(IloRange(cenv.Xenv, 1.0, IloInfinity));
+  // Add "<= 1" constraints, one for each b \in B
+  while (iB--)
+    cenv.Xrestr.add(IloRange(cenv.Xenv, -1.0, IloInfinity));
+  cenv.Xmodel.add(cenv.Xrestr);
 
-LP::~LP() {
-  // vars.end();
-  Xrestr.end();
-  Xvars.end();
-  Xobj.end();
-  Xmodel.end();
-  Xenv.end();
-  if (vlist != NULL)
-    delete[] vlist;
-  delete[] elist;
-}
+  // Add objective function
+  cenv.Xobj = IloMinimize(cenv.Xenv, 0.0);
+  cenv.Xmodel.add(cenv.Xobj);
 
-void LP::initialize() {
-  // Initialize hyperedge and vertex constraints
-  // We will have "hyperedge" constraints with r.h.s >= 1 and "vertex"
-  // constraints with r.h.s >= -1
-  for (int i = 0; i < hg.nbHyperedges(); i++)
-    Xrestr.add(IloRange(Xenv, 1.0, IloInfinity));
-  for (int i = 0; i < hg.nbVertices(); i++)
-    Xrestr.add(IloRange(Xenv, -1.0, IloInfinity));
-  Xmodel.add(Xrestr);
-
-  // Initialize objective function
-  Xobj = IloMinimize(Xenv, 0.0);
-  Xmodel.add(Xobj);
-
-  fill_initial_columns();
-
-  return;
-}
-
-void LP::fill_initial_columns() {
-  // TODO: Mejorar este algoritmo
-  for (const auto &v : hg.vertices()) {
-    int count = 0;
-    int members[vcount];
-    for (int i = 0; i < vcount; ++i) {
-      auto [e, u] = cg[vlist[i]];
-      if (u == v->id())
-        members[count++] = i;
+  // Add initial columns
+  // Color each b \in B with an unique color
+  for (auto &p : mapB) {
+    TypeB b = p.first;
+    std::set<TypeB> cB{b};
+    // Find (*,b) vertices in graph
+    std::set<TypeA> cA;
+    for (auto v : boost::make_iterator_range(vertices(graph))) {
+      auto [a1, b1] = graph[v];
+      if (b1 == b)
+        cA.insert(a1);
     }
-    if (count > 0)
-      add_column(count, members);
+    add_column(cenv, cA, cB);
   }
+
   return;
 }
 
-void LP::add_column(int count, const int *members) {
-  IloNumColumn column = Xobj(1.0);
-  std::vector<bool> hgCoef(hg.nbHyperedges(), false);
-  std::vector<bool> vCoef(hg.nbVertices(), false);
-  std::cout << "Adding column: ";
+void LP::add_column(CplexEnv &cenv, const std::set<TypeA> &cA,
+                    const std::set<TypeB> &cB) {
+  IloNumColumn column = cenv.Xobj(1.0);
+  std::cout << "Adding column: [";
+  for (auto a : cA) {
+    column += cenv.Xrestr[mapA[a]](1.0);
+    std::cout << " " << a;
+  }
+  std::cout << " ] [";
+  for (auto b : cB) {
+    column += cenv.Xrestr[mapA.size() + mapB[b]](-1.0);
+    std::cout << " " << b;
+  }
+  std::cout << " ]" << std::endl;
+  cenv.Xvars.add(IloNumVar(column));
+}
+
+void LP::add_column(CplexEnv &cenv, int count, const int *members) {
+  std::set<TypeA> cA;
+  std::set<TypeB> cB;
   for (int i = 0; i < count; ++i) {
-    std::cout << members[i];
-    auto [e, v] = cg[vlist[members[i]]];
-    std::cout << "(" << e << "," << v << "), ";
-    // Fill the column corresponding to ">= 1" constraints
-    if (!hgCoef[e]) {
-      column += Xrestr[e](1.0);
-      hgCoef[e] = true;
-    }
-    // and the ">= -1 constraint
-    if (!vCoef[v]) {
-      column += Xrestr[hg.nbHyperedges() + v](-1.0);
-      vCoef[v] = true;
-    }
+    auto [a, b] = graph[members[i]];
+    cA.insert(a);
+    cB.insert(b);
   }
-  std::cout << std::endl;
-  // add the column as a non-negative continuos variable
-  Xvars.add(IloNumVar(column));
+  add_column(cenv, cA, cB);
 }
 
-void LP::set_parameters(IloCplex &cplex) {
+void LP::set_parameters(CplexEnv &cenv, IloCplex &cplex) {
   cplex.setDefaults();
-#ifndef SHOWCPLEX
-  cplex.setOut(Xenv.getNullStream());
-  cplex.setWarning(Xenv.getNullStream());
-#endif
   cplex.setParam(IloCplex::Param::Threads, 1);
   cplex.setParam(IloCplex::Param::Parallel, 1);
+  cplex.setOut(cenv.Xenv.getNullStream());
+  cplex.setWarning(cenv.Xenv.getNullStream());
 }
 
 LP_STATE LP::optimize() {
 
-  auto start_time = std::chrono::high_resolution_clock::now();
+  auto startTime = std::chrono::high_resolution_clock::now();
   int rval = 0;
+  LP_STATE state;
+
+  CplexEnv cenv;
 
   MWISenv *mwis_env = NULL;
   COLORNWT *mwis_pi = NULL;
@@ -129,16 +145,16 @@ LP_STATE LP::optimize() {
   // If every hyperedge has exactly one representator -> SOLVE COLORING
   // Otherwise, do the code below
 
-  IloCplex cplex(Xmodel);
-  set_parameters(cplex);
-  initialize();
+  // Initialize cplex environment
+  IloCplex cplex(cenv.Xmodel);
+  set_parameters(cenv, cplex);
 
-  // Arguments:
-  //  pname = NULL;
-  //  write_mwis = 0;
+  // Initialize linear relaxation
+  initialize(cenv);
+
+  // Initalize stable environment
   rval = COLORstable_initenv(&mwis_env, NULL, 0);
-
-  mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(vcount, COLORNWT);
+  mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(num_vertices(graph), COLORNWT);
 
   do {
 
@@ -146,60 +162,63 @@ LP_STATE LP::optimize() {
     nnewsets = 0;
 
     // Set time limit
-    auto current_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration(current_time - start_time);
-    double time_limit = MAXTIME - duration.count();
-    if (time_limit < 0) {
-      free(mwis_pi);
-      COLORstable_freeenv(&mwis_env);
-      cplex.end();
-      return TIME_OR_MEM_LIMIT;
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration(currentTime - startTime);
+    double timeLimit = TIMELIMIT - duration.count();
+    if (timeLimit < 0) {
+      state = TIME_OR_MEM_LIMIT;
+      break;
     }
-    cplex.setParam(IloCplex::Param::TimeLimit, time_limit);
+    cplex.setParam(IloCplex::Param::TimeLimit, timeLimit);
 
-    // Optimization
+    // Optimize
     cplex.solve();
 
-    // Handle non-optimality
+    // Handle errores
     IloCplex::CplexStatus status = cplex.getCplexStatus();
     if (status == IloCplex::AbortTimeLim || status == IloCplex::MemLimFeas ||
         status == IloCplex::MemLimInfeas) {
-      free(mwis_pi);
-      COLORstable_freeenv(&mwis_env);
-      cplex.end();
-      return TIME_OR_MEM_LIMIT;
+      state = TIME_OR_MEM_LIMIT;
+      break;
     }
 
     // Recover dual values
-    IloNumArray duals(Xenv, nrows);
-    cplex.getDuals(duals, Xrestr);
+    IloNumArray duals(cenv.Xenv, mapA.size() + mapB.size());
+    cplex.getDuals(duals, cenv.Xrestr);
     std::cout << "duals: ";
-    for (int i = 0; i < nrows; ++i)
+    for (int i = 0; i < mapA.size() + mapB.size(); ++i)
       std::cout << duals[i] << " ";
     std::cout << std::endl;
-    IloNumArray weights(Xenv, vcount);
-    for (size_t i = 0; i < vcount; ++i) {
-      auto [e, v] = cg[vlist[i]];
-      weights[i] = duals[e] - duals[hg.nbHyperedges() + v];
+    IloNumArray weights(cenv.Xenv, num_vertices(graph));
+    size_t i = 0;
+    for (auto v : boost::make_iterator_range(vertices(graph))) {
+      auto [a, b] = graph[v];
+      weights[i++] = duals[mapA[a]] - duals[mapA.size() + mapB[b]];
     }
 
     // Scale weights
     std::cout << "weights: ";
-    for (int i = 0; i < vcount; ++i)
+    for (int i = 0; i < num_vertices(graph); ++i)
       std::cout << weights[i] << " ";
     std::cout << std::endl;
     double2COLORNWT(mwis_pi, &mwis_pi_scalef, weights);
 
-    // Solve the MWIS problem. Arguments:
-    //  greedy_only = 0
-    //  force_rounding = 0
-    //  rounding_strategy = 2 (no_rounding)
-    rval = COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, vcount, ecount,
-                               elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
+    // Get edge list
+    int ecount = 0;
+    int elist[2 * num_edges(graph)];
+    for (auto e : boost::make_iterator_range(edges(graph))) {
+      elist[2 * ecount] = source(e, graph);
+      elist[2 * ecount++ + 1] = target(e, graph);
+    }
+
+    // Solve the MWIS problem
+    rval =
+        COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, num_vertices(graph),
+                            ecount, elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
 
     // Add column/s
     for (int set_i = 0; set_i < nnewsets; ++set_i) {
-      add_column(newsets[set_i].count, newsets[set_i].members);
+      add_column(cenv, newsets[set_i].count, newsets[set_i].members);
       free(newsets[set_i].members);
     }
     if (newsets != NULL)
@@ -207,32 +226,37 @@ LP_STATE LP::optimize() {
 
   } while (nnewsets > 0);
 
-  // Recover primal values and objective value
-  values = IloNumArray(Xenv, Xvars.getSize());
-  cplex.getValues(values, Xvars);
-  std::cout << "Primal values: ";
-  for (int i = 0; i < Xvars.getSize(); ++i)
-    std::cout << values[i] << " ";
-  std::cout << std::endl;
-  obj_value = cplex.getObjValue();
-  std::cout << "LR value: " << obj_value << std::endl;
+  if (state != TIME_OR_MEM_LIMIT) {
 
-  // Check for integrality
-  bool is_integer = true;
-  for (int i = 0; i < Xvars.getSize(); ++i)
-    if (values[i] < 1 - EPSILON)
-      is_integer = false;
+    // Recover primal values and objective value
+    IloNumArray values = IloNumArray(cenv.Xenv, cenv.Xvars.getSize());
+    cplex.getValues(values, cenv.Xvars);
+    std::cout << "Primal values: ";
+    for (int i = 0; i < cenv.Xvars.getSize(); ++i)
+      std::cout << values[i] << " ";
+    std::cout << std::endl;
+    IloNum obj_value = cplex.getObjValue();
+    std::cout << "LR value: " << obj_value << std::endl;
+
+    // Check for integrality
+    bool is_integer = true;
+    for (int i = 0; i < cenv.Xvars.getSize(); ++i)
+      if (values[i] < 1 - EPSILON)
+        is_integer = false;
+
+    if (is_integer) {
+      obj_value = round(obj_value);
+      state = INTEGER;
+    }
+    state = FRACTIONAL;
+
+    values.end();
+  }
 
   free(mwis_pi);
   COLORstable_freeenv(&mwis_env);
-  values.end();
   cplex.end();
-
-  if (is_integer) {
-    obj_value = round(obj_value);
-    return INTEGER;
-  }
-  return FRACTIONAL;
+  return state;
 }
 
 /* Adaptation of  COLOR_double2COLORNWT from exactcolors.
@@ -294,15 +318,76 @@ void LP::save_solution(Coloring &col) {
   return;
 }
 
-void LP::branch(std::vector<LP *> &branches, CGVertex cgv) {
+void LP::branch(std::vector<LP *> &branches, Vertex v) {
 
   if (N_BRANCHES != 2) {
     std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
     abort();
   }
 
-  // Recover hyperedge e and vertex v
-  auto [e, v] = cg[cgv];
+  // Recover a and b
+  auto [a, b] = graph[v];
+
+  // *******
+  // ** Left branch: (a,b) is colored
+  // *******
+
+  // Get the set of vertices to be removed
+  // I.e. every vertex (a,b') with b' != b
+  std::set<Vertex> removed;
+  for (auto v : boost::make_iterator_range(vertices(graph)))
+    if (graph[v].first == a && graph[v].second != b)
+      removed.insert(v);
+
+  // Create a view of the graph without the vertices to be removed
+  using VFilter = boost::is_not_in_subset<std::set<Vertex>>;
+  VFilter vFilter(removed);
+  using Filter = boost::filtered_graph<Graph, boost::keep_all, VFilter>;
+  Filter filtered(graph, boost::keep_all(), vFilter);
+
+  // Create a copy of the view (force reindex)
+  Graph graph1;
+  boost::copy_graph(filtered, graph1);
+
+  // *******
+  // ** Right branch: (a,b) is uncolored
+  // ** ¡Reuse graph!
+  // *******
+
+  Graph graph2(std::move(graph));
+  remove_vertex(v, graph2);
+
+  // *******
+  // ** Create branches
+  // *******
+
+  branches.resize(2);
+  branches[0] = new LP(graph1);
+  branches[1] = new LP(graph2);
+
+  for (auto v : boost::make_iterator_range(vertices(graph1)))
+    std::cout << v << ": (" << graph1[v].first << "," << graph1[v].second
+              << ") ";
+  std::cout << std::endl;
+
+  for (auto v : boost::make_iterator_range(vertices(graph2)))
+    std::cout << v << ": (" << graph2[v].first << "," << graph2[v].second
+              << ") ";
+  std::cout << std::endl;
+
+  return;
+}
+
+/*
+void LP::branch(std::vector<LP *> &branches, Vertex v) {
+
+  if (N_BRANCHES != 2) {
+    std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
+    abort();
+  }
+
+  // Recover a and b
+  auto [a, b] = graph[v];
 
   // Find some index of interest
   // .. (e-1,u), (e,v1), ..., (e,v), ..., (e,vn), (e+1,w)
@@ -381,36 +466,37 @@ void LP::branch(std::vector<LP *> &branches, CGVertex cgv) {
   branches[0] = lp1;
   branches[1] = lp2;
 
-  /* TODO: Remove
-    std::cout << "i1, i2, i3: " << i1 << " " << i2 << " " << i3 << std::endl;
+  // TODO: Remove
+  std::cout << "i1, i2, i3: " << i1 << " " << i2 << " " << i3 << std::endl;
 
-    std::cout << "vcount1: " << vcount1 << std::endl;
-    std::cout << "vlist1: ";
-    for (int i = 0; i < vcount1; ++i)
-      std::cout << i << ":(" << cg[vlist1[i]].first << "," <<
-    cg[vlist1[i]].second
-                << ") ";
-    std::cout << std::endl;
+  std::cout << "vcount1: " << vcount1 << std::endl;
+  std::cout << "vlist1: ";
+  for (int i = 0; i < vcount1; ++i)
+    std::cout << i << ":(" << cg[vlist1[i]].first << "," <<
+  cg[vlist1[i]].second
+              << ") ";
+  std::cout << std::endl;
 
-    std::cout << "ecount1: " << ecount1 << std::endl;
-    std::cout << "elist1: ";
-    for (int i = 0; i < ecount1; ++i)
-      std::cout << "(" << elist1[2 * i] << "," << elist1[2 * i + 1] << ") ";
-    std::cout << std::endl;
+  std::cout << "ecount1: " << ecount1 << std::endl;
+  std::cout << "elist1: ";
+  for (int i = 0; i < ecount1; ++i)
+    std::cout << "(" << elist1[2 * i] << "," << elist1[2 * i + 1] << ") ";
+  std::cout << std::endl;
 
-    std::cout << "vcount2: " << vcount2 << std::endl;
-    std::cout << "vlist2: ";
-    for (int i = 0; i < vcount2; ++i)
-      std::cout << i << ":(" << cg[vlist2[i]].first << "," <<
-    cg[vlist2[i]].second
-                << ") ";
-    std::cout << std::endl;
+  std::cout << "vcount2: " << vcount2 << std::endl;
+  std::cout << "vlist2: ";
+  for (int i = 0; i < vcount2; ++i)
+    std::cout << i << ":(" << cg[vlist2[i]].first << "," <<
+  cg[vlist2[i]].second
+              << ") ";
+  std::cout << std::endl;
 
-    std::cout << "ecount2: " << ecount2 << std::endl;
-    std::cout << "elist2: ";
-    for (int i = 0; i < ecount2; ++i)
-      std::cout << "(" << elist2[2 * i] << "," << elist2[2 * i + 1] << ") ";
-    std::cout << std::endl;
-  */
-  return;
+  std::cout << "ecount2: " << ecount2 << std::endl;
+  std::cout << "elist2: ";
+  for (int i = 0; i < ecount2; ++i)
+    std::cout << "(" << elist2[2 * i] << "," << elist2[2 * i + 1] << ") ";
+  std::cout << std::endl;
+
+return;
 }
+*/

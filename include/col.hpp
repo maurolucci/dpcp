@@ -5,8 +5,9 @@
 
 #include <vector>
 
-using Color = size_t;
+using Color = int;
 using Coloring = std::map<Vertex, Color>;
+using VertexSet = std::set<Vertex>;
 using ColorClass = std::map<Color, VertexSet>;
 
 class Col {
@@ -23,7 +24,7 @@ public:
   [[nodiscard]] bool check_coloring() const;
 
 private:
-  HyperGraph &hg;
+  Graph &graph;
   Coloring coloring;
   ColorClass classes;
 };

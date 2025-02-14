@@ -4,16 +4,17 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "hglib.h"
 
-using HyperGraph = hglib::UndirectedHypergraph<>;
-using Vertex = hglib::VertexIdType;
-using Hyperedge = hglib::HyperedgeIdType;
-using VertexSet = std::set<Vertex>;
+using TypeA = size_t;
+using TypeB = size_t;
+using Pair = std::pair<TypeA, TypeB>;
+using Graph =
+    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Pair>;
+using Vertex = Graph::vertex_descriptor;
 
-using PSet = std::pair<Hyperedge, Vertex>;
-using ConflictGraph =
-    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, PSet>;
-using CGVertex = ConflictGraph::vertex_descriptor;
+using HGraph = hglib::UndirectedHypergraph<>;
+using HVertex = hglib::VertexIdType;
+using HEdge = hglib::HyperedgeIdType;
 
-void init_conflict_graph(const HyperGraph &hg, ConflictGraph &cg);
+void get_conflict_graph(const HGraph &hg, Graph &graph);
 
 #endif //_GRAPH_HPP_

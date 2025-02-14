@@ -2,21 +2,17 @@
 #define _LP_HPP_
 
 #include "col.hpp"
+#include "cplex_env.hpp"
 #include "graph.hpp"
 extern "C" {
 #include "mwis.h"
 }
 
 #include <chrono>
-#include <ilcplex/cplex.h>
-#include <ilcplex/ilocplex.h>
-#include <set>
-#include <vector>
 
-#define EPSILON 0.00001
-#define MAXTIME 300.0
+#define EPSILON 0.00001 // 10e-5
+#define TIMELIMIT 300.0 // 5 minutes
 #define THRESHOLD 0.1
-// #define IL_STD 1 // CPLEX lo pide
 #ifndef N_BRANCHES
 #define N_BRANCHES 2
 #endif
@@ -31,64 +27,37 @@ enum LP_STATE { INFEASIBLE, INTEGER, FRACTIONAL, TIME_OR_MEM_LIMIT };
 class LP {
 
 public:
-  // Constructors
-  LP(const HyperGraph &hg, const ConflictGraph &cg, double start_t);
-  LP(const HyperGraph &hg, const ConflictGraph &cg, int vcount, CGVertex *vlist,
-     int ecount, int *elist, double start_t);
+  LP(const Graph &graph);
+  LP(const Graph &&graph);
 
-  // Destructor
-  ~LP();
+  // Optimize the linear relaxation by column generation
+  [[nodiscard]] LP_STATE optimize();
 
-  // Optimize LP
-  LP_STATE optimize();
-
-  // Save optimal solution
+  // Save the optimal solution
   void save_solution(Coloring &coloring);
 
-  // Get objective value
-  [[nodiscard]] inline double get_obj_value() const { return obj_value; };
-
-  // Get number of columns
-  [[nodiscard]] inline int get_n_columns() const { return Xvars.getSize(); };
-
   // Branch
-  void branch(std::vector<LP *> &branches, CGVertex cgv);
+  void branch(std::vector<LP *> &branches, Vertex v);
 
 private:
-  double start_t;       // Starting time of B&P
-  IloEnv Xenv;          // CPLEX environment structure
-  IloModel Xmodel;      // CPLEX model
-  IloObjective Xobj;    // CPLEX objective function
-  IloNumVarArray Xvars; // CPLEX variables
-  IloRangeArray Xrestr; // CPLEX constraints
-  // IloArray<Column> vars; // Internal representation of CPLEX's columns
-  IloNumArray values; // Value of the optimal solution
-  IloNum obj_value;   // Objective value of the optimal solution
+  Graph graph;                  // Input graph with vertices in TypeA x TypeB
+  std::map<TypeA, size_t> mapA; // Map from TypeA to id of Constraint (>= 1)
+  std::map<TypeB, size_t> mapB; // Map from TypeB to id of Constraint (<= 1)
 
-  std::list<int> pos_vars; // List with the indexes of the positive variables
-  int most_fract_var;      // Index of the most fractional var with at least two
-                           // vertices in the stable set
+  // Initialize the linear relaxation with an initial set of columns
+  void initialize(CplexEnv &cenv);
 
-  const HyperGraph &hg;    // Original hypergraph
-  const ConflictGraph &cg; // Original conflict graph
-  size_t nrows;            // Number of constraints (= number of dual variables)
-  int vcount;
-  CGVertex *vlist;
-  int ecount;
-  int *elist;
+  // Add a new column to the linear relaxation
+  void add_column(CplexEnv &cenv, const std::set<size_t> &cA,
+                  const std::set<size_t> &cB);
+  void add_column(CplexEnv &cenv, int count, const int *members);
 
-  // Initialize LP
-  void initialize();
+  // Set CPLEX's parameters
+  void set_parameters(CplexEnv &cenv, IloCplex &cplex);
 
+  // Covert weights from double to int
   int double2COLORNWT(COLORNWT nweights[], COLORNWT *scalef,
                       const IloNumArray dbl_nweights);
-
-  // Fill the LP with a feasible set of columns
-  void fill_initial_columns();
-
-  void add_column(int count, const int *members);
-
-  void set_parameters(IloCplex &cplex);
 };
 
 #endif // _LP_HPP_
