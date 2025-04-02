@@ -6,7 +6,7 @@
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph) : LP(Graph{graph}) {};
+LP::LP(const Graph &graph) : LP(Graph{graph}){};
 
 LP::LP(const Graph &&graph) : graph(graph), stables(), posVars(), objVal(-1.0) {
 
@@ -104,6 +104,13 @@ void LP::add_column(CplexEnv &cenv, COLORset *newset) {
       std::cout << " " << idB2TyB[i];
   std::cout << " ]" << std::endl;
   // *******************************************************************
+  std::cout << "adding column: [";
+  for (int i = 0; i < newset->count; ++i) {
+    auto [a, b] = graph[newset->members[i]];
+    std::cout << " " << newset->members[i] << " = (" << a << ", " << b << ")";
+  }
+  std::cout << " ]" << std::endl;
+  // *******************************************************************
 }
 
 void LP::set_parameters(CplexEnv &cenv, IloCplex &cplex) {
@@ -195,7 +202,7 @@ LP_STATE LP::optimize() {
     // Set time limit
     double timeLimit = TIMELIMIT - get_elapsed_time(startTime);
     if (timeLimit < 0) {
-      state = LP_TIMELIMIT;
+      state = LP_TIME_EXCEEDED;
       break;
     }
     cplex.setParam(IloCplex::Param::TimeLimit, timeLimit);
@@ -206,11 +213,11 @@ LP_STATE LP::optimize() {
     // Handle errores
     IloCplex::CplexStatus status = cplex.getCplexStatus();
     if (status == IloCplex::AbortTimeLim) {
-      state != LP_TIMELIMIT;
+      state = LP_TIME_EXCEEDED;
       break;
     } else if (status == IloCplex::MemLimFeas ||
                status == IloCplex::MemLimInfeas) {
-      state != LP_MEMLIMIT;
+      state = LP_MEM_EXCEEDED;
       break;
     }
 
@@ -285,15 +292,27 @@ LP_STATE LP::optimize() {
     std::cout << "changed: " << changed << std::endl;
     // *******************************************************************
 
-    // Solve the MWIS problem
-    COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, nPosWeights, ecount,
-                        elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
+    if (ecount == 0) {
+      // Edge-less graphs raise error in COLORstable_wrapper
+      // So, they are manually solved
+      nnewsets = 1;
+      newsets = (COLORset *)malloc(sizeof(COLORset) * nnewsets);
+      newsets[0].next = NULL;
+      newsets[0].count = nPosWeights;
+      newsets[0].members = (int *)malloc(sizeof(int) * newsets[0].count);
+      for (int i = 0; i < newsets[0].count; ++i)
+        newsets[0].members[i] = i;
+    } else
+      // Solve the MWIS problem
+      COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, nPosWeights, ecount,
+                          elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
 
     // Add column/s
     for (int set_i = 0; set_i < nnewsets; ++set_i) {
       // Translate stable set into old vertices
-      for (int j = 0; j < newsets[set_i].count; ++j)
+      for (int j = 0; j < newsets[set_i].count; ++j) {
         newsets[set_i].members[j] = oldVertices[newsets[set_i].members[j]];
+      }
       newsets[set_i].age = 0;
       // Local copy of the translated stable set
       COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
@@ -307,7 +326,7 @@ LP_STATE LP::optimize() {
 
   } while (nnewsets > 0);
 
-  if (state != LP_TIMELIMIT && state != LP_MEMLIMIT) {
+  if (state != LP_TIME_EXCEEDED && state != LP_MEM_EXCEEDED) {
 
     // Recover primal values and objective value
     IloNumArray values = IloNumArray(cenv.Xenv, cenv.Xvars.getSize());
@@ -315,14 +334,14 @@ LP_STATE LP::optimize() {
     objVal = cplex.getObjValue();
 
     // *******************************************************************
-    // Print some statics
-    // Primal values
-    std::cout << "primal values: ";
-    for (int i = 0; i < cenv.Xvars.getSize(); ++i)
-      std::cout << values[i] << " ";
-    std::cout << std::endl;
-    // Objective function
-    std::cout << "objective value: " << objVal << std::endl;
+    // // Print some statics
+    // // Primal values
+    // std::cout << "primal values: ";
+    // for (int i = 0; i < cenv.Xvars.getSize(); ++i)
+    //   std::cout << values[i] << " ";
+    // std::cout << std::endl;
+    // // Objective function
+    // std::cout << "objective value: " << objVal << std::endl;
     // *******************************************************************
 
     // Integrality check
@@ -403,6 +422,7 @@ LP_STATE LP::solve_GCP() {
       COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
       memcpy(nset, &colorclasses[i], sizeof(COLORset));
       nset->members = (int *)malloc(sizeof(int) * newCount);
+      nset->count = newCount;
 
       // Write translated stable set
       for (int j = 0, l = 0; j < colorclasses[i].count; ++j)
@@ -414,7 +434,7 @@ LP_STATE LP::solve_GCP() {
       posVars.push_back(i);
     }
   } else
-    state = LP_TIMELIMIT;
+    state = LP_TIME_EXCEEDED;
 
   COLORproblem_free(&colorproblem);
   COLORfree_sets(&colorclasses, &ncolors);
@@ -506,21 +526,32 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
     }
   }
 
+  if (best_v == -1) {
+    // Choose by index
+    for (size_t iA = 0; iA < nA; ++iA)
+      if (snd[iA].size() > 1) {
+        best_v = iA;
+        break;
+      }
+  }
+
   assert(best_v != -1);
 
   // *******************************************************************
-  // Print some statics
-  std::cout << "branching variable: " << best_v << " [" << graph[best_v].first
-            << " " << graph[best_v].second << "] with size "
-            << posSnd[tyA2idA[graph[best_v].first]].size() << " and value "
-            << best_value << std::endl
-            << std::endl;
+  // // Print some statics
+  // std::cout << "branching variable: " << best_v << " [" <<
+  // graph[best_v].first
+  //           << " " << graph[best_v].second << "] with size "
+  //           << posSnd[tyA2idA[graph[best_v].first]].size() << " and value "
+  //           << best_value << std::endl
+  //           << std::endl;
   // *******************************************************************
 
   return best_v;
 }
 
 void LP::save_solution(Col &col) {
+  col.reset_coloring();
   size_t k = 0;
   for (auto i : posVars) {
     for (auto j = 0; j < stables[i]->count; ++j) {
@@ -536,7 +567,7 @@ void LP::save_solution(Col &col) {
 void LP::branch(std::vector<LP *> &branches) {
 
   if (N_BRANCHES != 2) {
-    std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
+    // std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
     abort();
   }
 
@@ -581,15 +612,15 @@ void LP::branch(std::vector<LP *> &branches) {
   branches[0] = new LP(graph1);
   branches[1] = new LP(graph2);
 
-  for (auto v : boost::make_iterator_range(vertices(graph1)))
-    std::cout << v << ": (" << graph1[v].first << "," << graph1[v].second
-              << ") ";
-  std::cout << std::endl;
+  // for (auto v : boost::make_iterator_range(vertices(graph1)))
+  //   std::cout << v << ": (" << graph1[v].first << "," << graph1[v].second
+  //             << ") ";
+  // std::cout << std::endl;
 
-  for (auto v : boost::make_iterator_range(vertices(graph2)))
-    std::cout << v << ": (" << graph2[v].first << "," << graph2[v].second
-              << ") ";
-  std::cout << std::endl;
+  // for (auto v : boost::make_iterator_range(vertices(graph2)))
+  //   std::cout << v << ": (" << graph2[v].first << "," << graph2[v].second
+  //             << ") ";
+  // std::cout << std::endl;
 
   return;
 }

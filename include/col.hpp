@@ -22,6 +22,8 @@ public:
 
   [[nodiscard]] inline size_t get_n_colors() const { return classes.size(); };
 
+  void reset_coloring();
+
   void set_color(const TypeA a, const TypeB b, const Color k);
 
   [[nodiscard]] bool check_coloring() const;

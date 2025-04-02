@@ -2,6 +2,11 @@
 
 Col::Col(Graph &graph) : graph(graph){};
 
+void Col::reset_coloring() {
+  coloring.clear();
+  classes.clear();
+}
+
 void Col::set_color(const TypeA a, const TypeB b, const Color k) {
   // Find vertex u in the original graph such that graph[u] = (a,b)
   Vertex u = num_vertices(graph);
@@ -11,8 +16,6 @@ void Col::set_color(const TypeA a, const TypeB b, const Color k) {
       break;
     }
   assert(u < num_vertices(graph));
-  if (coloring.contains(u))
-    classes[coloring[u]].erase(u);
   coloring[u] = k;
   classes[k].insert(u);
 }

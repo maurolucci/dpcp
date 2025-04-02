@@ -3,6 +3,7 @@
 #include "compact_ilp.hpp"
 #include "graph.hpp"
 #include "lp.hpp"
+#include "stats.hpp"
 #include <boost/graph/copy.hpp>
 
 int main() {
@@ -48,10 +49,13 @@ int main() {
   Col col(gcopy); // The original graph will be modified during branching
   LP *lp = new LP(graph);
   Node *root = new Node(lp);
-  BP<Col> bp(col);
-  bp.solve(root);
+  BP<Col> bp(col, std::cout);
+  Stats stats1 = bp.solve(root);
+  stats1.print_stats(std::cout);
 
-  solve_ilp(gcopy, 3);
+  std::cout << std::endl;
+  Stats stats2 = solve_ilp(gcopy, 3, std::cout);
+  stats2.print_stats(std::cout);
 
   return 0;
 }

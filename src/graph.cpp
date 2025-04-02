@@ -1,5 +1,26 @@
 #include "graph.hpp"
 
+void read_hypergrah(HGraph &hg, std::istream &input) {
+
+  size_t n, m, mm, v;
+  input >> n >> m;
+
+  // Add vertices
+  for (size_t v = 0; v < n; ++v)
+    hg.addVertex();
+
+  // Add hyperedges
+  for (size_t e = 0; e < m; ++e) {
+    input >> mm;
+    std::vector<HVertex> vertices;
+    for (size_t i = 0; i < mm; ++i) {
+      input >> v;
+      vertices.push_back(v);
+    }
+    hg.addHyperedge(vertices);
+  }
+}
+
 void get_conflict_graph(const HGraph &hg, Graph &graph) {
   // Add vertices (pointed sets)
   for (const auto &e : hg.hyperedges())

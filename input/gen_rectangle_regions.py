@@ -26,9 +26,10 @@ def gen_rectangles(
     Args:
         sside: Length of the side of the scene.
         rnum: Number of rectangles.
-        rmin: Minimum length of the side of the rectangles (rmin > 0).
+        rmin: Minimum length of the side of the rectangles,
+            written as a percentage of sside.
         rmax: Maximum length of the side of the rectangles
-              (rmax >= rmin and rmax < sside).
+            written as a percentage of sside.
         real: Whether to generate random real numbers, otherwise integers.
         seed: Seed for random generation.
 
@@ -43,8 +44,8 @@ def gen_rectangles(
     while nrect < rnum:
         x1 = generator(0, sside)
         y1 = generator(0, sside)
-        x2 = x1 + generator(rmin, rmax)
-        y2 = y1 + generator(rmin, rmax)
+        x2 = x1 + generator(sside * rmin / 100, sside * rmax / 100)
+        y2 = y1 + generator(sside * rmin / 100, sside * rmax / 100)
         if x2 > sside or y2 > sside:
             continue
         rect.append((x1, y1, x2, y2))
@@ -96,7 +97,7 @@ def get_midpoints(numbers: list[Number]) -> list[float]:
     return list(map(lambda x, y: (x + y) / 2, numbers[:-1], numbers[1:]))
 
 
-def gen_hypergraph(rect: list[Rect]) -> HyperGraph:
+def build_hypergraph(rect: list[Rect]) -> HyperGraph:
     """Generate the hypergraph associated with the rectangle regions.
 
     Args:
@@ -141,11 +142,3 @@ def write_hypergraph(path: str, graph: HyperGraph):
             for v in e[1]:
                 f.write(" " + str(v))
             f.write("\n")
-
-
-# Example
-SSIDE = 20
-rectangles = gen_rectangles(SSIDE, 5, 2, 10, real=True, seed=1)
-num_vertices, num_edges, edges = gen_hypergraph(rectangles)
-write_hypergraph("out.txt", (num_vertices, num_edges, edges))
-plot(SSIDE, rectangles)

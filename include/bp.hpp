@@ -3,11 +3,12 @@
 
 #include "bp.hpp"
 #include "lp.hpp"
+#include "stats.hpp"
 
 #include <cfloat>
 #include <chrono>
 #include <cmath>
-#include <exception>
+#include <iostream>
 #include <iterator>
 
 #define EPSILON_BP 0.001 // For doing ceil(x - EPSILON_BP) during prunning
@@ -19,9 +20,6 @@
 
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::_V2::system_clock::time_point;
-
-class TimelimitEx : public std::exception {};
-class MemlimitEx : public std::exception {};
 
 class Node {
 
@@ -61,9 +59,9 @@ private:
 template <class Solution> class BP {
 
 public:
-  BP(Solution &sol, bool DFS = false, bool EARLY_BRANCHING = false)
-      : best_integer_solution(sol), DFS(DFS), EARLY_BRANCHING(EARLY_BRANCHING),
-        primal_bound(DBL_MAX), nodes(0), root_lower_bound(-1) {}
+  BP(Solution &sol, std::ostream &log, bool DFS = false)
+      : best_integer_solution(sol), primal_bound(DBL_MAX), nodes(0), DFS(DFS),
+        log(log) {}
 
   Stats solve(Node *root) {
 
@@ -71,73 +69,19 @@ public:
     first_t = start_t;
     first_call = true;
 
-    try {
-      push(root);
-    } catch (TimelimitEx &e) { // Timelimit exception
-      return {
-          0, 0, TIMELIMIT, MAXITIME, 0,
-      };
-
-      opt_flag = 0;
-      primal_bound = 99999999;
-      dual_bound = -99999999;
-      nodes = -1;
-      time = std::chrono::duration_cast<std::chrono::seconds>(ClockType::now() -
-                                                              start_t)
-                 .count();
-      if (time >= MAXTIME) {
-        std::cout << "Time limit reached" << std::endl;
-        time = MAXTIME;
-      } else {
-        std::cout << "Mem limit reached" << std::endl;
-      }
-      return;
+    // Push root note (and solve initial LR)
+    switch (push(root)) {
+    case LP_TIME_EXCEEDED:
+      return return_stats(NODE_TIME_EXCEEDED);
+    case LP_MEM_EXCEEDED:
+      return return_stats(NODE_MEM_EXCEEDED);
+    default:
+      break;
     }
-
-#ifdef ONLY_RELAXATION
-    if (!L.empty()) {
-      // The initial relaxation is fractional
-      opt_flag = 3;
-      primal_bound = 99999999;
-      double db = calculate_dual_bound();
-      dual_bound = db == -DBL_MAX ? -99999999 : db;
-      time = std::chrono::duration_cast<std::chrono::seconds>(ClockType::now() -
-                                                              start_t)
-                 .count();
-      std::cout << "The initial relaxation is fractional" << std::endl;
-      std::cout << "Objective value = " << dual_bound << std::endl;
-      return;
-    } else {
-      if (primal_bound == DBL_MAX) {
-        // The initial relaxation is infeasible
-        opt_flag = 2;
-        primal_bound = 99999999;
-        dual_bound = -99999999;
-        time = std::chrono::duration_cast<std::chrono::seconds>(
-                   ClockType::now() - start_t)
-                   .count();
-        std::cout << "The initial relaxation is infeasible" << std::endl;
-        return;
-      } else {
-        // The initial relaxation is integer
-        opt_flag = 1;
-        dual_bound = primal_bound;
-        time = std::chrono::duration_cast<std::chrono::seconds>(
-                   ClockType::now() - start_t)
-                   .count();
-        std::cout << "The initial relaxation is integer" << std::endl;
-        std::cout << "Objective value = " << dual_bound << std::endl;
-        return;
-      }
-    }
-#endif
-
-    if (!L.empty())
-      root_lower_bound = ceil(root->get_obj_value() - EPSILON_BP);
 
     while (!L.empty()) {
 
-      // Pop
+      // Pop next node
       Node *node = top();
       show_stats(*node); // First show_stats, then pop
       pop();
@@ -148,74 +92,48 @@ public:
         continue;
       }
 
-      // Add sons
+      // Branch
       std::vector<Node *> sons;
       node->branch(sons);
+
+      // Push sons (and solve initial LR)
       for (auto n : sons) {
-        try {
-          push(n);
-        } catch (...) {
-          // Time or mem expired
-          opt_flag = 0;
-          primal_bound = primal_bound == DBL_MAX ? 99999999 : primal_bound;
-          dual_bound = calculate_dual_bound();
-          dual_bound = dual_bound == -DBL_MAX ? -99999999 : dual_bound;
-          nodes = -1;
-          time = std::chrono::duration_cast<std::chrono::seconds>(
-                     ClockType::now() - start_t)
-                     .count();
-          if (time >= MAXTIME) {
-            std::cout << "Time limit reached" << std::endl;
-            time = MAXTIME;
-          } else {
-            std::cout << "Mem limit reached" << std::endl;
-          }
-          L.clear();
+
+        switch (push(n)) {
+        case LP_TIME_EXCEEDED:
           delete node;
-          return;
+          return return_stats(NODE_TIME_EXCEEDED);
+        case LP_MEM_EXCEEDED:
+          delete node;
+          return return_stats(NODE_MEM_EXCEEDED);
+        default:
+          break;
         }
       }
 
       delete node;
     }
 
-    if (primal_bound == DBL_MAX) { // Infeasibility case:
-      opt_flag = 2;
-      primal_bound = 99999999;
-      double db = calculate_dual_bound();
-      dual_bound = db == -DBL_MAX ? -99999999 : db;
-      time = std::chrono::duration_cast<std::chrono::seconds>(ClockType::now() -
-                                                              start_t)
-                 .count();
-      std::cout << "Infeasibility proved" << std::endl;
-    } else { // Optimality case:
-      opt_flag = 1;
-      dual_bound = primal_bound;
-      time = std::chrono::duration_cast<std::chrono::seconds>(ClockType::now() -
-                                                              start_t)
-                 .count();
-      std::cout << "Optimality reached" << std::endl;
-      std::cout << "Optimal value = " << primal_bound << std::endl;
-    }
+    if (primal_bound == DBL_MAX) // Infeasibility case:
+      return return_stats(INFEASIBLE);
 
-    return;
+    // Optimality case:
+    return return_stats(OPTIMAL);
   }
 
   // Methods for getting variables' value
-  int get_nodes() { return nodes; }
+  size_t get_nodes() { return nodes; }
 
   double get_gap() {
     double _dual_bound = calculate_dual_bound();
-    double gap = abs(_dual_bound - primal_bound) /
-                 (0.0000000001 + abs(primal_bound)) * 100;
+    double gap = DBL_MAX;
+    if (_dual_bound != -DBL_MAX)
+      gap = abs(_dual_bound - primal_bound) /
+            (0.0000000001 + abs(primal_bound)) * 100;
     return gap;
   }
 
   double get_primal_bound() { return primal_bound; }
-
-  double get_dual_bound() { return dual_bound; };
-
-  double get_time() { return time; }
 
   int get_opt_flag() { return opt_flag; }
 
@@ -224,74 +142,74 @@ private:
 
   Solution &best_integer_solution; // Current best integer solution
   double primal_bound; // Primal bound (given by the best integer solution)
-  double dual_bound;   // Dual bound (given by the worst open relaxation)
-  int nodes; // Number of processed nodes so far. A node is considered processed
+  size_t
+      nodes; // Number of processed nodes so far. A node is considered processed
   // if its relaxation has been solved
-  TimePoint start_t;       // B&P initial execution time
-  TimePoint first_t;       // used by log
-  bool first_call;         // used by log
-  int opt_flag;            // Optimality flag
-  double time;             // Total execution time
-  double root_lower_bound; // Round-up of the LP objective value at the root of
-  // the B&P. Used for early branching
+  TimePoint start_t; // B&P initial execution time
+  TimePoint first_t; // used by log
+  bool first_call;   // used by log
+  int opt_flag;      // Optimality flag
+  bool DFS;
+  std::ostream &log;
 
-  void push(Node *node) {
+  Stats return_stats(STATE state) {
+    double elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                         ClockType::now() - start_t)
+                         .count();
+    if (elapsed > MAXTIME) {
+      elapsed = MAXTIME;
+      state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
+    }
+    double dual_bound, gap;
+    if (state == OPTIMAL) {
+      dual_bound = primal_bound;
+      gap = 0.0;
+    } else if (state == INFEASIBLE) {
+      dual_bound = -DBL_MAX;
+      gap = DBL_MAX;
+    } else {
+      dual_bound = calculate_dual_bound();
+      gap = get_gap();
+    }
+    return (Stats){0, 0, state, elapsed, nodes, dual_bound, primal_bound, gap};
+  }
 
-    // Solve the linear relaxation of the node and prune if possible
-    LP_STATE state = node->solve();
-
-#ifdef ONLY_RELAXATION
-    std::cout << "Number of columns = " << node->get_n_columns() << std::endl;
-#endif
+  LP_STATE push(Node *node) {
 
     nodes++;
     double obj_value;
 
+    // Solve the linear relaxation of the node and prune if possible
+    LP_STATE state = node->solve();
+
     switch (state) {
 
-    case LP_INFEASIBLE:
-      // Prune by infeasibility
-      delete node;
-      return;
-
     case LP_INTEGER:
-      // Prune by optimality
       obj_value = node->get_obj_value();
       if (obj_value < primal_bound)
         update_primal_bound(*node);
-      delete node;
-      return;
+      delete node; // Prune by optimality
+      return state;
 
     case LP_FRACTIONAL:
       obj_value = node->get_obj_value();
       if (ceil(obj_value - EPSILON_BP) >= primal_bound) {
-        // Prune by bound
-        delete node;
-        return;
+        delete node; // Prune by optimality
+        return state;
       }
-      break;
-
-    case LP_TIMELIMIT:
-      delete node;
-      throw TimelimitEx();
-      return;
-
-    case LP_MEMLIMIT:
-      delete node;
-      throw MemlimitEx();
-      return;
+      break; // Do not prune
 
     default:
-      delete node;
-      throw std::exception{};
-      return;
+      delete node; // Prune by infeasibility or mem/time limit
+      return state;
     }
 
+    // Continuation for fractional nodes
     // Place the node in the list according to its priority
 
     if (DFS) { // DFS strategy
       L.push_back(node);
-      return;
+      return LP_FRACTIONAL;
     }
 
     // Otherwise, best-bound strategy
@@ -299,19 +217,19 @@ private:
     // list is empty
     if (L.empty()) {
       L.push_back(node);
-      return;
+      return state;
     }
 
     // list is not empty
     for (auto it = L.begin(); it != L.end(); ++it)
       if (*node < **it) {
         L.insert(it, node);
-        return;
+        return state;
       }
 
     // Otherwise, push back
     L.push_back(node);
-    return;
+    return state;
   }
 
   Node *top() { return L.back(); }
@@ -340,13 +258,15 @@ private:
   double calculate_dual_bound() {
 
     double _dual_bound = DBL_MAX; // minimum objective value of unpruned nodes
-    if (DFS) {
-      // Traverse the list and search for the minimum objective value
-      for (auto it = L.begin(); it != L.end(); ++it)
-        if ((*it)->get_obj_value() < _dual_bound)
-          _dual_bound = (*it)->get_obj_value();
-    } else {
-      _dual_bound = L.front()->get_obj_value();
+    if (!L.empty()) {
+      if (DFS) {
+        // Traverse the list and search for the minimum objective value
+        for (auto it = L.begin(); it != L.end(); ++it)
+          if ((*it)->get_obj_value() < _dual_bound)
+            _dual_bound = (*it)->get_obj_value();
+      } else {
+        _dual_bound = L.front()->get_obj_value();
+      }
     }
 
     if (_dual_bound == DBL_MAX) {
@@ -372,33 +292,21 @@ private:
     double _dual_bound =
         calculate_dual_bound(); // (note: it is time consuming when DFS is used)
 
-    std::cout << std::fixed << std::setprecision(3);
+    log << std::fixed << std::setprecision(3);
 
-    // std::cout << "  Obj value = " << node.get_obj_value();
-    std::cout << "  Best obj value  = " << _dual_bound << "\t Best int = ";
+    log << "  Best obj value  = " << _dual_bound << "\t Best int = ";
     if (primal_bound == DBL_MAX)
-      std::cout << "inf\t Gap = ---";
+      log << "inf\t Gap = ---";
     else
-      std::cout << (int)(EPSILON + primal_bound) << "\t Gap = "
-                << (primal_bound - _dual_bound) / (EPSILON + primal_bound) * 100
-                << "%";
-    std::cout << "\t Nodes: processed = " << nodes << ", left = " << L.size()
-              << "\t time = "
-              << std::chrono::duration_cast<std::chrono::seconds>(now_t -
-                                                                  start_t)
-                     .count()
-              << std::endl;
+      log << (int)(EPSILON + primal_bound) << "\t Gap = "
+          << (primal_bound - _dual_bound) / (EPSILON + primal_bound) * 100
+          << "%";
+    log << "\t Nodes: processed = " << nodes << ", left = " << L.size()
+        << "\t time = "
+        << std::chrono::duration_cast<std::chrono::seconds>(now_t - start_t)
+               .count()
+        << std::endl;
   }
-
-  // Flags
-  bool DFS;
-  // **** Early Branching ****
-  //  At any node, if the column generation arrives to a solution with lower
-  //  value than root_lower_bound, then is not necessary to keep optimizing the
-  //  node and it could be inmediatly branched. CAUTION: Early branching may
-  //  alter the way nodes are branched (beacause braching depends on the LP
-  //  solution)
-  bool EARLY_BRANCHING;
 };
 
 #endif // _BP_HPP_

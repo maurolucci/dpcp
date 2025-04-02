@@ -1,5 +1,8 @@
 #include "compact_ilp.hpp"
+#include "col.hpp"
 
+#include <cfloat>
+#include <iostream>
 #include <map>
 #include <string>
 
@@ -8,7 +11,7 @@
 
 #define TIMELIMIT 900
 
-Stats solve_ilp(Graph graph, size_t ncolors) {
+Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
 
   // Initialize cplex enviroment
   IloEnv cxenv;
@@ -91,6 +94,7 @@ Stats solve_ilp(Graph graph, size_t ncolors) {
 
   // Set parameters
   cplex.setDefaults();
+  cplex.setOut(log);
   cplex.setParam(IloCplex::Param::TimeLimit, TIMELIMIT);
 
   // Solve
@@ -109,33 +113,39 @@ Stats solve_ilp(Graph graph, size_t ncolors) {
     state = INFEASIBLE;
     break;
   case IloCplex::CplexStatus::AbortTimeLim:
-    state = TIME_OR_MEM_LIMIT;
+    state = TIME_EXCEEDED;
+    break;
+  case IloCplex::CplexStatus::MemLimFeas:
+  case IloCplex::CplexStatus::MemLimInfeas:
+    state = MEM_EXCEEDED;
     break;
   default:
     state = UNKNOWN;
     break;
   }
 
-  // Print statics
-  std::cout << std::endl << "*** Resultados ***" << std::endl;
-  std::cout << "Numero de variables: " << cplex.getNcols() << std::endl;
-  std::cout << "Numero de restricciones: " << cplex.getNrows() << std::endl;
-  std::cout << "Estado: " << state << std::endl;
-  std::cout << "Tiempo: " << cplex.getTime() << std::endl;
-  std::cout << "Nodos: " << cplex.getNnodes() << std::endl;
-  std::cout << "Cota inferior: " << cplex.getBestObjValue() << std::endl;
-  if (state == IloCplex::CplexStatus::Optimal ||
-      state == IloCplex::CplexStatus::Feasible) {
-    std::cout << "Cota superior: " << cplex.getObjValue() << std::endl;
-    std::cout << "Gap: " << cplex.getMIPRelativeGap() << std::endl;
+  if (state == OPTIMAL || state == FEASIBLE) {
+    // Recover coloring
+    Col col(graph);
+    for (size_t v = 0; v < num_vertices(graph); ++v)
+      for (size_t k = 0; k < ncolors; ++k)
+        if (cplex.getValue(x[v][k]) > 0.5)
+          col.set_color(graph[v].first, graph[v].second, k);
+    assert(col.check_coloring());
   }
 
-  Stats stats = {
-      cplex.getNcols(),  cplex.getNrows(),        state, cplex.getTime(),
-      cplex.getNnodes(), cplex.getBestObjValue(), 0,     0};
-  if (state == IloCplex::CplexStatus::Optimal ||
-      state == IloCplex::CplexStatus::Feasible) {
-    stats.up = cplex.getObjValue();
+  Stats stats = {static_cast<size_t>(cplex.getNcols()),
+                 static_cast<size_t>(cplex.getNrows()),
+                 state,
+                 cplex.getTime(),
+                 static_cast<size_t>(cplex.getNnodes()),
+                 cplex.getBestObjValue(),
+                 -DBL_MAX,
+                 DBL_MAX};
+  if (state == OPTIMAL || state == FEASIBLE) {
+    stats.ub = cplex.getObjValue();
     stats.gap = cplex.getMIPRelativeGap();
   }
+
+  return stats;
 }

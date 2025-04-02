@@ -1,6 +1,8 @@
 #ifndef _GRAPH_HPP_
 #define _GRAPH_HPP_
 
+#include <iostream>
+
 #include "boost/graph/adjacency_list.hpp"
 #include "hglib.h"
 
@@ -17,6 +19,8 @@ using HEdge = hglib::HyperedgeIdType;
 
 using GCPGraph =
     boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, TypeB>;
+
+void read_hypergrah(HGraph &hg, std::istream &input);
 
 void get_conflict_graph(const HGraph &src, Graph &dst);
 
