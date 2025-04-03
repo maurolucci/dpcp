@@ -96,6 +96,8 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
   cplex.setDefaults();
   cplex.setOut(log);
   cplex.setParam(IloCplex::Param::TimeLimit, TIMELIMIT);
+  cplex.setParam(IloCplex::Param::Parallel, 1); // Deterministic mode
+  cplex.setParam(IloCplex::Param::Threads, 1);  // Single thread
 
   // Solve
   cplex.solve();
@@ -105,9 +107,6 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
   switch (cplex.getCplexStatus()) {
   case IloCplex::CplexStatus::Optimal:
     state = OPTIMAL;
-    break;
-  case IloCplex::CplexStatus::Feasible:
-    state = FEASIBLE;
     break;
   case IloCplex::CplexStatus::Infeasible:
     state = INFEASIBLE;

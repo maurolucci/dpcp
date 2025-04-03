@@ -3,7 +3,7 @@ import gen_rectangle_regions as grect
 import os
 
 SCENE = 10
-VERTICES = 7
+VERTICES = 8
 MIN_SIDE = 20
 MAX_SIDE = 40
 MIN_RADIOUS = 10

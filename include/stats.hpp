@@ -4,6 +4,13 @@
 #include <iostream>
 #include <string>
 
+enum PRICING_STATE {
+  PRICING_OPTIMAL,
+  PRICING_TIME_EXCEEDED,
+  PRICING_MEM_EXCEEDED,
+  PRICING_OTHER,
+};
+
 enum LP_STATE {
   LP_UNSOLVED,
   LP_INFEASIBLE,

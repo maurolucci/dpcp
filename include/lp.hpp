@@ -48,29 +48,20 @@ public:
   void branch(std::vector<LP *> &branches);
 
 private:
-  Graph graph;                     // Input graph with vertices in TypeA x TypeB
-  size_t nA, nB;                   // |A| and |B|
-  std::map<TypeA, size_t> tyA2idA; // Map from TypeA to idA
-  std::map<TypeB, size_t> tyB2idB; // Map from TypeB to idB
-  std::vector<TypeA> idA2TyA;      // Map from idA to TypeA
-  std::vector<TypeB> idB2TyB;      // Map from idB to TypeB
-  std::vector<std::vector<int>> snd; // Map from idA to subset of Vertex:
-                                     // snd[i_a] = {(a,b) \in V}
-  std::vector<std::vector<int>> fst; // Map from idB to subset of Vertex:
-                                     // fst[i_b] = {(a,b) \in V}
-  std::vector<COLORset *> stables;   // Vector of columns (stable sets)
-  std::vector<int> posVars;          // Vector of positive variables
-  Vertex branchVar;                  // Branching variable
-  double objVal;                     // Objective value
-
-  bool isGCP; // Whether the instance is a graph coloring instance, i.e.
-              // |snd[a]| = 1 forall a
+  GraphEnv in;                              // Input
+  std::vector<std::vector<Vertex>> stables; // Vector of columns (stable sets)
+  std::vector<int> posVars;                 // Vector of positive variables
+  Vertex branchVar;                         // Branching variable
+  double objVal;                            // Objective value
 
   // Initialize the linear relaxation with an initial set of columns
   void initialize(CplexEnv &cenv);
 
   // Add a new column to the linear relaxation
   void add_column(CplexEnv &cenv, COLORset *newset);
+
+  // Add a new column to the linear relaxation
+  void add_column(CplexEnv &cenv, StableEnv &stab);
 
   // Set CPLEX's parameters
   void set_parameters(CplexEnv &cenv, IloCplex &cplex);

@@ -4,7 +4,7 @@ SYSTEM     = x86-64_linux
 LIBFORMAT  = static_pic
 CC = g++ -std=c++20
 
-CCOPT = -O3 -fPIC -fno-strict-aliasing -fexceptions -Wall
+CCOPT = -O3 -fPIC -fno-strict-aliasing -fexceptions -Wall -g
 CCINFLAGS =  -I include/ -I hglib/include/ -I hglib/lib/filtered_vector/include/  -I exactcolors/
 
 CPLEXDIR      = /opt/ibm/ILOG/CPLEX_Studio2211/cplex
@@ -28,22 +28,30 @@ stats.o: src/stats.cpp include/stats.hpp
 graph.o: src/graph.cpp include/graph.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
-compact_ilp.o: src/compact_ilp.cpp include/compact_ilp.hpp include/graph.hpp include/stats.hpp include/col.hpp
+compact_ilp.o: src/compact_ilp.cpp include/compact_ilp.hpp \
+include/graph.hpp include/stats.hpp include/col.hpp
+	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
+
+pricing.o: src/pricing.cpp include/pricing.hpp include/graph.hpp include/stats.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
 col.o: src/col.cpp include/col.hpp include/graph.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
-lp.o: src/lp.cpp include/lp.hpp include/col.hpp include/cplex_env.hpp include/graph.hpp include/stats.hpp
+lp.o: src/lp.cpp include/lp.hpp include/col.hpp include/cplex_env.hpp \
+include/graph.hpp include/stats.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
-main.o: main.cpp include/bp.hpp include/lp.hpp include/graph.hpp include/col.hpp include/compact_ilp.hpp include/stats.hpp
+main.o: main.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
+include/col.hpp include/compact_ilp.hpp include/stats.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
-tests.o: tests.cpp include/bp.hpp include/lp.hpp include/graph.hpp include/col.hpp include/compact_ilp.hpp include/stats.hpp
+tests.o: tests.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
+include/col.hpp include/compact_ilp.hpp include/stats.hpp \
+include/pricing.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
-run_tests: tests.o lp.o col.o compact_ilp.o graph.o stats.o \
+run_tests: tests.o lp.o col.o compact_ilp.o graph.o stats.o pricing.o\
 exactcolors/color.o exactcolors/color_version.h exactcolors/util.o \
 exactcolors/rounding_mode.o exactcolors/cliq_enum.o exactcolors/color_parms.o \
 exactcolors/graph.o exactcolors/lpcplex.o exactcolors/bbsafe.o \

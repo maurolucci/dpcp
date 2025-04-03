@@ -1,4 +1,5 @@
 #include "lp.hpp"
+#include "pricing.hpp"
 
 #include <boost/graph/copy.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -6,53 +7,29 @@
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph) : LP(Graph{graph}){};
+LP::LP(const Graph &graph) : LP(Graph{graph}) {};
 
-LP::LP(const Graph &&graph) : graph(graph), stables(), posVars(), objVal(-1.0) {
-
-  // Fill maps
-  nA = 0, nB = 0;
-  isGCP = true;
-  for (auto v : boost::make_iterator_range(vertices(graph))) {
-    auto [a, b] = graph[v];
-    int u = static_cast<int>(v);
-    bool retA = tyA2idA.insert({a, nA}).second;
-    bool retB = tyB2idB.insert({b, nB}).second;
-    if (retA) {
-      idA2TyA.push_back(a);
-      snd.push_back(std::vector<int>{u});
-      nA++;
-    } else {
-      snd[tyA2idA[a]].push_back(u);
-      isGCP = false;
-    }
-    if (retB) {
-      idB2TyB.push_back(b);
-      fst.push_back(std::vector<int>{u});
-      nB++;
-    } else
-      fst[tyB2idB[b]].push_back(u);
-  }
-};
+LP::LP(const Graph &&graph)
+    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0) {};
 
 LP::~LP() {
-  for (size_t i = 0; i < stables.size(); ++i) {
-    if (stables[i]->age >= 0) {
-      free(stables[i]->members);
-      free(stables[i]);
-    } else
-      delete stables[i];
-  }
+  // for (size_t i = 0; i < stables.size(); ++i) {
+  //   if (stables[i]->age >= 0) {
+  //     free(stables[i]->members);
+  //     free(stables[i]);
+  //   } else
+  //     delete stables[i];
+  // }
 }
 
 void LP::initialize(CplexEnv &cenv) {
 
   // Add constraints
   // Add ">= 1" constraints, one for each a \in A
-  for (auto i = nA; i > 0; --i)
+  for (auto i = in.nA; i > 0; --i)
     cenv.Xrestr.add(IloRange(cenv.Xenv, 1.0, IloInfinity));
   // Add "<= 1" constraints, one for each b \in B
-  for (auto i = nB; i > 0; --i)
+  for (auto i = in.nB; i > 0; --i)
     cenv.Xrestr.add(IloRange(cenv.Xenv, -1.0, IloInfinity));
   cenv.Xmodel.add(cenv.Xrestr);
 
@@ -61,55 +38,76 @@ void LP::initialize(CplexEnv &cenv) {
   cenv.Xmodel.add(cenv.Xobj);
 
   // Add initial columns
+  // ¡TODO: this initialization DO NOT work in general cases!
   // Color each b \in B with an unique color
-  for (size_t i = 0; i < nB; ++i) {
-    COLORset *newset = new COLORset;
-    newset->count = fst[i].size();
-    newset->age = -1; // Initialize this value to make this column different to
-                      // the others (whose age is 0)
-    newset->members = &fst[i][0];
-    add_column(cenv, newset);
+  for (size_t iB = 0; iB < in.nB; ++iB) {
+    StableEnv stab;
+    stab.stable = in.fst[iB];
+    stab.bs.push_back(in.idB2TyB[iB]);
+    add_column(cenv, stab);
   }
 
   return;
 }
 
-void LP::add_column(CplexEnv &cenv, COLORset *newset) {
-  std::vector<bool> cA(nA);
-  std::vector<bool> cB(nB);
-  for (int i = 0; i < newset->count; ++i) {
-    auto [a, b] = graph[newset->members[i]];
-    cA[tyA2idA[a]] = true;
-    cB[tyB2idB[b]] = true;
-  }
-  IloNumColumn column = cenv.Xobj(1.0);
-  for (size_t i = 0; i < cA.size(); ++i)
-    if (cA[i])
-      column += cenv.Xrestr[i](1.0);
-  for (size_t i = 0; i < cB.size(); ++i)
-    if (cB[i])
-      column += cenv.Xrestr[cA.size() + i](-1.0);
-  cenv.Xvars.add(IloNumVar(column));
-  stables.push_back(newset);
+// void LP::add_column(CplexEnv &cenv, COLORset *newset) {
+//   std::vector<bool> cA(in.nA);
+//   std::vector<bool> cB(in.nB);
+//   for (int i = 0; i < newset->count; ++i) {
+//     auto [a, b] = in.graph[newset->members[i]];
+//     cA[in.tyA2idA[a]] = true;
+//     cB[in.tyB2idB[b]] = true;
+//   }
+//   IloNumColumn column = cenv.Xobj(1.0);
+//   for (size_t i = 0; i < cA.size(); ++i)
+//     if (cA[i])
+//       column += cenv.Xrestr[i](1.0);
+//   for (size_t i = 0; i < cB.size(); ++i)
+//     if (cB[i])
+//       column += cenv.Xrestr[cA.size() + i](-1.0);
+//   cenv.Xvars.add(IloNumVar(column));
+//   stables.push_back(newset);
 
-  // *******************************************************************
-  // Print some statics
-  std::cout << "adding column: [";
-  for (size_t i = 0; i < cA.size(); ++i)
-    if (cA[i])
-      std::cout << " " << idA2TyA[i];
-  std::cout << " ] [";
-  for (size_t i = 0; i < cB.size(); ++i)
-    if (cB[i])
-      std::cout << " " << idB2TyB[i];
-  std::cout << " ]" << std::endl;
-  // *******************************************************************
-  std::cout << "adding column: [";
-  for (int i = 0; i < newset->count; ++i) {
-    auto [a, b] = graph[newset->members[i]];
-    std::cout << " " << newset->members[i] << " = (" << a << ", " << b << ")";
+//   // *******************************************************************
+//   // Print some statics
+//   std::cout << "adding column: [";
+//   for (size_t i = 0; i < cA.size(); ++i)
+//     if (cA[i])
+//       std::cout << " " << in.idA2TyA[i];
+//   std::cout << " ] [";
+//   for (size_t i = 0; i < cB.size(); ++i)
+//     if (cB[i])
+//       std::cout << " " << in.idB2TyB[i];
+//   std::cout << " ]" << std::endl;
+//   // *******************************************************************
+//   std::cout << "adding column: [";
+//   for (int i = 0; i < newset->count; ++i) {
+//     auto [a, b] = in.graph[newset->members[i]];
+//     std::cout << " " << newset->members[i] << " = (" << a << ", " << b <<
+//     ")";
+//   }
+//   std::cout << " ]" << std::endl;
+//   // *******************************************************************
+// }
+
+void LP::add_column(CplexEnv &cenv, StableEnv &stab) {
+  IloNumColumn column = cenv.Xobj(1.0);
+  for (auto v : stab.stable) {
+    TypeA a = in.graph[v].first;
+    column += cenv.Xrestr[in.tyA2idA[a]](1.0);
   }
-  std::cout << " ]" << std::endl;
+  for (auto b : stab.bs)
+    column += cenv.Xrestr[in.nA + in.tyB2idB[b]](-1.0);
+  cenv.Xvars.add(IloNumVar(column));
+  stables.push_back(stab.stable);
+  // *******************************************************************
+  // // Print some statics
+  // std::cout << "adding column: [";
+  // for (auto v : stab.stable) {
+  //   auto [a, b] = in.graph[v];
+  //   std::cout << " " << v << " = (" << a << ", " << b << ")";
+  // }
+  // std::cout << " ]" << std::endl;
   // *******************************************************************
 }
 
@@ -131,9 +129,9 @@ std::pair<bool, size_t> LP::get_weights(std::vector<double> &weights,
                                         IloNumArray &duals) {
   size_t nPosWeights = 0;
   bool changed = false;
-  for (auto v : boost::make_iterator_range(vertices(graph))) {
-    auto [a, b] = graph[v];
-    double weight = duals[tyA2idA[a]] - duals[nA + tyB2idB[b]];
+  for (auto v : boost::make_iterator_range(vertices(in.graph))) {
+    auto [a, b] = in.graph[v];
+    double weight = duals[in.tyA2idA[a]] - duals[in.nA + in.tyB2idB[b]];
     if ((weight < -EPSILON && weights[v] > -EPSILON) ||
         (weight > -EPSILON && weights[v] < -EPSILON))
       changed = true;
@@ -151,17 +149,17 @@ LP_STATE LP::optimize() {
 
   CplexEnv cenv;
 
-  MWISenv *mwis_env = NULL;
-  COLORNWT *mwis_pi = NULL;
-  COLORNWT mwis_pi_scalef = 1;
+  // MWISenv *mwis_env = NULL;
+  // COLORNWT *mwis_pi = NULL;
+  // COLORNWT mwis_pi_scalef = 1;
 
-  COLORset *newsets = NULL;
-  int nnewsets = 0;
+  // COLORset *newsets = NULL;
+  // int nnewsets = 0;
 
-  IloNumArray duals(cenv.Xenv, nA + nB);
+  IloNumArray duals(cenv.Xenv, in.nA + in.nB);
 
   // Check if the input is a GCP instance
-  if (isGCP)
+  if (in.isGCP)
     return solve_GCP();
 
   // Initialize cplex environment
@@ -171,33 +169,33 @@ LP_STATE LP::optimize() {
   // Initialize linear relaxation
   initialize(cenv);
 
-  // Initalize stable environment
-  COLORstable_initenv(&mwis_env, NULL, 0);
+  // // Initalize stable environment
+  // COLORstable_initenv(&mwis_env, NULL, 0);
 
-  // Intialize vectors of weights
-  mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(num_vertices(graph), COLORNWT);
-  std::vector<double> weights(num_vertices(graph), 0.0);
+  // // Intialize vectors of weights
+  // mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(num_vertices(graph), COLORNWT);
+  // std::vector<double> weights(num_vertices(graph), 0.0);
 
-  // Map from new vertices (with positive weight) to original vertices,
-  // and viceversa
-  std::vector<int> newVertices(num_vertices(graph));
-  std::iota(newVertices.begin(), newVertices.end(), 0);
-  std::vector<Vertex> oldVertices(num_vertices(graph));
-  std::iota(oldVertices.begin(), oldVertices.end(), 0);
+  // // Map from new vertices (with positive weight) to original vertices,
+  // // and viceversa
+  // std::vector<int> newVertices(num_vertices(graph));
+  // std::iota(newVertices.begin(), newVertices.end(), 0);
+  // std::vector<Vertex> oldVertices(num_vertices(graph));
+  // std::iota(oldVertices.begin(), oldVertices.end(), 0);
 
-  // Initialize edge array
-  int ecount = 0;
-  int elist[2 * num_edges(graph)];
-  for (auto e : boost::make_iterator_range(edges(graph))) {
-    elist[2 * ecount] = source(e, graph);
-    elist[2 * ecount++ + 1] = target(e, graph);
-  }
+  // // Initialize edge array
+  // int ecount = 0;
+  // int elist[2 * num_edges(graph)];
+  // for (auto e : boost::make_iterator_range(edges(graph))) {
+  //   elist[2 * ecount] = source(e, graph);
+  //   elist[2 * ecount++ + 1] = target(e, graph);
+  // }
 
-  do {
+  while (state == LP_UNSOLVED) {
 
-    // Reset solution counter an cutoff value
-    nnewsets = 0;
-    mwis_pi_scalef = 1;
+    // // Reset solution counter an cutoff value
+    // nnewsets = 0;
+    // mwis_pi_scalef = 1;
 
     // Set time limit
     double timeLimit = TIMELIMIT - get_elapsed_time(startTime);
@@ -224,107 +222,127 @@ LP_STATE LP::optimize() {
     // Compute dual value array
     cplex.getDuals(duals, cenv.Xrestr);
 
-    // Compute vertex weight array
-    auto [changed, nPosWeights] = get_weights(weights, duals);
+    // // Compute vertex weight array
+    // auto [changed, nPosWeights] = get_weights(weights, duals);
 
-    // If the sign of the weight of any vertex has changed...
-    if (changed) {
+    // // If the sign of the weight of any vertex has changed...
+    // if (changed) {
 
-      // Reinitialize stable environment
-      COLORstable_freeenv(&mwis_env);
-      COLORstable_initenv(&mwis_env, NULL, 0);
+    //   // Reinitialize stable environment
+    //   COLORstable_freeenv(&mwis_env);
+    //   COLORstable_initenv(&mwis_env, NULL, 0);
 
-      // Reindex vertices with positive weight from 0 to nPosWeights-1
-      oldVertices.resize(nPosWeights);
-      size_t i = 0;
-      for (auto v : boost::make_iterator_range(vertices(graph))) {
-        if (weights[v] > -EPSILON) {
-          oldVertices[i] = v;
-          newVertices[v] = i;
-          ++i;
-        } else
-          newVertices[v] = -1;
-      }
+    //   // Reindex vertices with positive weight from 0 to nPosWeights-1
+    //   oldVertices.resize(nPosWeights);
+    //   size_t i = 0;
+    //   for (auto v : boost::make_iterator_range(vertices(graph))) {
+    //     if (weights[v] > -EPSILON) {
+    //       oldVertices[i] = v;
+    //       newVertices[v] = i;
+    //       ++i;
+    //     } else
+    //       newVertices[v] = -1;
+    //   }
 
-      // Recompute edge list according to the previous indices
-      // Ignore edges that have as endpoint a vertex with a negative weight
-      ecount = 0;
-      for (auto e : boost::make_iterator_range(edges(graph))) {
-        auto v = source(e, graph);
-        auto u = target(e, graph);
-        if (weights[v] < -EPSILON || weights[u] < -EPSILON)
-          continue;
-        elist[2 * ecount] = newVertices[v];
-        elist[2 * ecount++ + 1] = newVertices[u];
-      }
-    }
+    //   // Recompute edge list according to the previous indices
+    //   // Ignore edges that have as endpoint a vertex with a negative weight
+    //   ecount = 0;
+    //   for (auto e : boost::make_iterator_range(edges(graph))) {
+    //     auto v = source(e, graph);
+    //     auto u = target(e, graph);
+    //     if (weights[v] < -EPSILON || weights[u] < -EPSILON)
+    //       continue;
+    //     elist[2 * ecount] = newVertices[v];
+    //     elist[2 * ecount++ + 1] = newVertices[u];
+    //   }
+    // }
 
-    // Scale weights
-    double2COLORNWT(mwis_pi, &mwis_pi_scalef, nPosWeights, weights);
+    // // Scale weights
+    // double2COLORNWT(mwis_pi, &mwis_pi_scalef, nPosWeights, weights);
 
     // *******************************************************************
-    // Print some statics
-    // Dual values
-    std::cout << "dual values: ";
-    for (size_t i = 0; i < nA + nB; ++i)
-      std::cout << duals[i] << " ";
-    std::cout << std::endl;
-    // Weights
-    std::cout << "weights: ";
-    for (size_t i = 0; i < weights.size(); ++i)
-      std::cout << weights[i] << " ";
-    std::cout << std::endl;
-    // Positive weights
-    std::cout << "number of positive weights: " << nPosWeights << " of "
-              << num_vertices(graph) << std::endl;
-    // Scaled weights
-    std::cout << "mwis_pi: ";
-    for (size_t i = 0; i < nPosWeights; ++i)
-      std::cout << mwis_pi[i] << " ";
-    std::cout << std::endl;
-    std::cout << "mwis_pi_scalef: " << mwis_pi_scalef << std::endl;
-    // Edge array
-    std::cout << "edges: ";
-    for (int i = 0; i < ecount; ++i)
-      std::cout << "(" << elist[2 * i] << "," << elist[2 * i + 1] << ") ";
-    std::cout << std::endl;
-    // Changed
-    std::cout << "changed: " << changed << std::endl;
+    // // Print some statics
+    // // Dual values
+    // std::cout << "dual values: ";
+    // for (size_t i = 0; i < in.nA + in.nB; ++i)
+    //   std::cout << duals[i] << " ";
+    // std::cout << std::endl;
+    // // Weights
+    // std::cout << "weights: ";
+    // for (size_t i = 0; i < weights.size(); ++i)
+    //   std::cout << weights[i] << " ";
+    // std::cout << std::endl;
+    // // Positive weights
+    // std::cout << "number of positive weights: " << nPosWeights << " of "
+    //           << num_vertices(graph) << std::endl;
+    // // Scaled weights
+    // std::cout << "mwis_pi: ";
+    // for (size_t i = 0; i < nPosWeights; ++i)
+    //   std::cout << mwis_pi[i] << " ";
+    // std::cout << std::endl;
+    // std::cout << "mwis_pi_scalef: " << mwis_pi_scalef << std::endl;
+    // // Edge array
+    // std::cout << "edges: ";
+    // for (int i = 0; i < ecount; ++i)
+    //   std::cout << "(" << elist[2 * i] << "," << elist[2 * i + 1] << ") ";
+    // std::cout << std::endl;
+    // // Changed
+    // std::cout << "changed: " << changed << std::endl;
     // *******************************************************************
 
-    if (ecount == 0) {
-      // Edge-less graphs raise error in COLORstable_wrapper
-      // So, they are manually solved
-      nnewsets = 1;
-      newsets = (COLORset *)malloc(sizeof(COLORset) * nnewsets);
-      newsets[0].next = NULL;
-      newsets[0].count = nPosWeights;
-      newsets[0].members = (int *)malloc(sizeof(int) * newsets[0].count);
-      for (int i = 0; i < newsets[0].count; ++i)
-        newsets[0].members[i] = i;
-    } else
-      // Solve the MWIS problem
-      COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, nPosWeights, ecount,
-                          elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
+    // if (ecount == 0) {
+    //   // Edge-less graphs raise error in COLORstable_wrapper
+    //   // So, they are manually solved
+    //   nnewsets = 1;
+    //   newsets = (COLORset *)malloc(sizeof(COLORset) * nnewsets);
+    //   newsets[0].next = NULL;
+    //   newsets[0].count = nPosWeights;
+    //   newsets[0].members = (int *)malloc(sizeof(int) * newsets[0].count);
+    //   for (int i = 0; i < newsets[0].count; ++i)
+    //     newsets[0].members[i] = i;
+    // } else
+    //   // Solve the MWIS problem
+    //   COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, nPosWeights,
+    //   ecount,
+    //                       elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
 
-    // Add column/s
-    for (int set_i = 0; set_i < nnewsets; ++set_i) {
-      // Translate stable set into old vertices
-      for (int j = 0; j < newsets[set_i].count; ++j) {
-        newsets[set_i].members[j] = oldVertices[newsets[set_i].members[j]];
-      }
-      newsets[set_i].age = 0;
-      // Local copy of the translated stable set
-      COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
-      memcpy(nset, &newsets[set_i], sizeof(COLORset));
-      // Add column
-      add_column(cenv, nset);
+    // // Add column/s
+    // for (int set_i = 0; set_i < nnewsets; ++set_i) {
+    //   // Translate stable set into old vertices
+    //   for (int j = 0; j < newsets[set_i].count; ++j) {
+    //     newsets[set_i].members[j] = oldVertices[newsets[set_i].members[j]];
+    //   }
+    //   newsets[set_i].age = 0;
+    //   // Local copy of the translated stable set
+    //   COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
+    //   memcpy(nset, &newsets[set_i], sizeof(COLORset));
+    //   // Add column
+    //   add_column(cenv, nset);
+    // }
+
+    // // Free memory
+    // free(newsets);
+
+    // Pricing resolution
+    auto [stab, pricingState] = exact_solve(in, duals);
+
+    // Handle errors
+    if (pricingState == PRICING_TIME_EXCEEDED) {
+      state = LP_TIME_EXCEEDED;
+      break;
+    } else if (pricingState == PRICING_MEM_EXCEEDED) {
+      state = LP_MEM_EXCEEDED;
+      break;
     }
 
-    // Free memory
-    free(newsets);
+    // Optimality check
+    if (stab.cost > 1 + EPSILON) {
+      add_column(cenv, stab);
+      continue;
+    }
 
-  } while (nnewsets > 0);
+    break;
+  }
 
   if (state != LP_TIME_EXCEEDED && state != LP_MEM_EXCEEDED) {
 
@@ -363,8 +381,8 @@ LP_STATE LP::optimize() {
     values.end();
   }
 
-  free(mwis_pi);
-  COLORstable_freeenv(&mwis_env);
+  // free(mwis_pi);
+  // COLORstable_freeenv(&mwis_env);
   cplex.end();
   return state;
 }
@@ -380,7 +398,7 @@ LP_STATE LP::solve_GCP() {
 
   // Build GCP graph
   GCPGraph graphGCP;
-  get_gcp_graph(graph, graphGCP, tyB2idB, idB2TyB);
+  get_gcp_graph(in.graph, graphGCP, in.tyB2idB, in.idB2TyB);
 
   // Get edge list
   int ecount = 0;
@@ -416,21 +434,26 @@ LP_STATE LP::solve_GCP() {
       // Find the correct size
       int newCount = 0;
       for (int j = 0; j < colorclasses[i].count; ++j)
-        newCount += fst[colorclasses[i].members[j]].size();
+        newCount += in.fst[colorclasses[i].members[j]].size();
 
-      // Alloc memory for the translated stable set
-      COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
-      memcpy(nset, &colorclasses[i], sizeof(COLORset));
-      nset->members = (int *)malloc(sizeof(int) * newCount);
-      nset->count = newCount;
+      VertexVector stable;
+      stable.reserve(newCount);
+
+      // // Alloc memory for the translated stable set
+      // COLORset *nset = (COLORset *)malloc(sizeof(COLORset));
+      // memcpy(nset, &colorclasses[i], sizeof(COLORset));
+      // nset->members = (int *)malloc(sizeof(int) * newCount);
+      // nset->count = newCount;
 
       // Write translated stable set
-      for (int j = 0, l = 0; j < colorclasses[i].count; ++j)
-        for (auto v : fst[colorclasses[i].members[j]])
-          nset->members[l++] = v;
+      for (int j = 0; j < colorclasses[i].count; ++j)
+        for (auto v : in.fst[colorclasses[i].members[j]])
+          // nset->members[l++] = v;
+          stable.push_back(v);
 
       // Add the translated stable set
-      stables.push_back(nset);
+      stables.push_back(stable);
+      // stables.push_back(nset);
       posVars.push_back(i);
     }
   } else
@@ -489,11 +512,10 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
 
   // Given a in A with index i_a,
   // posSnd[i_a] = {(v, x): v = (a,b) \in V, x = \sum_{S : v \in S} x_S }
-  std::vector<std::map<Vertex, double>> posSnd(nA);
+  std::vector<std::map<Vertex, double>> posSnd(in.nA);
   for (auto i : posVars)
-    for (int j = 0; j < stables[i]->count; ++j) {
-      Vertex v = stables[i]->members[j];
-      size_t iA = tyA2idA[graph[v].first];
+    for (auto v : stables[i]) {
+      size_t iA = in.tyA2idA[in.graph[v].first];
       if (!posSnd[iA].contains(v))
         posSnd[iA][v] = 0.0;
       posSnd[iA][v] += values[i];
@@ -508,7 +530,7 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
   int best_a = -1;
   int best_v = -1;
   double best_value = 0.0;
-  for (size_t i = 0; i < nA; ++i) {
+  for (size_t i = 0; i < in.nA; ++i) {
     if (posSnd[i].size() <= 1)
       continue;
     else if (best_a == -1 || posSnd[i].size() < posSnd[best_a].size()) {
@@ -528,8 +550,8 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
 
   if (best_v == -1) {
     // Choose by index
-    for (size_t iA = 0; iA < nA; ++iA)
-      if (snd[iA].size() > 1) {
+    for (size_t iA = 0; iA < in.nA; ++iA)
+      if (in.snd[iA].size() > 1) {
         best_v = iA;
         break;
       }
@@ -554,8 +576,8 @@ void LP::save_solution(Col &col) {
   col.reset_coloring();
   size_t k = 0;
   for (auto i : posVars) {
-    for (auto j = 0; j < stables[i]->count; ++j) {
-      auto [a, b] = graph[stables[i]->members[j]];
+    for (auto v : stables[i]) {
+      auto [a, b] = in.graph[v];
       col.set_color(a, b, k);
     }
     ++k;
@@ -572,7 +594,7 @@ void LP::branch(std::vector<LP *> &branches) {
   }
 
   // Recover a and b
-  auto [a, b] = graph[branchVar];
+  auto [a, b] = in.graph[branchVar];
 
   // *******
   // ** Left branch: (a,b) is colored
@@ -581,15 +603,15 @@ void LP::branch(std::vector<LP *> &branches) {
   // Get the set of vertices to be removed
   // I.e. every vertex (a,b') with b' != b
   std::set<Vertex> removed;
-  for (auto v : boost::make_iterator_range(vertices(graph)))
-    if (graph[v].first == a && graph[v].second != b)
+  for (auto v : boost::make_iterator_range(vertices(in.graph)))
+    if (in.graph[v].first == a && in.graph[v].second != b)
       removed.insert(v);
 
   // Create a view of the graph without the vertices to be removed
   using VFilter = boost::is_not_in_subset<std::set<Vertex>>;
   VFilter vFilter(removed);
   using Filter = boost::filtered_graph<Graph, boost::keep_all, VFilter>;
-  Filter filtered(graph, boost::keep_all(), vFilter);
+  Filter filtered(in.graph, boost::keep_all(), vFilter);
 
   // Create a copy of the view (force reindex)
   Graph graph1;
@@ -600,7 +622,7 @@ void LP::branch(std::vector<LP *> &branches) {
   // ** ¡Reuse graph!
   // *******
 
-  Graph graph2(std::move(graph));
+  Graph graph2(std::move(in.graph));
   clear_vertex(branchVar, graph2);
   remove_vertex(branchVar, graph2);
 

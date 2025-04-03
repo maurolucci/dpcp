@@ -53,3 +53,42 @@ void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
       add_edge(tyB2idB[b1], tyB2idB[b2], dst);
   }
 }
+
+GraphEnv::GraphEnv(const Graph &graph) : GraphEnv(Graph{graph}) {};
+
+GraphEnv::GraphEnv(const Graph &&graph) : graph(graph) {
+
+  // Fill maps
+  nA = 0, nB = 0;
+  isGCP = true;
+  for (auto v : boost::make_iterator_range(vertices(graph))) {
+    auto [a, b] = graph[v];
+    bool retA = tyA2idA.insert({a, nA}).second;
+    bool retB = tyB2idB.insert({b, nB}).second;
+    if (retA) {
+      idA2TyA.push_back(a);
+      snd.push_back(std::vector<Vertex>{v});
+      nA++;
+    } else {
+      snd[tyA2idA[a]].push_back(v);
+      isGCP = false;
+    }
+    if (retB) {
+      idB2TyB.push_back(b);
+      fst.push_back(std::vector<Vertex>{v});
+      nB++;
+    } else
+      fst[tyB2idB[b]].push_back(v);
+  }
+};
+
+GraphEnv::~GraphEnv() {};
+
+StableEnv::StableEnv() : stable(), bs(), cost(0.0) {};
+
+StableEnv::StableEnv(VertexVector &stable, std::vector<TypeB> &bs, double cost)
+    : StableEnv(VertexVector{stable}, VertexVector{bs}, cost) {}
+
+StableEnv::StableEnv(VertexVector &&stable, std::vector<TypeB> &&bs,
+                     double cost)
+    : stable(stable), bs(bs), cost(cost) {}

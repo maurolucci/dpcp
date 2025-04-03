@@ -46,7 +46,7 @@ int main() {
     Col col(gcopy);
     LP *lp = new LP(graph);
     Node *root = new Node(lp);
-    BP<Col> bp(col, std::cout);
+    BP<Col> bp(col, std::cout, true);
     Stats stats1 = bp.solve(root);
     stats1.print_stats(std::cout);
 
