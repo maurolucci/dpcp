@@ -15,8 +15,6 @@ extern "C" {
 
 #define EPSILON 0.00001 // 10e-5
 #define TIMELIMIT 300.0 // 5 minutes
-#define THRESHOLD 0.1
-#define N_HEUR_FAILS 10
 #ifndef N_BRANCHES
 #define N_BRANCHES 2
 #endif

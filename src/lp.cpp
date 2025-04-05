@@ -7,10 +7,10 @@
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph) : LP(Graph{graph}){};
+LP::LP(const Graph &graph) : LP(Graph{graph}) {};
 
 LP::LP(const Graph &&graph)
-    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0){};
+    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0) {};
 
 LP::~LP() {
   // for (size_t i = 0; i < stables.size(); ++i) {
@@ -106,12 +106,21 @@ void LP::add_column(CplexEnv &cenv, StableEnv &stab) {
   stables.push_back(VertexVector(stab.stable)); // Push a copy
   // *******************************************************************
   // Print some statics
-  std::cout << "adding column: [";
-  for (auto v : stab.stable) {
-    auto [a, b] = in.graph[v];
-    std::cout << " " << v << " = (" << a << ", " << b << ")";
-  }
-  std::cout << " ] \t cost: " << stab.cost << std::endl;
+  // std::cout << "adding column: [";
+  // for (auto v : stab.stable) {
+  //   auto [a, b] = in.graph[v];
+  //   std::cout << " " << v << " = (" << a << ", " << b << ")";
+  // }
+  // std::cout << " ]" << std::endl;
+  // std::cout << "cost: " << stab.cost << std::endl;
+  // std::cout << "as: [";
+  // for (auto a : stab.as)
+  //   std::cout << " " << a;
+  // std::cout << " ]" << std::endl;
+  // std::cout << "bs: [";
+  // for (auto b : stab.bs)
+  //   std::cout << " " << b;
+  // std::cout << " ]" << std::endl;
   // *******************************************************************
 }
 
@@ -172,7 +181,6 @@ LP_STATE LP::optimize() {
 
   // Initialize pricing environment
   PricingEnv penv(in);
-  size_t heurTries = N_HEUR_FAILS;
 
   // // Initalize stable environment
   // COLORstable_initenv(&mwis_env, NULL, 0);
@@ -272,8 +280,11 @@ LP_STATE LP::optimize() {
     // // Print some statics
     // // Dual values
     // std::cout << "dual values: ";
-    // for (size_t i = 0; i < in.nA + in.nB; ++i)
-    //   std::cout << duals[i] << " ";
+    // for (size_t i = 0; i < in.nA; ++i)
+    //   std::cout << i << "(" << in.idA2TyA[i] << "): " << dualsA[i] << " ";
+    // std::cout << std::endl;
+    // for (size_t i = 0; i < in.nB; ++i)
+    //   std::cout << i << "(" << in.idB2TyB[i] << "): " << dualsB[i] << " ";
     // std::cout << std::endl;
     // // Weights
     // std::cout << "weights: ";
@@ -334,15 +345,20 @@ LP_STATE LP::optimize() {
     std::pair<StableEnv, PRICING_STATE> res;
 
     // First, heuristic resolution of pricing
-    if (heurTries > 0) {
-      res = penv.heur_solve(dualsA, dualsB);
+    penv.heur_init(dualsA, dualsB);
+    size_t added = 0;
+    for (size_t iA = 0; iA < in.nA; ++iA) {
+      res = penv.heur_solve(dualsA, dualsB, in.idA2TyA[iA]);
       // Non-optimality check
       if (res.first.cost > 1 + EPSILON) {
-        std::cout << "Heuristic!" << std::endl;
         add_column(cenv, res.first);
-        continue;
+        added++;
       }
-      heurTries--;
+    }
+
+    if (added > 0) {
+      // std::cout << "Heuristic added " << added << " columns" << std::endl;
+      continue;
     }
 
     // Second, exact resolution of pricing
@@ -359,7 +375,7 @@ LP_STATE LP::optimize() {
 
     // Non-optimality check
     if (res.first.cost > 1 + EPSILON) {
-      std::cout << "Exact!" << std::endl;
+      // std::cout << "Exact" << std::endl;
       add_column(cenv, res.first);
       continue;
     }

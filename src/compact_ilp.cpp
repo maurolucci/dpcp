@@ -98,6 +98,7 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
   cplex.setParam(IloCplex::Param::TimeLimit, TIMELIMIT);
   cplex.setParam(IloCplex::Param::Parallel, 1); // Deterministic mode
   cplex.setParam(IloCplex::Param::Threads, 1);  // Single thread
+  cplex.setParam(IloCplex::Param::MIP::Strategy::HeuristicEffort, 0);
 
   // Solve
   cplex.solve();
