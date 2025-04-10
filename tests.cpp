@@ -2,24 +2,34 @@
 #include "col.hpp"
 #include "compact_ilp.hpp"
 #include "graph.hpp"
+#include "heur.hpp"
 #include "lp.hpp"
+#include "random.hpp"
 #include "stats.hpp"
 
+#include <algorithm> // shuffle
 #include <boost/graph/copy.hpp>
 #include <filesystem>
 #include <iostream>
+#include <random> // std::default_random_engine
 
 using recursive_directory_iterator =
     std::filesystem::recursive_directory_iterator;
 
+std::string SEPBAR =
+    "*************************************************************";
+
 int main() {
+
+  // Set seed
+  set_seed(0);
 
   for (const auto &file : recursive_directory_iterator("input/tests/")) {
 
     if (file.path().extension() != ".txt")
       continue;
 
-    std::cout << "\n\n\n*** Solving: " << file << "***" << std::endl;
+    std::cout << "*** Solving: " << file << " ***" << std::endl;
 
     // Open file
     std::ifstream in(file.path());
@@ -38,31 +48,39 @@ int main() {
     std::cout << "\tVertices: " << num_vertices(graph) << std::endl;
     std::cout << "\tEdges: " << num_edges(graph) << std::endl;
 
+    std::cout << std::endl << SEPBAR << std::endl << std::endl;
+
     // Copy conflict graph
     Graph gcopy;
     boost::copy_graph(graph, gcopy);
 
+    // Solve with heuristic
+    GraphEnv genv(gcopy);
+    Col dsaturCol;
+    std::cout << "Running heuristic..." << std::endl;
+    Stats stats0 = heur_solve(genv, genv.idA2TyA, dsaturCol, 200);
+    stats0.print_stats(std::cout);
+
+    std::cout << std::endl << SEPBAR << std::endl << std::endl;
+
+    // Solve with compact ilp
+    std::cout << "Running CPLEX with compact ilp formulation..." << std::endl;
+    Stats stats2 =
+        solve_ilp(gcopy, dsaturCol.get_n_colors(), std::cout, dsaturCol);
+    stats2.print_stats(std::cout);
+
+    std::cout << std::endl << SEPBAR << std::endl << std::endl;
+
     // Solve with branch and price
-    Col col(gcopy);
+    std::cout << "Running B&P..." << std::endl;
+    Col col;
     LP *lp = new LP(graph);
     Node *root = new Node(lp);
-    BP<Col> bp(col, std::cout, true);
+    BP<Col> bp(col, std::cout, false);
     Stats stats1 = bp.solve(root);
     stats1.print_stats(std::cout);
 
-    // Solve with compact ilp
-    std::cout << std::endl;
-    // Find an upper bound for the number of colors
-    size_t ncolors = 0;
-    for (auto v : boost::make_iterator_range(vertices(gcopy))) {
-      std::set<TypeB> bs;
-      for (auto u : boost::make_iterator_range(adjacent_vertices(v, gcopy)))
-        bs.insert(gcopy[u].second);
-      ncolors = std::max(ncolors, bs.size());
-    }
-    std::cout << "Nro de colores: " << ncolors << std::endl;
-    Stats stats2 = solve_ilp(gcopy, ncolors, std::cout);
-    stats2.print_stats(std::cout);
+    std::cout << std::endl << SEPBAR << std::endl << std::endl;
 
     if (stats1.state == OPTIMAL && stats2.state == OPTIMAL) {
       assert(round(stats1.ub) == round(stats2.ub));

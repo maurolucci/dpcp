@@ -1,26 +1,31 @@
 #include "col.hpp"
 
-Col::Col(Graph &graph) : graph(graph){};
+Col::Col(){};
 
 void Col::reset_coloring() {
   coloring.clear();
   classes.clear();
 }
 
-void Col::set_color(const TypeA a, const TypeB b, const Color k) {
-  // Find vertex u in the original graph such that graph[u] = (a,b)
-  Vertex u = num_vertices(graph);
-  for (auto v : boost::make_iterator_range(vertices(graph)))
-    if (graph[v].first == a && graph[v].second == b) {
-      u = v;
-      break;
-    }
-  assert(u < num_vertices(graph));
-  coloring[u] = k;
-  classes[k].insert(u);
+// void Col::set_color(const TypeA a, const TypeB b, const Color k) {
+//   // Find vertex u in the original graph such that graph[u] = (a,b)
+//   Vertex u = num_vertices(graph);
+//   for (auto v : boost::make_iterator_range(vertices(graph)))
+//     if (graph[v].first == a && graph[v].second == b) {
+//       u = v;
+//       break;
+//     }
+//   assert(u < num_vertices(graph));
+//   coloring[u] = k;
+//   classes[k].insert(u);
+// }
+
+void Col::set_color(const Vertex v, const Color k) {
+  coloring[v] = k;
+  classes[k].insert(v);
 }
 
-bool Col::check_coloring() const {
+bool Col::check_coloring(const Graph &graph) const {
 
   std::map<TypeA, Color> colorA;
   std::map<TypeB, Color> colorB;

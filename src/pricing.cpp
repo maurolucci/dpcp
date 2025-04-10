@@ -1,9 +1,6 @@
 #include "pricing.hpp"
+#include "random.hpp"
 #include <limits>
-
-std::uniform_int_distribution<rng_type::result_type>
-    udist(0, std::numeric_limits<rng_type::result_type>::max());
-std::uniform_real_distribution<double> cdist(0.0, 1.0);
 
 void ThresholdCallback::check_thresolhd(
     const IloCplex::Callback::Context &context) {
@@ -44,11 +41,8 @@ void ThresholdCallback::invoke(const IloCplex::Callback::Context &context) {
 PricingEnv::PricingEnv(GraphEnv &in)
     : in(in), stab(), cxenv(), cxmodel(cxenv), y(cxenv, num_vertices(in.graph)),
       wa(cxenv, in.nA), wb(cxenv, in.nB), cxcons(cxenv), cplex(cxenv),
-      cb(in, stab, y, wa, wb), contextMask(0), rng() {
+      cb(in, stab, y, wa, wb), contextMask(0) {
   exact_init();
-  // seed rng:
-  rng_type::result_type const seedval = 0;
-  rng.seed(seedval);
 }
 
 PricingEnv::~PricingEnv() {
@@ -153,7 +147,6 @@ void PricingEnv::exact_init() {
 
   // Set parameters
   cplex.setDefaults();
-  cplex.setParam(IloCplex::Param::TimeLimit, TIMELIMIT);
   cplex.setParam(IloCplex::Param::Parallel, 1); // Deterministic mode
   cplex.setParam(IloCplex::Param::Threads, 1);  // Single thread
   cplex.setOut(cxenv.getNullStream());
@@ -168,8 +161,9 @@ void PricingEnv::exact_init() {
     cplex.use(&cb, contextMask);
 }
 
-std::pair<StableEnv, PRICING_STATE>
-PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
+std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(IloNumArray &dualsA,
+                                                            IloNumArray &dualsB,
+                                                            double timelimit) {
   // Update objective coefficients
   cxobj.setLinearCoefs(wa, dualsA);
   cxobj.setLinearCoefs(wb, dualsB);
@@ -182,6 +176,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Solve
   cplex.extract(cxmodel);
+  cplex.setParam(IloCplex::Param::TimeLimit, timelimit);
   cplex.solve();
 
   // Get final state
@@ -278,7 +273,7 @@ void PricingEnv::try_stable_add(double weight, size_t v, TypeA a, TypeB b,
   std::shuffle(in.fst[in.tyB2idB[b]].begin(), in.fst[in.tyB2idB[b]].end(), rng);
   for (size_t u : in.fst[in.tyB2idB[b]]) {
 
-    if (cdist(rng) < 0.5)
+    if (rand_double(rng) < 0.5)
       continue;
 
     if (edge(v, u, in.graph).second)

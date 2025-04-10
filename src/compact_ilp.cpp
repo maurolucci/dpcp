@@ -1,5 +1,4 @@
 #include "compact_ilp.hpp"
-#include "col.hpp"
 
 #include <cfloat>
 #include <iostream>
@@ -11,7 +10,8 @@
 
 #define TIMELIMIT 900
 
-Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
+Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
+                const Col &initialCol) {
 
   // Initialize cplex enviroment
   IloEnv cxenv;
@@ -92,13 +92,32 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
   // Solve model
   IloCplex cplex(cxmodel);
 
+  if (initialCol.get_n_colors() > 0) {
+    // Mipstart
+    Coloring coloring = initialCol.get_coloring();
+    ColorClass classes = initialCol.get_color_classes();
+    IloNumVarArray startVar(cxenv);
+    IloNumArray startVal(cxenv);
+    for (auto [v, k] : coloring) {
+      startVar.add(x[v][k]);
+      startVal.add(1);
+    }
+    for (auto &[k, s] : classes) {
+      startVar.add(w[k]);
+      startVal.add(1);
+    }
+    cplex.addMIPStart(startVar, startVal);
+    startVal.end();
+    startVar.end();
+  }
+
   // Set parameters
   cplex.setDefaults();
   cplex.setOut(log);
   cplex.setParam(IloCplex::Param::TimeLimit, TIMELIMIT);
   cplex.setParam(IloCplex::Param::Parallel, 1); // Deterministic mode
   cplex.setParam(IloCplex::Param::Threads, 1);  // Single thread
-  cplex.setParam(IloCplex::Param::MIP::Strategy::HeuristicEffort, 0);
+  // cplex.setParam(IloCplex::Param::MIP::Strategy::HeuristicEffort, 0);
 
   // Solve
   cplex.solve();
@@ -113,7 +132,10 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
     state = INFEASIBLE;
     break;
   case IloCplex::CplexStatus::AbortTimeLim:
-    state = TIME_EXCEEDED;
+    if (cplex.getSolnPoolNsolns())
+      state = FEASIBLE;
+    else
+      state = TIME_EXCEEDED;
     break;
   case IloCplex::CplexStatus::MemLimFeas:
   case IloCplex::CplexStatus::MemLimInfeas:
@@ -126,12 +148,12 @@ Stats solve_ilp(Graph graph, size_t ncolors, std::ostream &log) {
 
   if (state == OPTIMAL || state == FEASIBLE) {
     // Recover coloring
-    Col col(graph);
+    Col col;
     for (size_t v = 0; v < num_vertices(graph); ++v)
       for (size_t k = 0; k < ncolors; ++k)
         if (cplex.getValue(x[v][k]) > 0.5)
-          col.set_color(graph[v].first, graph[v].second, k);
-    assert(col.check_coloring());
+          col.set_color(v, k);
+    assert(col.check_coloring(graph));
   }
 
   Stats stats = {static_cast<size_t>(cplex.getNcols()),

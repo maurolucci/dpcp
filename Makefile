@@ -28,11 +28,14 @@ stats.o: src/stats.cpp include/stats.hpp
 graph.o: src/graph.cpp include/graph.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
+heur.o: src/heur.cpp include/heur.hpp include/col.hpp include/graph.hpp include/random.hpp
+	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
+
 compact_ilp.o: src/compact_ilp.cpp include/compact_ilp.hpp \
 include/graph.hpp include/stats.hpp include/col.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
-pricing.o: src/pricing.cpp include/pricing.hpp include/graph.hpp include/stats.hpp
+pricing.o: src/pricing.cpp include/pricing.hpp include/graph.hpp include/stats.hpp include/random.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
 col.o: src/col.cpp include/col.hpp include/graph.hpp
@@ -48,10 +51,10 @@ include/col.hpp include/compact_ilp.hpp include/stats.hpp
 
 tests.o: tests.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
 include/col.hpp include/compact_ilp.hpp include/stats.hpp \
-include/pricing.hpp
+include/pricing.hpp include/heur.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
-run_tests: tests.o lp.o col.o compact_ilp.o graph.o stats.o pricing.o\
+run_tests: tests.o lp.o col.o compact_ilp.o graph.o stats.o pricing.o heur.o\
 exactcolors/color.o exactcolors/color_version.h exactcolors/util.o \
 exactcolors/rounding_mode.o exactcolors/cliq_enum.o exactcolors/color_parms.o \
 exactcolors/graph.o exactcolors/lpcplex.o exactcolors/bbsafe.o \

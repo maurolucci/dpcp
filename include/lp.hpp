@@ -4,17 +4,16 @@
 #include "col.hpp"
 #include "cplex_env.hpp"
 #include "graph.hpp"
+#include "stats.hpp"
 extern "C" {
 #include "color.h"
 #include "color_private.h"
 #include "mwis.h"
-#include "stats.hpp"
 }
 
 #include <chrono>
 
 #define EPSILON 0.00001 // 10e-5
-#define TIMELIMIT 300.0 // 5 minutes
 #ifndef N_BRANCHES
 #define N_BRANCHES 2
 #endif
@@ -32,7 +31,7 @@ public:
   ~LP();
 
   // Optimize the linear relaxation by column generation
-  [[nodiscard]] LP_STATE optimize();
+  [[nodiscard]] LP_STATE optimize(double timelimit);
 
   // Get objective value (after calling optimize)
   [[nodiscard]] double get_obj_value() const { return objVal; };
@@ -76,7 +75,7 @@ private:
                       const std::vector<double> &dbl_nweights);
 
   // Exact solve of a GCP instance
-  LP_STATE solve_GCP();
+  LP_STATE solve_GCP(double timelimit);
 
   // Get branching variable
   size_t get_branching_variable(const IloNumArray &values);

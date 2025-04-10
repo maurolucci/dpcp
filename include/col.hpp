@@ -14,22 +14,29 @@ using ColorClass = std::map<Color, VertexSet>;
 class Col {
 
 public:
-  Col(Graph &graph);
+  Col();
 
   [[nodiscard]] inline const Coloring &get_coloring() const {
     return coloring;
   };
 
+  [[nodiscard]] inline const ColorClass &get_color_classes() const {
+    return classes;
+  };
+
   [[nodiscard]] inline size_t get_n_colors() const { return classes.size(); };
+
+  [[nodiscard]] inline Color get_color(const Vertex v) const {
+    return coloring.at(v);
+  };
 
   void reset_coloring();
 
-  void set_color(const TypeA a, const TypeB b, const Color k);
+  void set_color(const Vertex v, const Color k);
 
-  [[nodiscard]] bool check_coloring() const;
+  [[nodiscard]] bool check_coloring(const Graph &graph) const;
 
 private:
-  const Graph graph;
   Coloring coloring;
   ColorClass classes;
 };

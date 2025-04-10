@@ -14,57 +14,69 @@ HyperGraph = tuple[int, int, tuple[int, list[int]]]
 Vertex = int
 
 
-def gen_circles(
-    sside: int,
-    cnum: int,
-    cmin: int,
-    cmax: int,
+def gen_centers(
+    side: int,
+    ncenters: int,
     real: bool = False,
     seed: int | None = None,
-) -> list[Circ]:
+) -> list[Point]:
     """
-    Generate a list of random circles.
+    Generate a list of centers.
 
     Args:
-        sside: Length of the side of the scene.
-        cnum: Number of circles.
-        cmin: Minimum length of the radious,
-            written as a percentage of sside.
-        cmax: Maximum length of the radious,
-            written as a percentage of sside.
+        side: Length of the side of the scene.
+        ncenters: Number of circles.
         real: Whether to generate random real numbers, otherwise integers.
         seed: Seed for random generation.
 
     Returns:
-        A list of circles. Each one of the form (x,y,r) where (x,y) are
-        the coordinates of the center and r is the radious.
+        A list of centers. Each one of the form (x,y) where (x,y) are
+        the coordinates of the center.
     """
     ncirc = 0
     circ = []
     generator = random.uniform if real else random.randint
     random.seed(seed)
-    while ncirc < cnum:
-        x = generator(0, sside)
-        y = generator(0, sside)
-        r = generator(sside * cmin / 100, sside * cmax / 100)
-        if x - r < 0 or x + r > sside or y - r < 0 or y + r > sside:
-            continue
-        circ.append(((x, y), r))
+    while ncirc < ncenters:
+        x = generator(0, side)
+        y = generator(0, side)
+        circ.append((x, y))
         ncirc += 1
     return circ
 
 
-def plot(sside: int, circ: list[Circ], saveto: str | None = str) -> None:
+def gen_circles(
+    side: int,
+    centers: list[Point],
+    radius: int,
+) -> list[Circ]:
+    """
+    Generate a list of circles.
+
+    Args:
+        side: Length of the side of the scene.
+        centers: List of centers.
+        radius: Length of the radius,
+            written as a percentage of side.
+
+    Returns:
+        A list of circles. Each one of the form (x,y,r) where (x,y) are
+        the coordinates of the center and r is the radious.
+    """
+    return [(c, radius * side / 100) for c in centers]
+
+
+def plot(side: int, circ: list[Circ], saveto: str | None = str) -> None:
     """Plot a list of circles inside a scene.
 
     Args:
-        sside: Length of the side of the scene.
+        side: Length of the side of the scene.
         circ: List of rectangles.
         saveto: Path to save plot.
     """
     plt.figure()
-    plt.xlim(0, sside)
-    plt.ylim(0, sside)
+    plt.xlim(0, side)
+    plt.ylim(0, side)
     ax = plt.gca()
     for c, r in circ:
         ax.add_patch(Circle(c, r, fill=False))
@@ -74,15 +86,15 @@ def plot(sside: int, circ: list[Circ], saveto: str | None = str) -> None:
         plt.savefig(saveto)
 
 
-def gen_mesh_points(sside: int, nsteps: int) -> list[Point]:
+def gen_mesh_points(side: int, nsteps: int) -> list[Point]:
     """Generate the points of a mesh.
 
     Args:
-        sside: Length of the side of the scene.
+        side: Length of the side of the scene.
         nsteps: Size of the mesh, that is,
             with (nsteps + 1)*(nsteps + 1) points.
     """
-    step = sside / nsteps
+    step = side / nsteps
     return [(x * step, y * step) for x in range(nsteps + 1) for y in range(nsteps + 1)]
 
 

@@ -7,10 +7,10 @@
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph) : LP(Graph{graph}) {};
+LP::LP(const Graph &graph) : LP(Graph{graph}){};
 
 LP::LP(const Graph &&graph)
-    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0) {};
+    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0){};
 
 LP::~LP() {
   // for (size_t i = 0; i < stables.size(); ++i) {
@@ -155,7 +155,7 @@ std::pair<bool, size_t> LP::get_weights(std::vector<double> &weights,
   return std::make_pair(changed, nPosWeights);
 }
 
-LP_STATE LP::optimize() {
+LP_STATE LP::optimize(double timelimit) {
 
   auto startTime = std::chrono::high_resolution_clock::now();
   LP_STATE state = LP_UNSOLVED;
@@ -169,7 +169,7 @@ LP_STATE LP::optimize() {
 
   // Check if the input is a GCP instance
   if (in.isGCP)
-    return solve_GCP();
+    return solve_GCP(timelimit);
 
   // Initialize cplex environment
   CplexEnv cenv;
@@ -211,12 +211,12 @@ LP_STATE LP::optimize() {
     // mwis_pi_scalef = 1;
 
     // Set time limit
-    double timeLimit = TIMELIMIT - get_elapsed_time(startTime);
-    if (timeLimit < 0) {
+    double timelimit2 = timelimit - get_elapsed_time(startTime);
+    if (timelimit2 < 0) {
       state = LP_TIME_EXCEEDED;
       break;
     }
-    cplex.setParam(IloCplex::Param::TimeLimit, timeLimit);
+    cplex.setParam(IloCplex::Param::TimeLimit, timelimit2);
 
     // Optimize
     cplex.solve();
@@ -362,7 +362,7 @@ LP_STATE LP::optimize() {
     }
 
     // Second, exact resolution of pricing
-    res = penv.exact_solve(dualsA, dualsB);
+    res = penv.exact_solve(dualsA, dualsB, timelimit2);
 
     // Handle errors
     if (res.second == PRICING_TIME_EXCEEDED) {
@@ -428,13 +428,16 @@ LP_STATE LP::optimize() {
 }
 
 /* Solve a graph coloring problem instance with exactcolors */
-LP_STATE LP::solve_GCP() {
+LP_STATE LP::solve_GCP(double timelimit) {
   LP_STATE state;
 
   COLORproblem colorproblem;
   COLORparms *parms = &(colorproblem.parms);
   colordata *cd = &(colorproblem.root_cd);
   int ncolors = 0;
+
+  if (timelimit < 0)
+    return LP_TIME_EXCEEDED;
 
   // Build GCP graph
   GCPGraph graphGCP;
@@ -454,7 +457,7 @@ LP_STATE LP::solve_GCP() {
                                elist);
   cd->id = 0;
   colorproblem.ncolordata = 1;
-  parms->branching_cpu_limit = TIMELIMIT;
+  parms->branching_cpu_limit = timelimit;
 
   int COLORproblem_init_with_graph(COLORproblem * problem, int ncount,
                                    int ecount, const int elist[]);
@@ -617,12 +620,13 @@ void LP::save_solution(Col &col) {
   size_t k = 0;
   for (auto i : posVars) {
     for (auto v : stables[i]) {
-      auto [a, b] = in.graph[v];
-      col.set_color(a, b, k);
+      // auto [a, b] = in.graph[v];
+      // col.set_color(a, b, k);
+      col.set_color(v, k);
     }
     ++k;
   }
-  assert(col.check_coloring());
+  assert(col.check_coloring(in.graph));
   return;
 }
 

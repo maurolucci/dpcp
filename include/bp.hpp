@@ -15,7 +15,7 @@
 
 // #define ONLY_RELAXATION
 #ifndef MAXTIME
-#define MAXTIME 3600 // In seconds = 1 hour
+#define MAXTIME 900 // In seconds
 #endif
 
 using ClockType = std::chrono::high_resolution_clock;
@@ -34,7 +34,7 @@ public:
     return (get_obj_value() < n.get_obj_value());
   }
 
-  LP_STATE solve() { return lp->optimize(); }
+  LP_STATE solve(double timelimit) { return lp->optimize(timelimit); }
 
   template <class Solution> void save(Solution &sol) { lp->save_solution(sol); }
 
@@ -168,7 +168,7 @@ private:
       gap = DBL_MAX;
     } else {
       dual_bound = calculate_dual_bound();
-      gap = get_gap();
+      gap = get_gap() * 100;
     }
     return (Stats){0, 0, state, elapsed, nodes, dual_bound, primal_bound, gap};
   }
@@ -179,7 +179,10 @@ private:
     double obj_value;
 
     // Solve the linear relaxation of the node and prune if possible
-    LP_STATE state = node->solve();
+    double elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                         ClockType::now() - start_t)
+                         .count();
+    LP_STATE state = node->solve(MAXTIME - elapsed);
 
     switch (state) {
 
