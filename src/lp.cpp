@@ -11,9 +11,10 @@
 LP::LP(const Graph &graph, Pool &_pool, Graph &origGraph, Col *initSol)
     : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0), initSol(initSol),
       pool(_pool), origGraph(origGraph), vertexMap(), invVertexMap(),
-      nTotalPoolCols(0), nTotalHeurCols(0), nTotalExactCols(0),
-      nRemainingAttemptsPool(MAXFAILSPOOL),
-      nRemainingAttemptsHeur(MAXFAILSHEUR) {
+      nTotalPoolCols(0), nTotalHeurCols(0), nTotalMwis2Cols(0),
+      nTotalExactCols(0), nRemainingAttemptsPool(MAXFAILSPOOL),
+      nRemainingAttemptsHeur(MAXFAILSHEUR),
+      nRemainingAttemptsMwis2(MAXFAILSHEUR) {
 
   // Translate original vertices to current vertices and viceversa
   vertexMap.resize(num_vertices(graph));
@@ -202,10 +203,12 @@ LP_STATE LP::optimize(double timelimit) {
     // // Dual values
     // std::cout << "dual values: ";
     // for (size_t i = 0; i < in.nA; ++i)
-    //   std::cout << i << "(" << in.idA2TyA[i] << "): " << dualsA[i] << " ";
+    //   std::cout << i << "(" << in.idA2TyA[i] << "): " << dualsA[i] << "
+    //   ";
     // std::cout << std::endl;
     // for (size_t i = 0; i < in.nB; ++i)
-    //   std::cout << i << "(" << in.idB2TyB[i] << "): " << dualsB[i] << " ";
+    //   std::cout << i << "(" << in.idB2TyB[i] << "): " << dualsB[i] << "
+    //   ";
     // std::cout << std::endl;
     // *******************************************************************
 
@@ -317,7 +320,19 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
       nRemainingAttemptsHeur--;
   }
 
-  // Third, exact resolution of pricing
+  // Third, MWSSP heuristic 2: the weight of v is \gamma_v
+  if (nRemainingAttemptsMwis2 > 0) {
+    res = penv.mwis2_solve(dualsA, dualsB);
+    if (res.second == PRICING_SOLUTION) {
+      // std::cout << "** Added a column from MWSSP 2" << std::endl;
+      add_column(cenv, res.first);
+      nTotalMwis2Cols++;
+      return 1;
+    } else
+      nRemainingAttemptsMwis2--;
+  }
+
+  // Fourth, exact resolution of pricing
   res = penv.exact_solve(dualsA, dualsB);
 
   // Handle exact outputs

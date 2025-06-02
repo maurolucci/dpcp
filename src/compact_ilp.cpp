@@ -19,7 +19,7 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
   IloArray<IloNumVarArray> x(cxenv, num_vertices(graph));
   IloNumVarArray w(cxenv, ncolors);
   IloConstraintArray cxcons(cxenv);
-  Stats stats;
+  Stats stats = Stats{};
 
   // Define variables
   for (size_t v = 0; v < num_vertices(graph); ++v) {

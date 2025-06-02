@@ -58,7 +58,7 @@ PricingEnv::~PricingEnv() {
   cxenv.end();
 
   // End MWIS variables
-  delete[] elist;
+  free(elist);
   free(mwis_pi);
   COLORstable_freeenv(&mwis_env);
 }
@@ -156,14 +156,13 @@ void PricingEnv::mwis_init() {
 
   // Intialize vectors of weights
   mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(num_vertices(in.graph), COLORNWT);
-  std::vector<double> weights(num_vertices(in.graph), 0.0);
 
   // // Initialize maps from original vertices to positive vertices, and
   // viceversa std::iota(toPosVertex.begin(), toPosVertex.end(), 0);
   // std::iota(toVertex.begin(), toVertex.end(), 0);
 
   // Initialize edge array
-  int *elist = new int[2 * num_edges(in.graph)];
+  elist = (int *)malloc(sizeof(int) * 2 * num_edges(in.graph));
   for (auto e : boost::make_iterator_range(edges(in.graph))) {
     elist[2 * ecount] = source(e, in.graph);
     elist[2 * ecount++ + 1] = target(e, in.graph);
@@ -263,10 +262,8 @@ PricingEnv::mwis2_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Compute vertex weight array
   std::vector<double> weights(num_vertices(in.graph));
-
-  // Reinitialize stable environment
-  COLORstable_freeenv(&mwis_env);
-  COLORstable_initenv(&mwis_env, NULL, 0);
+  for (auto v : boost::make_iterator_range(vertices(in.graph)))
+    weights[v] = dualsA[in.tyA2idA[in.graph[v].first]];
 
   // Scale weights
   double2COLORNWT(mwis_pi, &mwis_pi_scalef, weights);
@@ -281,8 +278,8 @@ PricingEnv::mwis2_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
       int v = newsets[set_i].members[j];
       stab.stable.push_back(v);
       auto [a, b] = in.graph[v];
-      stab.as.insert(a);
-      stab.cost += dualsA[in.tyA2idA[a]];
+      if (stab.as.insert(a).second)
+        stab.cost += dualsA[in.tyA2idA[a]];
       if (stab.bs.insert(b).second)
         stab.cost -= dualsB[in.tyB2idB[b]];
     }

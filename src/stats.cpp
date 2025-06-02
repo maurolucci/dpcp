@@ -29,7 +29,7 @@ void Stats::write_stats(std::ostream &file) {
   file << nvars << "," << ncons << "," << get_state_as_str() << "," << time
        << "," << nodes << "," << initSol << "," << lb << "," << ub << "," << gap
        << "," << poolSize << "," << ncolsPool << "," << ncolsHeur << ","
-       << ncolsExact << std::endl;
+       << ncolsMwis2 << "," << ncolsExact << std::endl;
 }
 
 void Stats::print_stats(std::ostream &file) {
@@ -52,10 +52,14 @@ void Stats::print_stats(std::ostream &file) {
     file << "Gap: " << gap << std::endl;
   if (poolSize != -1)
     file << "Size of pool: " << poolSize << std::endl;
-  if (ncolsPool != -1)
-    file << "Pool columns: " << ncolsPool << std::endl;
+  if (ncolsPool != -1) {
+    file << "Number of columns from:" << std::endl;
+    file << "\tPool: " << ncolsPool << std::endl;
+  }
   if (ncolsHeur != -1)
-    file << "Heuristic columns: " << ncolsHeur << std::endl;
+    file << "\tGreedy heuristic: " << ncolsHeur << std::endl;
+  if (ncolsMwis2 != -1)
+    file << "\tMWSSP II: " << ncolsMwis2 << std::endl;
   if (ncolsExact != -1)
-    file << "Exact columns: " << ncolsExact << std::endl;
+    file << "\tMIP: " << ncolsExact << std::endl;
 }

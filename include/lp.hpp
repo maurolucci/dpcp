@@ -43,6 +43,7 @@ public:
   // Get number of columns (after calling optimize)
   [[nodiscard]] size_t get_n_pool_columns() const { return nTotalPoolCols; };
   [[nodiscard]] size_t get_n_heur_columns() const { return nTotalHeurCols; };
+  [[nodiscard]] size_t get_n_mwis2_columns() const { return nTotalMwis2Cols; };
   [[nodiscard]] size_t get_n_exact_columns() const { return nTotalExactCols; };
 
   // Save the optimal solution (after calling optimize)
@@ -74,9 +75,11 @@ private:
   std::vector<int> invVertexMap;
   size_t nTotalPoolCols;
   size_t nTotalHeurCols;
+  size_t nTotalMwis2Cols;
   size_t nTotalExactCols;
   size_t nRemainingAttemptsPool;
   size_t nRemainingAttemptsHeur;
+  size_t nRemainingAttemptsMwis2;
 
   // Initialize the linear relaxation with an initial set of columns
   void add_constraints(CplexEnv &cenv);

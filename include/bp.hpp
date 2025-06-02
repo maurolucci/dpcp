@@ -35,10 +35,11 @@ public:
   }
 
   LP_STATE solve(double timelimit, size_t &ncolsPool, size_t &ncolsHeur,
-                 size_t &ncolsExact) {
+                 size_t &ncolsMwis2, size_t &ncolsExact) {
     LP_STATE state = lp->optimize(timelimit);
     ncolsPool += lp->get_n_pool_columns();
     ncolsHeur += lp->get_n_heur_columns();
+    ncolsMwis2 += lp->get_n_mwis2_columns();
     ncolsExact += lp->get_n_exact_columns();
     return state;
   }
@@ -66,7 +67,7 @@ template <class Solution> class BP {
 public:
   BP(Solution &sol, std::ostream &log, bool DFS = false)
       : best_integer_solution(sol), primal_bound(DBL_MAX), nodes(0), DFS(DFS),
-        log(log), ncolsPool(0), ncolsHeur(0), ncolsExact(0),
+        log(log), ncolsPool(0), ncolsHeur(0), ncolsMwis2(0), ncolsExact(0),
         initSolValue(-1.0) {}
 
   void set_initial_solution(Solution &initSol, double initValue) {
@@ -174,11 +175,12 @@ private:
   std::ostream &log;
   size_t ncolsPool;
   size_t ncolsHeur;
+  size_t ncolsMwis2;
   size_t ncolsExact;
   double initSolValue; // Value of the provided initial solution
 
   Stats return_stats(STATE state) {
-    Stats stats;
+    Stats stats = Stats{};
     stats.state = state;
     stats.time =
         std::chrono::duration<double>(ClockType::now() - start_t).count();
@@ -199,6 +201,7 @@ private:
     }
     stats.ncolsPool = static_cast<int>(ncolsPool);
     stats.ncolsHeur = static_cast<int>(ncolsHeur);
+    stats.ncolsMwis2 = static_cast<int>(ncolsMwis2);
     stats.ncolsExact = static_cast<int>(ncolsExact);
     stats.initSol = static_cast<int>(initSolValue + 0.5);
 
@@ -214,8 +217,8 @@ private:
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(
                          ClockType::now() - start_t)
                          .count();
-    LP_STATE state =
-        node->solve(MAXTIME - elapsed, ncolsPool, ncolsHeur, ncolsExact);
+    LP_STATE state = node->solve(MAXTIME - elapsed, ncolsPool, ncolsHeur,
+                                 ncolsMwis2, ncolsExact);
 
     switch (state) {
 
