@@ -63,6 +63,8 @@ struct StableEnv {
             double cost);
   StableEnv(VertexVector &&stable, std::set<TypeB> &&as, std::set<TypeB> &&bs,
             double cost);
+
+  bool check(const Graph &graph);
 };
 
 using Pool = std::vector<StableEnv>;

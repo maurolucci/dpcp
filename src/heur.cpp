@@ -114,7 +114,7 @@ Stats heur_solve(const GraphEnv &genv, const std::vector<TypeA> &as, Col &col,
   assert(col.check_coloring(genv.graph));
   TimePoint end = ClockType::now();
 
-  Stats stats = Stats{};
+  Stats stats;
   stats.state = FEASIBLE;
   stats.time = std::chrono::duration<double>(end - start).count();
   stats.ub = static_cast<double>(col.get_n_colors());

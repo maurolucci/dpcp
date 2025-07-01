@@ -34,13 +34,8 @@ public:
     return (get_obj_value() < n.get_obj_value());
   }
 
-  LP_STATE solve(double timelimit, size_t &ncolsPool, size_t &ncolsHeur,
-                 size_t &ncolsMwis2, size_t &ncolsExact) {
-    LP_STATE state = lp->optimize(timelimit);
-    ncolsPool += lp->get_n_pool_columns();
-    ncolsHeur += lp->get_n_heur_columns();
-    ncolsMwis2 += lp->get_n_mwis2_columns();
-    ncolsExact += lp->get_n_exact_columns();
+  LP_STATE solve(double timelimit, Stats &stats) {
+    LP_STATE state = lp->optimize(timelimit, stats);
     return state;
   }
 
@@ -67,8 +62,7 @@ template <class Solution> class BP {
 public:
   BP(Solution &sol, std::ostream &log, bool DFS = false)
       : best_integer_solution(sol), primal_bound(DBL_MAX), nodes(0), DFS(DFS),
-        log(log), ncolsPool(0), ncolsHeur(0), ncolsMwis2(0), ncolsExact(0),
-        initSolValue(-1.0) {}
+        log(log), stats(), initSolValue(-1.0) {}
 
   void set_initial_solution(Solution &initSol, double initValue) {
     initSolValue = primal_bound = initValue;
@@ -82,7 +76,7 @@ public:
     first_call = true;
 
     // Push root note (and solve initial LR)
-    switch (push(root)) {
+    switch (push(root, true)) {
     case LP_TIME_EXCEEDED:
       return return_stats(TIME_EXCEEDED_LP);
     case LP_TIME_EXCEEDED_PR:
@@ -95,6 +89,7 @@ public:
       break;
     }
 
+#ifndef ONLY_RELAXATION
     while (!L.empty()) {
 
       // Pop next node
@@ -135,9 +130,15 @@ public:
 
       delete node;
     }
+#endif
 
     if (primal_bound == DBL_MAX) // Infeasibility case:
       return return_stats(INFEASIBLE);
+
+#ifdef ONLY_RELAXATION
+    if (!L.empty())
+      return return_stats(FEASIBLE);
+#endif
 
     // Optimality case:
     return return_stats(OPTIMAL);
@@ -173,14 +174,11 @@ private:
   int opt_flag;      // Optimality flag
   bool DFS;
   std::ostream &log;
-  size_t ncolsPool;
-  size_t ncolsHeur;
-  size_t ncolsMwis2;
-  size_t ncolsExact;
+  Stats stats;
   double initSolValue; // Value of the provided initial solution
+  double rootval;
 
   Stats return_stats(STATE state) {
-    Stats stats = Stats{};
     stats.state = state;
     stats.time =
         std::chrono::duration<double>(ClockType::now() - start_t).count();
@@ -189,6 +187,7 @@ private:
       stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
     }
     stats.nodes = static_cast<int>(nodes);
+    stats.rootval = rootval;
     stats.ub = static_cast<int>(primal_bound + 0.5);
     if (state == OPTIMAL) {
       stats.lb = primal_bound;
@@ -199,16 +198,12 @@ private:
       stats.lb = calculate_dual_bound();
       stats.gap = get_gap() / 100;
     }
-    stats.ncolsPool = static_cast<int>(ncolsPool);
-    stats.ncolsHeur = static_cast<int>(ncolsHeur);
-    stats.ncolsMwis2 = static_cast<int>(ncolsMwis2);
-    stats.ncolsExact = static_cast<int>(ncolsExact);
     stats.initSol = static_cast<int>(initSolValue + 0.5);
 
     return stats;
   }
 
-  LP_STATE push(Node *node) {
+  LP_STATE push(Node *node, bool root = false) {
 
     nodes++;
     double obj_value;
@@ -217,8 +212,10 @@ private:
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(
                          ClockType::now() - start_t)
                          .count();
-    LP_STATE state = node->solve(MAXTIME - elapsed, ncolsPool, ncolsHeur,
-                                 ncolsMwis2, ncolsExact);
+    LP_STATE state = node->solve(MAXTIME - elapsed, stats);
+
+    if (root)
+      rootval = node->get_obj_value();
 
     switch (state) {
 

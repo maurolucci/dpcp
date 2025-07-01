@@ -93,3 +93,11 @@ StableEnv::StableEnv(VertexVector &stable, std::set<TypeB> &as,
 StableEnv::StableEnv(VertexVector &&stable, std::set<TypeB> &&as,
                      std::set<TypeB> &&bs, double cost)
     : stable(stable), as(as), bs(bs), cost(cost) {}
+
+bool StableEnv::check(const Graph &graph) {
+  for (auto it_v = stable.begin(); it_v != stable.end(); ++it_v)
+    for (auto it_u = std::next(it_v); it_u != stable.end(); ++it_u)
+      if (edge(*it_v, *it_u, graph).second)
+        return false;
+  return true;
+}

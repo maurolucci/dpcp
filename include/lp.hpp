@@ -14,11 +14,9 @@ extern "C" {
 
 #include <chrono>
 
-#define EPSILON 0.00001     // 10e-5
-#define MAXCOLSFROMPOOL 200 // Max number of columns added from pool per round
-#define MAXCOLSFROMHEUR 200 // Max number of columns added from heur per round
-#define MAXFAILSPOOL 100    // Max number of failed rounds for pool
-#define MAXFAILSHEUR 100    // Max number of failed rounds for heur
+#define EPSILON 0.00001 // 10e-5
+#define MAXCOLS 200     // Max number of columns added per round
+#define MAXFAILS 100    // Max number of failed accepted per round
 #ifndef N_BRANCHES
 #define N_BRANCHES 2
 #endif
@@ -35,16 +33,10 @@ public:
   ~LP();
 
   // Optimize the linear relaxation by column generation
-  [[nodiscard]] LP_STATE optimize(double timelimit);
+  [[nodiscard]] LP_STATE optimize(double timelimit, Stats &stats);
 
   // Get objective value (after calling optimize)
   [[nodiscard]] double get_obj_value() const { return objVal; };
-
-  // Get number of columns (after calling optimize)
-  [[nodiscard]] size_t get_n_pool_columns() const { return nTotalPoolCols; };
-  [[nodiscard]] size_t get_n_heur_columns() const { return nTotalHeurCols; };
-  [[nodiscard]] size_t get_n_mwis2_columns() const { return nTotalMwis2Cols; };
-  [[nodiscard]] size_t get_n_exact_columns() const { return nTotalExactCols; };
 
   // Save the optimal solution (after calling optimize)
   void save_solution(Col &col);
@@ -73,12 +65,11 @@ private:
   std::vector<Vertex> vertexMap;
   // Map from original vertices to current vertices
   std::vector<int> invVertexMap;
-  size_t nTotalPoolCols;
-  size_t nTotalHeurCols;
-  size_t nTotalMwis2Cols;
-  size_t nTotalExactCols;
+
+  // Remaining attempts for pricing
   size_t nRemainingAttemptsPool;
   size_t nRemainingAttemptsHeur;
+  size_t nRemainingAttemptsMwis1;
   size_t nRemainingAttemptsMwis2;
 
   // Initialize the linear relaxation with an initial set of columns
@@ -97,20 +88,9 @@ private:
   // Set CPLEX's parameters
   void set_parameters(CplexEnv &cenv, IloCplex &cplex);
 
-  int pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
-              IloNumArray &dualsB);
-
-  // // Compute vertex weights from dual values
-  // // Return a boolean to indicate whether the weight of any vertex changed
-  // sign
-  // // from the previous iteration and the number of positive weights
-  // std::pair<bool, size_t> get_weights(std::vector<double> &weights,
-  //                                     IloNumArray &duals);
-
-  // // Covert weights from double to int
-  // int double2COLORNWT(COLORNWT nweights[], COLORNWT *scalef, size_t
-  // nPosWeights,
-  //                     const std::vector<double> &dbl_nweights);
+  // Solve pricing problem
+  int pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+              IloNumArray &dualsA, IloNumArray &dualsB);
 
   // Check if an stable from de pool is an entering column
   // Be careful, the stable is assume to be in terms of the original graph

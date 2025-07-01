@@ -6,8 +6,10 @@
 #include <string>
 
 enum PRICING_STATE {
-  PRICING_SOLUTION,
-  PRICING_NO_SOLUTION,
+  PRICING_STABLE_FOUND,
+  PRICING_STABLE_NOT_FOUND,
+  PRICING_STABLE_NOT_EXIST,
+  PRICING_READY,
   PRICING_TIME_EXCEEDED,
   PRICING_MEM_EXCEEDED,
   PRICING_OTHER,
@@ -37,26 +39,35 @@ enum STATE {
   UNKNOWN,
 };
 
-struct Stats {
+class Stats {
+
+public:
   int nvars;
   int ncons;
   STATE state;
   double time;
   int nodes;
   int initSol;
+  double rootval;
   double lb;
   int ub;
   double gap;
   int poolSize;
-  int ncolsPool;
-  int ncolsHeur;
-  int ncolsMwis2;
-  int ncolsExact;
+  int nColsPool;
+  int nColsHeur;
+  int nColsMwis1;
+  int nColsMwis2;
+  int nColsExact;
+  int nCallsHeur;
+  int nCallsMWis1;
+  int nCallsMWis2;
+  int nCallsExact;
 
   Stats()
       : nvars(-1), ncons(-1), state(UNKNOWN), time(-1.0), nodes(-1),
-        initSol(-1), lb(-1.0), ub(-1), gap(-1.0), poolSize(-1), ncolsPool(-1),
-        ncolsHeur(-1), ncolsMwis2(-1), ncolsExact(-1){};
+        initSol(-1), rootval(-1.0), lb(-1.0), ub(-1), gap(-1.0), poolSize(-1),
+        nColsPool(0), nColsHeur(0), nColsMwis1(0), nColsMwis2(0), nColsExact(0),
+        nCallsHeur(0), nCallsMWis1(0), nCallsMWis2(0), nCallsExact(0){};
 
   std::string get_state_as_str();
   void write_stats(std::ostream &file);

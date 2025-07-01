@@ -11,10 +11,8 @@
 LP::LP(const Graph &graph, Pool &_pool, Graph &origGraph, Col *initSol)
     : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0), initSol(initSol),
       pool(_pool), origGraph(origGraph), vertexMap(), invVertexMap(),
-      nTotalPoolCols(0), nTotalHeurCols(0), nTotalMwis2Cols(0),
-      nTotalExactCols(0), nRemainingAttemptsPool(MAXFAILSPOOL),
-      nRemainingAttemptsHeur(MAXFAILSHEUR),
-      nRemainingAttemptsMwis2(MAXFAILSHEUR) {
+      nRemainingAttemptsPool(MAXFAILS), nRemainingAttemptsHeur(MAXFAILS),
+      nRemainingAttemptsMwis1(MAXFAILS), nRemainingAttemptsMwis2(MAXFAILS) {
 
   // Translate original vertices to current vertices and viceversa
   vertexMap.resize(num_vertices(graph));
@@ -147,7 +145,7 @@ std::pair<bool, StableEnv> LP::translate_stable_from_pool(StableEnv &stab,
   return std::make_pair(true, newStab);
 }
 
-LP_STATE LP::optimize(double timelimit) {
+LP_STATE LP::optimize(double timelimit, Stats &stats) {
 
   auto startTime = std::chrono::high_resolution_clock::now();
   LP_STATE state = LP_UNSOLVED;
@@ -212,7 +210,7 @@ LP_STATE LP::optimize(double timelimit) {
     // std::cout << std::endl;
     // *******************************************************************
 
-    int ret = pricing(cenv, penv, dualsA, dualsB);
+    int ret = pricing(cenv, penv, stats, dualsA, dualsB);
     if (ret > 0)
       continue;
     else if (ret == 0)
@@ -271,8 +269,8 @@ LP_STATE LP::optimize(double timelimit) {
   return state;
 }
 
-int LP::pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
-                IloNumArray &dualsB) {
+int LP::pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // First, look for entering columns in the pool
   if (nRemainingAttemptsPool > 0) {
@@ -284,8 +282,8 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
       if (ret.second.cost > 1 + EPSILON) {
         add_column(cenv, ret.second);
         nPoolCols++;
-        nTotalPoolCols++;
-        if (nPoolCols > MAXCOLSFROMPOOL)
+        stats.nColsPool++;
+        if (nPoolCols > MAXCOLS)
           break;
       }
     }
@@ -302,14 +300,15 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
   // Second, heuristic resolution of pricing
   if (nRemainingAttemptsHeur > 0) {
     size_t nHeurCols = 0;
-    for (size_t i = 0; i < MAXCOLSFROMHEUR; ++i) {
+    for (size_t i = 0; i < MAXCOLS; ++i) {
       // Random starting vertex for the stable set
       Vertex v = rand_int(rng) % num_vertices(in.graph);
       res = penv.heur_solve(dualsA, dualsB, v);
-      if (res.second == PRICING_SOLUTION) {
+      stats.nCallsHeur++;
+      if (res.second == PRICING_STABLE_FOUND) {
         add_column(cenv, res.first);
         nHeurCols++;
-        nTotalHeurCols++;
+        stats.nColsHeur++;
       }
     }
     if (nHeurCols > 0) {
@@ -320,29 +319,52 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, IloNumArray &dualsA,
       nRemainingAttemptsHeur--;
   }
 
-  // Third, MWSSP heuristic 2: the weight of v is \gamma_v
-  if (nRemainingAttemptsMwis2 > 0) {
-    res = penv.mwis2_solve(dualsA, dualsB);
-    if (res.second == PRICING_SOLUTION) {
-      // std::cout << "** Added a column from MWSSP 2" << std::endl;
-      add_column(cenv, res.first);
-      nTotalMwis2Cols++;
-      return 1;
+  // Third, MWSSP heuristic I: the weight of (a,b) is \gamma_a - \mu_b
+  if (nRemainingAttemptsMwis1 > 0) {
+    size_t nMwis1Cols = 0;
+    auto res = penv.mwis1_solve(dualsA, dualsB);
+    stats.nCallsMWis1++;
+    for (auto &[stab, state] : res) {
+      if (state == PRICING_STABLE_FOUND) {
+        add_column(cenv, stab);
+        nMwis1Cols++;
+        stats.nColsMwis1++;
+      }
+    }
+    if (nMwis1Cols > 0) {
+      // std::cout << "** Added " << nMwis2Cols << " columns from MWSSP I"
+      //           << std::endl;
+      return nMwis1Cols;
     } else
-      nRemainingAttemptsMwis2--;
+      nRemainingAttemptsMwis1--;
   }
 
-  // Fourth, exact resolution of pricing
+  // Fourth, MWSSP heuristic II: the weight of (a,b) is \gamma_a
+  if (nRemainingAttemptsMwis2 > 0) {
+    res = penv.mwis2_solve(dualsA, dualsB);
+    stats.nCallsMWis2++;
+    if (res.second == PRICING_STABLE_FOUND) {
+      // std::cout << "** Added a column from MWSSP II" << std::endl;
+      add_column(cenv, res.first);
+      stats.nColsMwis2++;
+      return 1;
+    } else if (res.second == PRICING_STABLE_NOT_FOUND)
+      nRemainingAttemptsMwis2--;
+    else
+      return 0; // Node solved up to optimality
+  }
+
+  // Fifth, exact resolution of pricing
   res = penv.exact_solve(dualsA, dualsB);
+  stats.nCallsExact++;
 
   // Handle exact outputs
-  if (res.second == PRICING_SOLUTION) {
-    // std::cout << "Exact: " << res.first.cost << std::endl;
+  if (res.second == PRICING_STABLE_FOUND) {
     add_column(cenv, res.first);
-    nTotalExactCols++;
+    stats.nColsExact++;
     // std::cout << "** Added a column from ILP" << std::endl;
     return 1;
-  } else if (res.second == PRICING_NO_SOLUTION)
+  } else if (res.second == PRICING_STABLE_NOT_EXIST)
     return 0;
   else if (res.second == PRICING_TIME_EXCEEDED)
     return -1;

@@ -42,23 +42,32 @@ bool Col::check_coloring(const Graph &graph) const {
   for (auto [v, k] : coloring) {
     auto [a, b] = graph[v];
     colorA[a] = k;
-    if (colorB[b] != -1 && colorB[b] != k)
+    if (colorB[b] != -1 && colorB[b] != k) {
+      std::cout << "Coloring error #1: " << b << " has colors " << colorB[b]
+                << " and " << k << std::endl;
       return false;
+    }
     colorB[b] = k;
   }
 
   // Return false if some a \in A is uncolored
   for (auto [a, k] : colorA)
-    if (k == -1)
+    if (k == -1) {
+      std::cout << "Coloring error #2: " << a << " is uncolored" << std::endl;
       return false;
+    }
 
   // Return false if the coloring is not proper
   for (auto e : boost::make_iterator_range(edges(graph))) {
     auto u = source(e, graph);
     auto v = target(e, graph);
     if (coloring.contains(u) && coloring.contains(v) &&
-        coloring.at(u) == coloring.at(v))
+        coloring.at(u) == coloring.at(v)) {
+      std::cout << "Coloring error #3: " << u << " and " << v
+                << " are adjecent and both have color " << coloring.at(u)
+                << std::endl;
       return false;
+    }
   }
 
   return true;
