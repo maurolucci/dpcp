@@ -8,36 +8,30 @@
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph, Pool &_pool, Graph &origGraph, Col *initSol)
-    : in(GraphEnv(graph)), stables(), posVars(), objVal(-1.0), initSol(initSol),
-      pool(_pool), origGraph(origGraph), vertexMap(), invVertexMap(),
-      nRemainingAttemptsPool(MAXFAILS), nRemainingAttemptsHeur(MAXFAILS),
-      nRemainingAttemptsMwis1(MAXFAILS), nRemainingAttemptsMwis2(MAXFAILS) {
+LP::LP(const Graph &graph, Params &params, Pool &_pool, Graph &origGraph,
+       Col *initSol)
+    : in(GraphEnv(graph, params)), params(params), stables(), posVars(),
+      objVal(-1.0), initSol(initSol), pool(_pool), origGraph(origGraph),
+      vertexMap(), invVertexMap(), nRemainingAttemptsPool(MAXFAILS),
+      nRemainingAttemptsHeur(MAXFAILS), nRemainingAttemptsMwis1(MAXFAILS),
+      nRemainingAttemptsMwis2(MAXFAILS){
 
-  // Translate original vertices to current vertices and viceversa
-  vertexMap.resize(num_vertices(graph));
-  invVertexMap.resize(num_vertices(origGraph), -1);
-  for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
-    auto [av, bv] = origGraph[v];
-    for (Vertex u : boost::make_iterator_range(vertices(graph))) {
-      auto [au, bu] = graph[u];
-      if (av == au && bv == bu) {
-        vertexMap[u] = v;
-        invVertexMap[v] = u;
-      }
-    }
-  }
-};
+          // // Translate original vertices to current vertices and viceversa
+          // vertexMap.resize(num_vertices(graph));
+          // invVertexMap.resize(num_vertices(origGraph), -1);
+          // for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
+          //   auto [av, bv] = origGraph[v];
+          //   for (Vertex u : boost::make_iterator_range(vertices(graph))) {
+          //     auto [au, bu] = graph[u];
+          //     if (av == au && bv == bu) {
+          //       vertexMap[u] = v;
+          //       invVertexMap[v] = u;
+          //     }
+          //   }
+          // }
+      };
 
-LP::~LP() {
-  // for (size_t i = 0; i < stables.size(); ++i) {
-  //   if (stables[i]->age >= 0) {
-  //     free(stables[i]->members);
-  //     free(stables[i]);
-  //   } else
-  //     delete stables[i];
-  // }
-}
+LP::~LP() {}
 
 void LP::add_constraints(CplexEnv &cenv) {
   // Add constraints
@@ -130,19 +124,20 @@ double get_elapsed_time(auto startTime) {
 std::pair<bool, StableEnv> LP::translate_stable_from_pool(StableEnv &stab,
                                                           IloNumArray &dualsA,
                                                           IloNumArray &dualsB) {
-  StableEnv newStab;
-  for (Vertex v : stab.stable) {
-    auto [a, b] = origGraph[v];
-    int u = invVertexMap[v];
-    if (u < 0)
-      return std::make_pair(false, newStab);
-    newStab.stable.push_back(u);
-    if (newStab.as.insert(a).second)
-      newStab.cost += dualsA[in.tyA2idA[a]];
-    if (newStab.bs.insert(b).second)
-      newStab.cost -= dualsB[in.tyB2idB[b]];
-  }
-  return std::make_pair(true, newStab);
+  // StableEnv newStab;
+  // for (Vertex v : stab.stable) {
+  //   auto [a, b] = origGraph[v];
+  //   int u = invVertexMap[v];
+  //   if (u < 0)
+  //     return std::make_pair(false, newStab);
+  //   newStab.stable.push_back(u);
+  //   if (newStab.as.insert(a).second)
+  //     newStab.cost += dualsA[in.tyA2idA[a]];
+  //   if (newStab.bs.insert(b).second)
+  //     newStab.cost -= dualsB[in.tyB2idB[b]];
+  // }
+  // return std::make_pair(true, newStab);
+  return std::make_pair(false, StableEnv());
 }
 
 LP_STATE LP::optimize(double timelimit, Stats &stats) {
@@ -530,11 +525,10 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
 
 void LP::save_solution(Col &col) {
   col.reset_coloring();
+  // Translate solution according to the original graph
   size_t k = 0;
   for (auto i : posVars) {
     for (auto v : stables[i]) {
-      // auto [a, b] = in.graph[v];
-      // col.set_color(a, b, k);
       col.set_color(vertexMap[v], k);
     }
     ++k;
@@ -544,11 +538,6 @@ void LP::save_solution(Col &col) {
 }
 
 void LP::branch(std::vector<LP *> &branches) {
-
-  if (N_BRANCHES != 2) {
-    // std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
-    abort();
-  }
 
   // Recover a and b
   auto [a, b] = in.graph[branchVar];
@@ -603,126 +592,3 @@ void LP::branch(std::vector<LP *> &branches) {
 
   return;
 }
-
-/*
-void LP::branch(std::vector<LP *> &branches, Vertex v) {
-
-  if (N_BRANCHES != 2) {
-    std::cout << "N_BRANCHES != 2: Unimplemented" << std::endl;
-    abort();
-  }
-
-  // Recover a and b
-  auto [a, b] = graph[v];
-
-  // Find some index of interest
-  // .. (e-1,u), (e,v1), ..., (e,v), ..., (e,vn), (e+1,w)
-  //               i1           i2                  i3
-  size_t i1 = 0, i2 = 0, i3 = 0;
-  for (; i1 < vcount; ++i1)
-    if (cg[vlist[i1]].first == e)
-      break;
-  for (i2 = i1; i2 < vcount; ++i2)
-    if (cg[vlist[i2]].second == v)
-      break;
-  for (i3 = i2 + 1; i3 < vcount; ++i3)
-    if (cg[vlist[i3]].first != e)
-      break;
-
-  // *******
-  // ** Left branch: e is represented with v
-  // *******
-
-  int vcount1 = vcount - i3 + i1 + 1;
-  CGVertex *vlist1 = new CGVertex[2 * vcount1];
-  memcpy(vlist1, vlist, sizeof(CGVertex) * i1);
-  vlist1[i1] = cgv;
-  memcpy(vlist1 + i1 + 1, vlist + i3, sizeof(CGVertex) * (vcount - i3));
-
-  int ecount1 = 0;
-  int *elist1 = new int[2 * ecount];
-  for (int i = 0; i < 2 * ecount; ++i) {
-    int u = elist[i];
-    if (u >= i1 && u < i3 && u != i2) {
-      if (i % 2 == 0)
-        ++i;
-      continue;
-    }
-    int u2 = u < i1 ? u : (u == i2 ? i1 : u - i3 + i1 + 1);
-    if (i % 2 == 0)
-      elist1[2 * ecount1] = u2;
-    else {
-      elist1[2 * ecount1 + 1] = u2;
-      ecount1++;
-    }
-  }
-
-  LP *lp1 = new LP(hg, cg, vcount1, vlist1, ecount1, elist1, start_t);
-
-  // *******
-  // ** Right branch: e is not represented with v
-  // *******
-
-  int vcount2 = vcount - 1;
-  CGVertex *vlist2 = vlist;
-  vlist = NULL;
-  memcpy(vlist2 + i2, vlist2 + i2 + 1, sizeof(CGVertex) * (vcount - i2 - 1));
-
-  int ecount2 = 0;
-  int *elist2 = new int[2 * ecount];
-  for (int i = 0; i < 2 * ecount; ++i) {
-    int u = elist[i];
-    if (u == i2) {
-      if (i % 2 == 0)
-        ++i;
-      continue;
-    }
-    int u2 = u < i2 ? u : u - 1;
-    if (i % 2 == 0)
-      elist2[2 * ecount2] = u2;
-    else {
-      elist2[2 * ecount2 + 1] = u2;
-      ecount2++;
-    }
-  }
-
-  LP *lp2 = new LP(hg, cg, vcount2, vlist2, ecount2, elist2, start_t);
-
-  branches.resize(2);
-  branches[0] = lp1;
-  branches[1] = lp2;
-
-  // TODO: Remove
-  std::cout << "i1, i2, i3: " << i1 << " " << i2 << " " << i3 << std::endl;
-
-  std::cout << "vcount1: " << vcount1 << std::endl;
-  std::cout << "vlist1: ";
-  for (int i = 0; i < vcount1; ++i)
-    std::cout << i << ":(" << cg[vlist1[i]].first << "," <<
-  cg[vlist1[i]].second
-              << ") ";
-  std::cout << std::endl;
-
-  std::cout << "ecount1: " << ecount1 << std::endl;
-  std::cout << "elist1: ";
-  for (int i = 0; i < ecount1; ++i)
-    std::cout << "(" << elist1[2 * i] << "," << elist1[2 * i + 1] << ") ";
-  std::cout << std::endl;
-
-  std::cout << "vcount2: " << vcount2 << std::endl;
-  std::cout << "vlist2: ";
-  for (int i = 0; i < vcount2; ++i)
-    std::cout << i << ":(" << cg[vlist2[i]].first << "," <<
-  cg[vlist2[i]].second
-              << ") ";
-  std::cout << std::endl;
-
-  std::cout << "ecount2: " << ecount2 << std::endl;
-  std::cout << "elist2: ";
-  for (int i = 0; i < ecount2; ++i)
-    std::cout << "(" << elist2[2 * i] << "," << elist2[2 * i + 1] << ") ";
-  std::cout << std::endl;
-
-return;
-}
-*/

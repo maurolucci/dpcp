@@ -3,14 +3,20 @@
 
 #include <iostream>
 
+#include "params.hpp"
+
 #include "boost/graph/adjacency_list.hpp"
 #include "hglib.h"
 
 using TypeA = size_t;
 using TypeB = size_t;
-using Pair = std::pair<TypeA, TypeB>;
-using Graph =
-    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Pair>;
+struct VertexInfo {
+  TypeA first;
+  TypeB second;
+  size_t id;
+};
+using Graph = boost::adjacency_list<boost::listS, boost::listS,
+                                    boost::undirectedS, VertexInfo>;
 using Vertex = Graph::vertex_descriptor;
 
 using VertexVector = std::vector<Vertex>;
@@ -30,25 +36,38 @@ void get_conflict_graph(const HGraph &src, Graph &dst);
 void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
                    std::vector<TypeB> &idB2TyB);
 
-struct GraphEnv {
-  Graph graph;                     // Graph G = (V,E) with V c AxB
-  size_t nA, nB;                   // |A| and |B|
-  std::map<TypeA, size_t> tyA2idA; // Map from TypeA to idA
-  std::map<TypeB, size_t> tyB2idB; // Map from TypeB to idB
-  std::vector<TypeA> idA2TyA;      // Map from idA to TypeA
-  std::vector<TypeB> idB2TyB;      // Map from idB to TypeB
-  std::vector<std::vector<Vertex>>
-      snd; // Map from idA to subset of Vertex:
-           // snd[i_a] = {(a,b) in V: tyA2idA[a] = i_a}
-  std::vector<std::vector<Vertex>>
-      fst;    // Map from idB to subset of Vertex:
-              // fst[i_b] = {(a,b) in V: tyB2idB[b] = i_b}
-  bool isGCP; // Whether the instance is a graph coloring instance, i.e.
-  // |snd[a]| = 1 forall a \in A
+Graph graph_remove_vertices(Graph &src, std::list<int> &toRemove);
 
-  GraphEnv(const Graph &graph);
-  GraphEnv(const Graph &&graph);
+class GraphEnv {
+
+public:
+  Graph graph;                          // Graph G = (V,E) with V c AxB
+  Params &params;                       // Parameters
+  size_t nA, nB;                        // |A| and |B|
+  std::map<TypeA, size_t> tyA2idA;      // Map from TypeA to idA
+  std::map<TypeB, size_t> tyB2idB;      // Map from TypeB to idB
+  std::vector<TypeA> idA2TyA;           // Map from idA to TypeA
+  std::vector<TypeB> idB2TyB;           // Map from idB to TypeB
+  std::vector<std::vector<Vertex>> snd; // V_a = {v : v = (a,b) for some b}
+  std::vector<std::vector<Vertex>> fst; // V^b = {v : v = (a,b) for some a}
+  bool isGCP;                           // Is a GCP instance?
+  bool isInfeasible;                    // Is the instance infeasible?
+  std::list<VertexInfo> isolated;       // List of isolated vertices
+
+  GraphEnv(const Graph &graph, Params &param);
+  GraphEnv(const Graph &&graph, Params &param);
   ~GraphEnv();
+
+private:
+  // Intialization
+  void init_graphenv();
+
+  // Preprocessing
+  void preprocess();
+  void init_preprocess();
+  void preprocess_step1();
+  void preprocess_step2();
+  void preprocess_step3();
 };
 
 struct StableEnv {
@@ -59,9 +78,9 @@ struct StableEnv {
                        // B: (a,b) \in S for some a \in A}
   double cost;
   StableEnv();
-  StableEnv(VertexVector &stable, std::set<TypeB> &as, std::set<TypeB> &bs,
+  StableEnv(VertexVector &stable, std::set<TypeA> &as, std::set<TypeB> &bs,
             double cost);
-  StableEnv(VertexVector &&stable, std::set<TypeB> &&as, std::set<TypeB> &&bs,
+  StableEnv(VertexVector &&stable, std::set<TypeA> &&as, std::set<TypeB> &&bs,
             double cost);
 
   bool check(const Graph &graph);

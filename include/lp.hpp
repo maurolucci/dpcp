@@ -4,6 +4,7 @@
 #include "col.hpp"
 #include "cplex_env.hpp"
 #include "graph.hpp"
+#include "params.hpp"
 #include "pricing.hpp"
 #include "stats.hpp"
 extern "C" {
@@ -29,7 +30,8 @@ extern "C" {
 class LP {
 
 public:
-  LP(const Graph &graph, Pool &pool, Graph &origGraph, Col *initSol = NULL);
+  LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
+     Col *initSol = NULL);
   ~LP();
 
   // Optimize the linear relaxation by column generation
@@ -47,6 +49,8 @@ public:
 private:
   // Input data
   GraphEnv in;
+  // Parameters
+  Params &params;
   // Vector of columns (stable sets)
   std::vector<std::vector<Vertex>> stables;
   // Vector of positive variables

@@ -1,5 +1,8 @@
 #include "graph.hpp"
 
+#include <boost/graph/copy.hpp>
+#include <boost/graph/filtered_graph.hpp>
+
 void read_hypergrah(HGraph &hg, std::istream &input) {
 
   size_t n, m, mm, v;
@@ -23,16 +26,17 @@ void read_hypergrah(HGraph &hg, std::istream &input) {
 
 void get_conflict_graph(const HGraph &hg, Graph &graph) {
   // Add vertices (pointed sets)
+  size_t nVertices = 0;
   for (const auto &e : hg.hyperedges())
     for (const auto &v : *hg.impliedVertices(e->id()))
-      add_vertex(std::make_pair(e->id(), v->id()), graph);
+      add_vertex(VertexInfo{e->id(), v->id(), nVertices++}, graph);
   // Add edge ((e1,v1), (e2,v2)) such that v2 in e1 - v1
   auto [it1, end] = vertices(graph);
   for (; it1 != end; ++it1)
     for (auto it2 = std::next(it1); it2 != end; ++it2) {
       // Unpack PSets
-      auto [e1, v1] = graph[*it1];
-      auto [e2, v2] = graph[*it2];
+      TypeA e1 = graph[*it1].first, e2 = graph[*it2].first;
+      TypeB v1 = graph[*it1].second, v2 = graph[*it2].second;
       if (v1 != v2 &&
           (hg.isVertexOfHyperedge(v2, e1) || hg.isVertexOfHyperedge(v1, e2)))
         add_edge(*it1, *it2, graph);
@@ -54,15 +58,130 @@ void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
   }
 }
 
-GraphEnv::GraphEnv(const Graph &graph) : GraphEnv(Graph{graph}){};
+GraphEnv::GraphEnv(const Graph &graph, Params &params)
+    : GraphEnv(Graph{graph}, params){};
 
-GraphEnv::GraphEnv(const Graph &&graph) : graph(graph) {
+GraphEnv::GraphEnv(const Graph &&graph, Params &params)
+    : graph(graph), params(params), nA(0), nB(0), tyA2idA(), idA2TyA(),
+      tyB2idB(), idB2TyB(), fst(), snd(), isGCP(true), isInfeasible(false),
+      isolated() {
+  preprocess();
+  init_graphenv();
+};
 
-  // Fill maps
-  nA = 0, nB = 0;
-  isGCP = true;
+GraphEnv::~GraphEnv(){};
+
+void GraphEnv::preprocess() {
+  init_preprocess();
+  if (params.preprocess[0] == '1')
+    preprocess_step1();
+  if (params.preprocess[1] == '1')
+    preprocess_step2();
+  if (params.preprocess[2] == '1')
+    preprocess_step3();
+}
+
+// Initialize preprocessing
+void GraphEnv::init_preprocess() {
+  // Initialize tyA2idA, nA (|A|) and snd (V_a, for all a in A)
+  // (necessary for preprocessing)
   for (auto v : boost::make_iterator_range(vertices(graph))) {
-    auto [a, b] = graph[v];
+    TypeA a = graph[v].first;
+    bool retA = tyA2idA.insert({a, nA}).second;
+    if (retA) {
+      snd.push_back(std::vector<Vertex>{v});
+      nA++;
+    } else
+      snd[tyA2idA[a]].push_back(v);
+  }
+}
+
+// Warring: This function changes the stored graph by adding new edges
+void GraphEnv::preprocess_step1() {
+  // 1. Make each V_a a clique
+  for (size_t id_a = 0; id_a < nA; id_a++) {
+    auto it1 = snd[id_a].begin();
+    auto it2 = std::next(it1);
+    for (; it2 != snd[id_a].end(); ++it1, ++it2)
+      if (!edge(*it1, *it2, graph).second)
+        add_edge(*it1, *it2, graph);
+  }
+}
+
+// Warring: This function changes the stored graph by removing edges and
+// vertices
+void GraphEnv::preprocess_step2() {
+  // 2. Iteratively, for all a with |V_a| = 1, wlog V_a = {(a, b_a)},
+  // remove N(a,b_a) \cap V_{b_a}. If some V_a = {}, the instance is
+  // infeasible.
+
+  // Push candidates (a with |V_a| = 1) into a queue
+  std::list<TypeA> queue;
+  for (size_t id_a = 0; id_a < nA; id_a++)
+    if (snd[id_a].size() == 1)
+      queue.push_back(id_a);
+
+  // Process candidates
+  while (!queue.empty()) {
+    // Pop from queue
+    size_t id_a = queue.front();
+    queue.pop_front();
+    auto v = snd[id_a].front();
+    auto b = graph[v].second;
+    // Remove neighbors of v with common b
+    auto [it_u, it_end] = vertices(graph);
+    for (auto next = it_u; it_u != it_end; it_u = next) {
+      ++next;
+      TypeA au = graph[*it_u].first;
+      TypeB bu = graph[*it_u].second;
+      if (bu == b) {
+        // Remove the vertex from the graph
+        clear_vertex(*it_u, graph);
+        remove_vertex(*it_u, graph);
+        // Remove vertex u from V_{au}
+        size_t id_au = tyA2idA[au];
+        auto it = std::find(snd[id_au].begin(), snd[id_au].end(), *it_u);
+        snd[id_au].erase(it);
+        // Check |V_{au}|
+        if (snd[id_au].size() == 1)
+          // Push u into the queue
+          queue.push_back(id_au);
+        else if (snd[id_au].size() == 0) {
+          // Infeasibility detected
+          isInfeasible = true;
+          return;
+        }
+      }
+    }
+  }
+}
+
+// Warring: This function changes the stored graph by removing isolated vertices
+void GraphEnv::preprocess_step3() {
+  // 3. Vanish isolated vertices
+  auto [it_u, it_end] = vertices(graph);
+  for (auto next = it_u; it_u != it_end; it_u = next) {
+    ++next;
+    if (degree(*it_u, graph) == 0) {
+      auto vi = graph[*it_u];
+      isolated.push_back(graph[*it_u]);
+      clear_vertex(*it_u, graph);
+      remove_vertex(*it_u, graph);
+    }
+  }
+}
+
+void GraphEnv::init_graphenv() {
+
+  // Reset structs intiliazed during preprocessing
+  nA = 0;
+  tyA2idA.clear();
+  snd.clear();
+
+  // Initialize the other struct members
+  for (auto v : boost::make_iterator_range(vertices(graph))) {
+    TypeA a = graph[v].first;
+    TypeB b = graph[v].second;
     bool retA = tyA2idA.insert({a, nA}).second;
     bool retB = tyB2idB.insert({b, nB}).second;
     if (retA) {
@@ -80,17 +199,16 @@ GraphEnv::GraphEnv(const Graph &&graph) : graph(graph) {
     } else
       fst[tyB2idB[b]].push_back(v);
   }
-};
-
-GraphEnv::~GraphEnv(){};
+}
 
 StableEnv::StableEnv() : stable(), as(), bs(), cost(0.0){};
 
-StableEnv::StableEnv(VertexVector &stable, std::set<TypeB> &as,
+StableEnv::StableEnv(VertexVector &stable, std::set<TypeA> &as,
                      std::set<TypeB> &bs, double cost)
-    : StableEnv(VertexVector{stable}, VertexSet{as}, VertexSet{bs}, cost) {}
+    : StableEnv(VertexVector{stable}, std::set<TypeA>{as}, std::set<TypeB>{bs},
+                cost) {}
 
-StableEnv::StableEnv(VertexVector &&stable, std::set<TypeB> &&as,
+StableEnv::StableEnv(VertexVector &&stable, std::set<TypeA> &&as,
                      std::set<TypeB> &&bs, double cost)
     : stable(stable), as(as), bs(bs), cost(cost) {}
 
