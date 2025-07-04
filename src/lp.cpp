@@ -12,23 +12,22 @@ LP::LP(const Graph &graph, Params &params, Pool &_pool, Graph &origGraph,
        Col *initSol)
     : in(GraphEnv(graph, params)), params(params), stables(), posVars(),
       objVal(-1.0), initSol(initSol), pool(_pool), origGraph(origGraph),
-      vertexMap(), invVertexMap(), nRemainingAttemptsPool(MAXFAILS),
-      nRemainingAttemptsHeur(MAXFAILS), nRemainingAttemptsMwis1(MAXFAILS),
-      nRemainingAttemptsMwis2(MAXFAILS){
+      nRemainingAttemptsPool(MAXFAILS), nRemainingAttemptsHeur(MAXFAILS),
+      nRemainingAttemptsMwis1(MAXFAILS), nRemainingAttemptsMwis2(MAXFAILS) {
 
-          // // Translate original vertices to current vertices and viceversa
-          // vertexMap.resize(num_vertices(graph));
-          // invVertexMap.resize(num_vertices(origGraph), -1);
-          // for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
-          //   auto [av, bv] = origGraph[v];
-          //   for (Vertex u : boost::make_iterator_range(vertices(graph))) {
-          //     auto [au, bu] = graph[u];
-          //     if (av == au && bv == bu) {
-          //       vertexMap[u] = v;
-          //       invVertexMap[v] = u;
-          //     }
-          //   }
-          // }
+        // // Translate original vertices to current vertices and viceversa
+        // vertexMap.resize(num_vertices(graph));
+        // invVertexMap.resize(num_vertices(origGraph), -1);
+        // for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
+        //   auto [av, bv] = origGraph[v];
+        //   for (Vertex u : boost::make_iterator_range(vertices(graph))) {
+        //     auto [au, bu] = graph[u];
+        //     if (av == au && bv == bu) {
+        //       vertexMap[u] = v;
+        //       invVertexMap[v] = u;
+        //     }
+        //   }
+        // }
       };
 
 LP::~LP() {}
@@ -524,61 +523,64 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
 }
 
 void LP::save_solution(Col &col) {
+
+  // Recover the coloring of the current graph
+  Col col(in.graph);
+  Color k = 0;
+  for (auto i : posVars) {
+    for (auto v : stables[i])
+      col.set_color(v, k);
+    ++k;
+  }
+
+  // Extend the coloring with the isolated vertices
+  in.color_isolated(col);
+
   col.reset_coloring();
   // Translate solution according to the original graph
   size_t k = 0;
   for (auto i : posVars) {
     for (auto v : stables[i]) {
-      col.set_color(vertexMap[v], k);
+      col.set_color(vertex(in.graph[v].id, origGraph), k);
     }
     ++k;
   }
+  // Add isolated vertices
+  for (auto [a, b, id] : in.isolated) {
+    // Is any v in V^b already colored
+    Color c = -1;
+    for (auto v : fst[in.])
+  }
+
   assert(col.check_coloring(origGraph));
   return;
 }
 
 void LP::branch(std::vector<LP *> &branches) {
 
-  // Recover a and b
-  auto [a, b] = in.graph[branchVar];
-
   // *******
-  // ** Left branch: (a,b) is colored
+  // ** Left branch: v is colored
   // *******
 
-  // Get the set of vertices to be removed
-  // I.e. every vertex (a,b') with b' != b
-  std::set<Vertex> removed;
-  for (auto v : boost::make_iterator_range(vertices(in.graph)))
-    if (in.graph[v].first == a && in.graph[v].second != b)
-      removed.insert(v);
-
-  // Create a view of the graph without the vertices to be removed
-  using VFilter = boost::is_not_in_subset<std::set<Vertex>>;
-  VFilter vFilter(removed);
-  using Filter = boost::filtered_graph<Graph, boost::keep_all, VFilter>;
-  Filter filtered(in.graph, boost::keep_all(), vFilter);
-
-  // Create a copy of the view (force reindex)
+  // Create a copy of the graph
   Graph graph1;
-  boost::copy_graph(filtered, graph1);
+  boost::copy_graph(in.graph, graph1);
+  vertex_branching1(graph1, branchVar);
 
   // *******
-  // ** Right branch: (a,b) is uncolored
+  // ** Right branch: v is uncolored
   // ** ¡Reuse graph!
   // *******
 
-  Graph graph2(std::move(in.graph));
-  clear_vertex(branchVar, graph2);
-  remove_vertex(branchVar, graph2);
+  vertex_branching2(in.graph, branchVar);
 
   // *******
   // ** Create branches
   // *******
 
   branches.resize(2);
-  branches[0] = new LP(graph1, pool, origGraph);
-  branches[1] = new LP(graph2, pool, origGraph);
+  branches[0] = new LP(graph1, params, pool, origGraph);
+  branches[1] = new LP(in.graph, params, pool, origGraph);
 
   // for (auto v : boost::make_iterator_range(vertices(graph1)))
   //   std::cout << v << ": (" << graph1[v].first << "," << graph1[v].second

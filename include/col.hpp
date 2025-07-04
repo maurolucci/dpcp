@@ -14,7 +14,7 @@ using ColorClass = std::map<Color, VertexSet>;
 class Col {
 
 public:
-  Col();
+  Col(Graph &graph);
 
   [[nodiscard]] inline const Coloring &get_coloring() const {
     return coloring;
@@ -26,9 +26,11 @@ public:
 
   [[nodiscard]] inline size_t get_n_colors() const { return classes.size(); };
 
-  [[nodiscard]] inline Color get_color(const Vertex v) const {
-    return coloring.at(v);
+  [[nodiscard]] inline bool is_colored_B(TypeB b) const {
+    return colorB.contains(b);
   };
+
+  [[nodiscard]] inline bool get_color_B(TypeB b) const { return colorB[b]; };
 
   void reset_coloring();
 
@@ -39,8 +41,11 @@ public:
   [[nodiscard]] StableEnv get_stable(const Graph &graph, const Color k) const;
 
 private:
+  Graph &graph;
   Coloring coloring;
   ColorClass classes;
+  std::map<TypeA, Color> colorA;
+  std::map<TypeB, Color> colorB;
 };
 
 #endif // _COL_HPP_

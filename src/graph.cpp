@@ -58,8 +58,29 @@ void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
   }
 }
 
+// Vertex branching: v is colored
+// Warning: This function modifies the input graph
+void vertex_branching1(Graph &graph, Vertex v) {
+  TypeA a = graph[v].first;
+  TypeA b = graph[v].second;
+  auto [it_v, it_end] = vertices(graph);
+  for (auto next = it_v; it_v != it_end; it_v = next) {
+    next++;
+    if (graph[*it_v].first == a && graph[*it_v].second != b)
+      clear_vertex(v, graph);
+    remove_vertex(v, graph);
+  }
+}
+
+// Vertex branching: v is not colored
+// Warning: This function modifies the input graph
+void vertex_branching2(Graph &graph, Vertex v) {
+  clear_vertex(v, graph);
+  remove_vertex(v, graph);
+}
+
 GraphEnv::GraphEnv(const Graph &graph, Params &params)
-    : GraphEnv(Graph{graph}, params){};
+    : GraphEnv(Graph{graph}, params) {};
 
 GraphEnv::GraphEnv(const Graph &&graph, Params &params)
     : graph(graph), params(params), nA(0), nB(0), tyA2idA(), idA2TyA(),
@@ -69,7 +90,7 @@ GraphEnv::GraphEnv(const Graph &&graph, Params &params)
   init_graphenv();
 };
 
-GraphEnv::~GraphEnv(){};
+GraphEnv::~GraphEnv() {};
 
 void GraphEnv::preprocess() {
   init_preprocess();
@@ -201,7 +222,9 @@ void GraphEnv::init_graphenv() {
   }
 }
 
-StableEnv::StableEnv() : stable(), as(), bs(), cost(0.0){};
+void GraphEnv::color_isolated(Col &col) {}
+
+StableEnv::StableEnv() : stable(), as(), bs(), cost(0.0) {};
 
 StableEnv::StableEnv(VertexVector &stable, std::set<TypeA> &as,
                      std::set<TypeB> &bs, double cost)

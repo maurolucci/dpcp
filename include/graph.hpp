@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "col.hpp"
 #include "params.hpp"
 
 #include "boost/graph/adjacency_list.hpp"
@@ -36,7 +37,8 @@ void get_conflict_graph(const HGraph &src, Graph &dst);
 void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
                    std::vector<TypeB> &idB2TyB);
 
-Graph graph_remove_vertices(Graph &src, std::list<int> &toRemove);
+void vertex_branching1(Graph &graph, Vertex v);
+void vertex_branching2(Graph &graph, Vertex v);
 
 class GraphEnv {
 
@@ -57,6 +59,8 @@ public:
   GraphEnv(const Graph &graph, Params &param);
   GraphEnv(const Graph &&graph, Params &param);
   ~GraphEnv();
+
+  void color_isolated(Col &col);
 
 private:
   // Intialization

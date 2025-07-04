@@ -27,6 +27,8 @@ extern "C" {
 //   Column(int n_best, const nodepnt *best_sol);
 // } Column;
 
+using Column = VertexVector;
+
 class LP {
 
 public:
@@ -52,7 +54,7 @@ private:
   // Parameters
   Params &params;
   // Vector of columns (stable sets)
-  std::vector<std::vector<Vertex>> stables;
+  std::vector<Column> stables;
   // Vector of positive variables
   std::vector<int> posVars;
   // Branching variable
@@ -65,10 +67,10 @@ private:
   Pool &pool;
   // Original graph
   Graph &origGraph;
-  // Map from current vertices to original vertices
-  std::vector<Vertex> vertexMap;
-  // Map from original vertices to current vertices
-  std::vector<int> invVertexMap;
+  // // Map from current vertices to original vertices
+  // std::vector<Vertex> vertexMap;
+  // // Map from original vertices to current vertices
+  // std::vector<int> invVertexMap;
 
   // Remaining attempts for pricing
   size_t nRemainingAttemptsPool;
