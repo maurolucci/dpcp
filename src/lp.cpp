@@ -3,31 +3,31 @@
 #include "random.hpp"
 
 #include <boost/graph/copy.hpp>
-#include <boost/graph/filtered_graph.hpp>
 #include <cfloat>
 #include <limits>
 #include <numeric>
 
-LP::LP(const Graph &graph, Params &params, Pool &_pool, Graph &origGraph,
-       Col *initSol)
-    : in(GraphEnv(graph, params)), params(params), stables(), posVars(),
-      objVal(-1.0), initSol(initSol), pool(_pool), origGraph(origGraph),
-      nRemainingAttemptsPool(MAXFAILS), nRemainingAttemptsHeur(MAXFAILS),
-      nRemainingAttemptsMwis1(MAXFAILS), nRemainingAttemptsMwis2(MAXFAILS) {
+LP::LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
+       Col *initSol, bool isRoot)
+    : in(GraphEnv(graph, params, isRoot)), params(params), stables(), posVars(),
+      objVal(-1.0), initSol(initSol), pool(pool), origGraph(origGraph),
+      nRemainingAttemptsPool(0), nRemainingAttemptsHeur(0),
+      nRemainingAttemptsMwis1(2 * MAXFAILS),
+      nRemainingAttemptsMwis2(2 * MAXFAILS){
 
-        // // Translate original vertices to current vertices and viceversa
-        // vertexMap.resize(num_vertices(graph));
-        // invVertexMap.resize(num_vertices(origGraph), -1);
-        // for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
-        //   auto [av, bv] = origGraph[v];
-        //   for (Vertex u : boost::make_iterator_range(vertices(graph))) {
-        //     auto [au, bu] = graph[u];
-        //     if (av == au && bv == bu) {
-        //       vertexMap[u] = v;
-        //       invVertexMap[v] = u;
-        //     }
-        //   }
-        // }
+          // // Translate original vertices to current vertices and viceversa
+          // vertexMap.resize(num_vertices(graph));
+          // invVertexMap.resize(num_vertices(origGraph), -1);
+          // for (Vertex v : boost::make_iterator_range(vertices(origGraph))) {
+          //   auto [av, bv] = origGraph[v];
+          //   for (Vertex u : boost::make_iterator_range(vertices(graph))) {
+          //     auto [au, bu] = graph[u];
+          //     if (av == au && bv == bu) {
+          //       vertexMap[u] = v;
+          //       invVertexMap[v] = u;
+          //     }
+          //   }
+          // }
       };
 
 LP::~LP() {}
@@ -88,8 +88,8 @@ void LP::add_column(CplexEnv &cenv, StableEnv &stab) {
   // // Print some statics
   // std::cout << "adding column: [";
   // for (auto v : stab.stable) {
-  //   auto [a, b] = in.graph[v];
-  //   std::cout << " " << v << " = (" << a << ", " << b << ")";
+  //   auto [a, b, id] = in.graph[v];
+  //   std::cout << " " << in.getId[v] << " = (" << a << ", " << b << ")";
   // }
   // std::cout << " ]" << std::endl;
   // std::cout << "cost: " << stab.cost << std::endl;
@@ -143,6 +143,12 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
 
   auto startTime = std::chrono::high_resolution_clock::now();
   LP_STATE state = LP_UNSOLVED;
+
+  // Check if the instance is infeasible
+  if (in.isInfeasible) {
+    std::cout << "Infeasibility detected" << std::endl;
+    return LP_INFEASIBLE;
+  }
 
   // Check if the input is a GCP instance
   if (in.isGCP)
@@ -296,7 +302,8 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
     size_t nHeurCols = 0;
     for (size_t i = 0; i < MAXCOLS; ++i) {
       // Random starting vertex for the stable set
-      Vertex v = rand_int(rng) % num_vertices(in.graph);
+      int id = rand_int(rng) % num_vertices(in.graph);
+      Vertex v = vertex(id, in.graph);
       res = penv.heur_solve(dualsA, dualsB, v);
       stats.nCallsHeur++;
       if (res.second == PRICING_STABLE_FOUND) {
@@ -458,7 +465,7 @@ auto find_most_fractional(std::map<Vertex, double> &m) {
                           });
 }
 
-size_t LP::get_branching_variable(const IloNumArray &values) {
+Vertex LP::get_branching_variable(const IloNumArray &values) {
 
   // Given a in A with index i_a,
   // posSnd[i_a] = {(v, x): v = (a,b) \in V, x = \sum_{S : v \in S} x_S }
@@ -478,7 +485,7 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
   //    x is the most fracional value among \cup_{a \in A'} posSnd[i_a]
   // 4. Break ties with index of a
   int best_a = -1;
-  int best_v = -1;
+  Vertex best_v = NULL;
   double best_value = 0.0;
   for (size_t i = 0; i < in.nA; ++i) {
     if (posSnd[i].size() <= 1)
@@ -498,16 +505,16 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
     }
   }
 
-  if (best_v == -1) {
+  if (best_v == NULL) {
     // Choose by index
     for (size_t iA = 0; iA < in.nA; ++iA)
       if (in.snd[iA].size() > 1) {
-        best_v = iA;
+        best_v = in.snd[iA].front();
         break;
       }
   }
 
-  assert(best_v != -1);
+  assert(best_v != NULL);
 
   // *******************************************************************
   // // Print some statics
@@ -524,33 +531,24 @@ size_t LP::get_branching_variable(const IloNumArray &values) {
 
 void LP::save_solution(Col &col) {
 
+  // Reset coloring
+  col.reset_coloring();
+
   // Recover the coloring of the current graph
-  Col col(in.graph);
+  Col currentCol;
   Color k = 0;
   for (auto i : posVars) {
     for (auto v : stables[i])
-      col.set_color(v, k);
+      currentCol.set_color(in.graph, v, k);
     ++k;
   }
+  assert(currentCol.check_coloring(in.graph));
 
-  // Extend the coloring with the isolated vertices
-  in.color_isolated(col);
+  // Translate coloring to the original graph
+  currentCol.translate_coloring(in.graph, origGraph, col);
 
-  col.reset_coloring();
-  // Translate solution according to the original graph
-  size_t k = 0;
-  for (auto i : posVars) {
-    for (auto v : stables[i]) {
-      col.set_color(vertex(in.graph[v].id, origGraph), k);
-    }
-    ++k;
-  }
-  // Add isolated vertices
-  for (auto [a, b, id] : in.isolated) {
-    // Is any v in V^b already colored
-    Color c = -1;
-    for (auto v : fst[in.])
-  }
+  // Color isolated vertices
+  currentCol.color_isolated_vertices(in.isolated, col, origGraph);
 
   assert(col.check_coloring(origGraph));
   return;
@@ -563,9 +561,12 @@ void LP::branch(std::vector<LP *> &branches) {
   // *******
 
   // Create a copy of the graph
-  Graph graph1;
-  boost::copy_graph(in.graph, graph1);
-  vertex_branching1(graph1, branchVar);
+  Graph gcopy;
+  boost::copy_graph(
+      in.graph, gcopy,
+      boost::vertex_index_map(boost::make_assoc_property_map(in.getId)));
+  Vertex branchVarCopy = vertex(in.getId[branchVar], gcopy);
+  vertex_branching1(gcopy, branchVarCopy);
 
   // *******
   // ** Right branch: v is uncolored
@@ -579,7 +580,7 @@ void LP::branch(std::vector<LP *> &branches) {
   // *******
 
   branches.resize(2);
-  branches[0] = new LP(graph1, params, pool, origGraph);
+  branches[0] = new LP(gcopy, params, pool, origGraph);
   branches[1] = new LP(in.graph, params, pool, origGraph);
 
   // for (auto v : boost::make_iterator_range(vertices(graph1)))

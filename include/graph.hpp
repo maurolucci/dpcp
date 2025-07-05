@@ -3,7 +3,6 @@
 
 #include <iostream>
 
-#include "col.hpp"
 #include "params.hpp"
 
 #include "boost/graph/adjacency_list.hpp"
@@ -45,6 +44,7 @@ class GraphEnv {
 public:
   Graph graph;                          // Graph G = (V,E) with V c AxB
   Params &params;                       // Parameters
+  std::map<Vertex, size_t> getId;       // Map from V to {0,..,|V|-1}
   size_t nA, nB;                        // |A| and |B|
   std::map<TypeA, size_t> tyA2idA;      // Map from TypeA to idA
   std::map<TypeB, size_t> tyB2idB;      // Map from TypeB to idB
@@ -52,15 +52,14 @@ public:
   std::vector<TypeB> idB2TyB;           // Map from idB to TypeB
   std::vector<std::vector<Vertex>> snd; // V_a = {v : v = (a,b) for some b}
   std::vector<std::vector<Vertex>> fst; // V^b = {v : v = (a,b) for some a}
+  bool isRoot;                          // Is the root node?
   bool isGCP;                           // Is a GCP instance?
   bool isInfeasible;                    // Is the instance infeasible?
   std::list<VertexInfo> isolated;       // List of isolated vertices
 
-  GraphEnv(const Graph &graph, Params &param);
-  GraphEnv(const Graph &&graph, Params &param);
+  GraphEnv(const Graph &graph, Params &param, bool isRoot = false);
+  GraphEnv(const Graph &&graph, Params &param, bool isRoot = false);
   ~GraphEnv();
-
-  void color_isolated(Col &col);
 
 private:
   // Intialization

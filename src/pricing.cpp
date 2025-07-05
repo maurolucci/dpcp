@@ -15,7 +15,7 @@ void ThresholdCallback::check_thresolhd(
       IloNumArray valWb(context.getEnv(), in.nB);
       context.getCandidatePoint(w, valWb);
       for (auto v : boost::make_iterator_range(vertices(in.graph)))
-        if (valY[v] > 0.5) {
+        if (valY[in.getId[v]] > 0.5) {
           stab.stable.push_back(v);
           stab.as.insert(in.graph[v].first);
         }
@@ -69,7 +69,7 @@ void PricingEnv::exact_init() {
     char name[100];
     snprintf(name, sizeof(name), "y_%ld_%ld", in.graph[v].first,
              in.graph[v].second);
-    y[v] = IloBoolVar(cxenv, name);
+    y[in.getId[v]] = IloBoolVar(cxenv, name);
   }
   for (size_t iB = 0; iB < in.nB; ++iB) {
     char name[100];
@@ -80,7 +80,7 @@ void PricingEnv::exact_init() {
   // Objective
   IloExpr obj(cxenv);
   for (auto v : boost::make_iterator_range(vertices(in.graph)))
-    obj += y[v] * 1.0;
+    obj += y[in.getId[v]] * 1.0;
   for (size_t iB = 0; iB < in.nB; ++iB)
     obj += w[iB] * (-1.0);
   cxobj = IloMaximize(cxenv, obj);
@@ -91,8 +91,8 @@ void PricingEnv::exact_init() {
   // (1) \sum_{b \in B: (a,b) \in V} y_a_b <= 1, for all a \in A
   for (size_t ia = 0; ia < in.nA; ++ia) {
     IloExpr restr(cxenv);
-    for (size_t v : in.snd[ia])
-      restr += y[v];
+    for (Vertex v : in.snd[ia])
+      restr += y[in.getId[v]];
     cxcons.add(restr <= 1);
     restr.end();
   }
@@ -104,7 +104,7 @@ void PricingEnv::exact_init() {
     if (in.graph[u].first == in.graph[v].first)
       continue;
     IloExpr restr(cxenv);
-    restr += y[u] + y[v];
+    restr += y[in.getId[u]] + y[in.getId[v]];
     cxcons.add(restr <= 1);
     restr.end();
   }
@@ -112,7 +112,7 @@ void PricingEnv::exact_init() {
   // (3) y_a_b <= w_b, for all (a,b) \in V
   for (auto v : boost::make_iterator_range(vertices(in.graph))) {
     IloExpr restr(cxenv);
-    restr += y[v] - w[in.tyB2idB[in.graph[v].second]];
+    restr += y[in.getId[v]] - w[in.tyB2idB[in.graph[v].second]];
     cxcons.add(restr <= 0);
     restr.end();
   }
@@ -122,7 +122,7 @@ void PricingEnv::exact_init() {
     IloExpr restr(cxenv);
     restr += w[iB];
     for (auto v : in.fst[iB])
-      restr -= y[v];
+      restr -= y[in.getId[v]];
     cxcons.add(restr <= 0);
     restr.end();
   }
@@ -159,8 +159,8 @@ void PricingEnv::mwis_init() {
   // Initialize edge array
   elist = (int *)malloc(sizeof(int) * 2 * num_edges(in.graph));
   for (auto e : boost::make_iterator_range(edges(in.graph))) {
-    elist[2 * ecount] = source(e, in.graph);
-    elist[2 * ecount++ + 1] = target(e, in.graph);
+    elist[2 * ecount] = in.getId[source(e, in.graph)];
+    elist[2 * ecount++ + 1] = in.getId[target(e, in.graph)];
   }
 }
 
@@ -211,11 +211,11 @@ PricingEnv::mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   std::vector<double> weights2;
   size_t i = 0;
   for (auto v : boost::make_iterator_range(vertices(in.graph))) {
-    auto [a, b] = in.graph[v];
+    auto [a, b, id] = in.graph[v];
     double w = dualsA[in.tyA2idA[a]] - dualsB[in.tyB2idB[b]];
     if (w > PRICING_EPSILON) {
-      vmap[v] = i;
-      invmap.push_back(v);
+      vmap[in.getId[v]] = i;
+      invmap.push_back(in.getId[v]);
       weights2.push_back(w);
       ++i;
     }
@@ -228,10 +228,10 @@ PricingEnv::mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   for (auto e : boost::make_iterator_range(edges(in.graph))) {
     auto v = source(e, in.graph);
     auto u = target(e, in.graph);
-    if (vmap[v] == -1 || vmap[u] == -1)
+    if (vmap[in.getId[v]] == -1 || vmap[in.getId[u]] == -1)
       continue;
-    elist2[2 * ecount2] = vmap[v];
-    elist2[2 * ecount2++ + 1] = vmap[u];
+    elist2[2 * ecount2] = vmap[in.getId[v]];
+    elist2[2 * ecount2++ + 1] = vmap[in.getId[u]];
   }
 
   // Scale weights
@@ -262,8 +262,9 @@ PricingEnv::mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
     StableEnv st;
     for (int j = 0; j < newsets[set_i].count; ++j) {
       int v = invmap[newsets[set_i].members[j]];
-      st.stable.push_back(v);
-      auto [a, b] = in.graph[v];
+      Vertex vv = vertex(v, in.graph);
+      st.stable.push_back(vv);
+      auto [a, b, id] = in.graph[vv];
       if (st.as.insert(a).second)
         st.cost += dualsA[in.tyA2idA[a]];
       if (st.bs.insert(b).second)
@@ -323,7 +324,7 @@ PricingEnv::mwis2_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   // Compute vertex weight array
   std::vector<double> weights(num_vertices(in.graph));
   for (auto v : boost::make_iterator_range(vertices(in.graph)))
-    weights[v] = dualsA[in.tyA2idA[in.graph[v].first]];
+    weights[in.getId[v]] = dualsA[in.tyA2idA[in.graph[v].first]];
 
   // Scale weights
   double2COLORNWT(mwis_pi, &mwis_pi_scalef, weights);
@@ -341,8 +342,9 @@ PricingEnv::mwis2_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   for (int j = 0; j < newsets[0].count; ++j) {
     int v = newsets[0].members[j];
     w += weights[v];
-    stab.stable.push_back(v);
-    auto [a, b] = in.graph[v];
+    Vertex vv = vertex(v, in.graph);
+    stab.stable.push_back(vv);
+    auto [a, b, id] = in.graph[vv];
     if (stab.as.insert(a).second)
       stab.cost += dualsA[in.tyA2idA[a]];
     if (stab.bs.insert(b).second)
@@ -370,7 +372,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   // Update objective coefficients
   IloNumArray y_coefs(cxenv, num_vertices(in.graph));
   for (auto v : boost::make_iterator_range(vertices(in.graph)))
-    y_coefs[v] = dualsA[in.tyA2idA[in.graph[v].first]];
+    y_coefs[in.getId[v]] = dualsA[in.tyA2idA[in.graph[v].first]];
   IloNumArray w_coefs(cxenv, in.nB);
   for (size_t iB = 0; iB < in.nB; ++iB)
     w_coefs[iB] = -dualsB[iB];
@@ -401,7 +403,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
     IloNumArray valW(cxenv, in.nB);
     cplex.getValues(w, valW);
     for (auto v : boost::make_iterator_range(vertices(in.graph)))
-      if (valY[v] > 0.5) {
+      if (valY[in.getId[v]] > 0.5) {
         stab.stable.push_back(v);
         stab.as.insert(in.graph[v].first);
       }
@@ -420,7 +422,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
     state = PRICING_STABLE_FOUND;
     // Try to improve the stable set
     for (Vertex v : boost::make_iterator_range(vertices(in.graph))) {
-      auto [a, b] = in.graph[v];
+      auto [a, b, id] = in.graph[v];
       if (dualsA[in.tyA2idA[a]] < PRICING_EPSILON || stab.as.contains(a))
         continue;
       if (!stab.bs.contains(b))
@@ -465,7 +467,7 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::heur_solve(IloNumArray &dualsA,
   TypeA start_a = in.graph[start_v].first;
   TypeA start_b = in.graph[start_v].second;
   for (auto v : boost::make_iterator_range(vertices(in.graph))) {
-    auto [a, b] = in.graph[v];
+    auto [a, b, id] = in.graph[v];
     double cost_a = dualsA[in.tyA2idA[a]];
     double cost_b = dualsB[in.tyB2idB[b]];
     if (v == start_v) {
@@ -496,7 +498,7 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::heur_solve(IloNumArray &dualsA,
     }
 
     Vertex v = it_v->second;
-    auto [a, b] = in.graph[v];
+    auto [a, b, id] = in.graph[v];
 
     // Add the best candidate to the stable set
     stab.stable.push_back(v);
@@ -507,7 +509,7 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::heur_solve(IloNumArray &dualsA,
     // Remove and update weights in the candidate list
     for (auto it = candidates.begin(); it != candidates.end();) {
       Vertex u = it->second;
-      auto [au, bu] = in.graph[u];
+      auto [au, bu, idu] = in.graph[u];
       if (au == a || edge(u, v, in.graph).second) {
         it = candidates.erase(it);
         continue;

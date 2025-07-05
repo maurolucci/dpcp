@@ -20,12 +20,12 @@ CPLEXLIBFLAGS = -L$(CPLEXLIBDIR) -L$(CONCERTLIBDIR)
 CPLEXLNFLAGS = -lconcert -lilocplex -lcplex -ldl 
 
 
-all: run_tests_lp
+all: run_tests
 
 stats.o: src/stats.cpp include/stats.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
-graph.o: src/graph.cpp include/graph.hpp
+graph.o: src/graph.cpp include/graph.hpp include/params.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
 heur.o: src/heur.cpp include/heur.hpp include/col.hpp include/graph.hpp include/random.hpp
@@ -42,7 +42,7 @@ col.o: src/col.cpp include/col.hpp include/graph.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS)
 
 lp.o: src/lp.cpp include/lp.hpp include/col.hpp include/cplex_env.hpp \
-include/graph.hpp include/stats.hpp
+include/graph.hpp include/stats.hpp include/params.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
 main.o: main.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
@@ -50,7 +50,7 @@ include/col.hpp include/compact_ilp.hpp include/stats.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 
 tests.o: tests.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
-include/col.hpp include/compact_ilp.hpp include/stats.hpp \
+include/col.hpp include/compact_ilp.hpp include/stats.hpp include/params.hpp \
 include/pricing.hpp include/heur.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
 

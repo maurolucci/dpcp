@@ -33,7 +33,7 @@ class LP {
 
 public:
   LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
-     Col *initSol = NULL);
+     Col *initSol = NULL, bool isRoot = false);
   ~LP();
 
   // Optimize the linear relaxation by column generation
@@ -107,7 +107,7 @@ private:
   LP_STATE solve_GCP(double timelimit);
 
   // Get branching variable
-  size_t get_branching_variable(const IloNumArray &values);
+  Vertex get_branching_variable(const IloNumArray &values);
 };
 
 #endif // _LP_HPP_

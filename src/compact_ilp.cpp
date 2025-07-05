@@ -43,8 +43,8 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
   cxmodel.add(IloMinimize(cxenv, fobj));
 
   // Define snd: A -> P(AxB) / snd(a) = {(a',b) \in V: a = a'}
-  std::map<int, std::vector<int>> snd;
-  for (size_t v : boost::make_iterator_range(vertices(graph)))
+  std::map<int, std::vector<Vertex>> snd;
+  for (Vertex v : boost::make_iterator_range(vertices(graph)))
     snd[graph[v].first].push_back(v);
 
   // Constraints
@@ -52,18 +52,18 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
   // \sum_{(a,b) \in V} \sum_{k \in C} x_(a,b)_k \geq 1, forall a \in A
   for (auto &[a, vec] : snd) {
     IloExpr restr(cxenv);
-    for (size_t v : vec)
+    for (Vertex v : vec)
       for (size_t k = 0; k < ncolors; ++k)
-        restr += x[v][k];
+        restr += x[graph[v].id][k];
     cxcons.add(restr >= 1);
   }
 
   // x_(a,b)_k + x_(a',b)_k' \leq 1, forall (a,b),(a',b) \in V with a != a',
   //                                         k, k' \in C with k != k'
   for (auto v1 : boost::make_iterator_range(vertices(graph))) {
-    auto [a1, b1] = graph[v1];
+    auto [a1, b1, id1] = graph[v1];
     for (auto v2 : boost::make_iterator_range(vertices(graph))) {
-      auto [a2, b2] = graph[v2];
+      auto [a2, b2, id2] = graph[v2];
       if ((b1 != b2) || (a1 == a2))
         continue;
       for (size_t k1 = 0; k1 < ncolors; ++k1)
@@ -71,7 +71,7 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
           if (k1 == k2)
             continue;
           IloExpr restr(cxenv);
-          restr += x[v1][k1] + x[v2][k2];
+          restr += x[id1][k1] + x[id2][k2];
           cxcons.add(restr <= 1);
         }
     }
@@ -83,7 +83,7 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
     auto v = target(e, graph);
     for (size_t k = 0; k < ncolors; ++k) {
       IloExpr restr(cxenv);
-      restr += x[u][k] + x[v][k] - w[k];
+      restr += x[graph[u].id][k] + x[graph[v].id][k] - w[k];
       cxcons.add(restr <= 0);
     }
   }
@@ -100,7 +100,7 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
     IloNumVarArray startVar(cxenv);
     IloNumArray startVal(cxenv);
     for (auto [v, k] : coloring) {
-      startVar.add(x[v][k]);
+      startVar.add(x[graph[v].id][k]);
       startVal.add(1);
     }
     for (auto &[k, s] : classes) {
@@ -151,10 +151,10 @@ Stats solve_ilp(const Graph &graph, size_t ncolors, std::ostream &log,
   if (state == OPTIMAL || state == FEASIBLE) {
     // Recover coloring
     Col col;
-    for (size_t v = 0; v < num_vertices(graph); ++v)
+    for (auto v : boost::make_iterator_range(vertices(graph)))
       for (size_t k = 0; k < ncolors; ++k)
-        if (cplex.getValue(x[v][k]) > 0.5)
-          col.set_color(v, k);
+        if (cplex.getValue(x[graph[v].id][k]) > 0.5)
+          col.set_color(graph, v, k);
     assert(col.check_coloring(graph));
   }
 

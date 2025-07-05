@@ -1,8 +1,5 @@
 #include "graph.hpp"
 
-#include <boost/graph/copy.hpp>
-#include <boost/graph/filtered_graph.hpp>
-
 void read_hypergrah(HGraph &hg, std::istream &input) {
 
   size_t n, m, mm, v;
@@ -66,9 +63,10 @@ void vertex_branching1(Graph &graph, Vertex v) {
   auto [it_v, it_end] = vertices(graph);
   for (auto next = it_v; it_v != it_end; it_v = next) {
     next++;
-    if (graph[*it_v].first == a && graph[*it_v].second != b)
-      clear_vertex(v, graph);
-    remove_vertex(v, graph);
+    if (graph[*it_v].first == a && graph[*it_v].second != b) {
+      clear_vertex(*it_v, graph);
+      remove_vertex(*it_v, graph);
+    }
   }
 }
 
@@ -79,22 +77,22 @@ void vertex_branching2(Graph &graph, Vertex v) {
   remove_vertex(v, graph);
 }
 
-GraphEnv::GraphEnv(const Graph &graph, Params &params)
-    : GraphEnv(Graph{graph}, params) {};
+GraphEnv::GraphEnv(const Graph &graph, Params &params, bool isRoot)
+    : GraphEnv(Graph{graph}, params, isRoot){};
 
-GraphEnv::GraphEnv(const Graph &&graph, Params &params)
-    : graph(graph), params(params), nA(0), nB(0), tyA2idA(), idA2TyA(),
-      tyB2idB(), idB2TyB(), fst(), snd(), isGCP(true), isInfeasible(false),
-      isolated() {
+GraphEnv::GraphEnv(const Graph &&graph, Params &params, bool isRoot)
+    : graph(graph), params(params), getId(), nA(0), nB(0), tyA2idA(), tyB2idB(),
+      idA2TyA(), idB2TyB(), snd(), fst(), isRoot(isRoot), isGCP(true),
+      isInfeasible(false), isolated() {
   preprocess();
   init_graphenv();
 };
 
-GraphEnv::~GraphEnv() {};
+GraphEnv::~GraphEnv(){};
 
 void GraphEnv::preprocess() {
   init_preprocess();
-  if (params.preprocess[0] == '1')
+  if (params.preprocess[0] == '1' && isRoot)
     preprocess_step1();
   if (params.preprocess[1] == '1')
     preprocess_step2();
@@ -156,10 +154,7 @@ void GraphEnv::preprocess_step2() {
       TypeA au = graph[*it_u].first;
       TypeB bu = graph[*it_u].second;
       if (bu == b) {
-        // Remove the vertex from the graph
-        clear_vertex(*it_u, graph);
-        remove_vertex(*it_u, graph);
-        // Remove vertex u from V_{au}
+        // First, remove vertex u from V_{au}
         size_t id_au = tyA2idA[au];
         auto it = std::find(snd[id_au].begin(), snd[id_au].end(), *it_u);
         snd[id_au].erase(it);
@@ -172,6 +167,9 @@ void GraphEnv::preprocess_step2() {
           isInfeasible = true;
           return;
         }
+        // Then, remove the vertex from the graph
+        clear_vertex(*it_u, graph);
+        remove_vertex(*it_u, graph);
       }
     }
   }
@@ -185,7 +183,7 @@ void GraphEnv::preprocess_step3() {
     ++next;
     if (degree(*it_u, graph) == 0) {
       auto vi = graph[*it_u];
-      isolated.push_back(graph[*it_u]);
+      isolated.push_back(vi);
       clear_vertex(*it_u, graph);
       remove_vertex(*it_u, graph);
     }
@@ -201,6 +199,7 @@ void GraphEnv::init_graphenv() {
 
   // Initialize the other struct members
   for (auto v : boost::make_iterator_range(vertices(graph))) {
+    getId.insert(std::make_pair(v, getId.size()));
     TypeA a = graph[v].first;
     TypeB b = graph[v].second;
     bool retA = tyA2idA.insert({a, nA}).second;
@@ -222,9 +221,7 @@ void GraphEnv::init_graphenv() {
   }
 }
 
-void GraphEnv::color_isolated(Col &col) {}
-
-StableEnv::StableEnv() : stable(), as(), bs(), cost(0.0) {};
+StableEnv::StableEnv() : stable(), as(), bs(), cost(0.0){};
 
 StableEnv::StableEnv(VertexVector &stable, std::set<TypeA> &as,
                      std::set<TypeB> &bs, double cost)

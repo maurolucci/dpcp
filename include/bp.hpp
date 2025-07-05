@@ -72,7 +72,7 @@ public:
   Stats solve(Node *root) {
 
     start_t = ClockType::now();
-    first_t = start_t;
+    last_t = start_t;
     first_call = true;
 
     // Push root note (and solve initial LR)
@@ -169,7 +169,7 @@ private:
       nodes; // Number of processed nodes so far. A node is considered processed
   // if its relaxation has been solved
   TimePoint start_t; // B&P initial execution time
-  TimePoint first_t; // used by log
+  TimePoint last_t;  // used by log
   bool first_call;   // used by log
   int opt_flag;      // Optimality flag
   bool DFS;
@@ -318,9 +318,9 @@ private:
     if (first_call)
       first_call = false;
     else {
-      if (std::chrono::duration<double>(now_t - start_t).count() < 10.0)
+      if (std::chrono::duration<double>(now_t - last_t).count() < 10.0)
         return;
-      first_t = now_t;
+      last_t = now_t;
     }
 
     double _dual_bound =

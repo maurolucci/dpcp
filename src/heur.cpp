@@ -23,7 +23,7 @@ void heur_solve_aux(const GraphEnv &genv, const std::vector<TypeA> &as,
   std::vector<TypeB> invbs;   // Map from new index (in the subgraph) to b
   std::map<TypeB, VertexVector>
       repr; // Map from b to the vector of vertices that b represents
-  std::vector<VertexVector> adj;        // Adjacent lists of the subgraph
+  std::vector<std::vector<TypeB>> adj;  // Adjacent lists of the subgraph
                                         // : new index -> std::vector<TypeB>
   int ecount = 0;                       // Number of edges in the subgraph
   int elist[2 * num_edges(genv.graph)]; // Edgle list of the subgraph
@@ -67,7 +67,7 @@ void heur_solve_aux(const GraphEnv &genv, const std::vector<TypeA> &as,
     if (!bs.contains(b1)) {
       bs[b1] = bs.size();
       invbs.push_back(b1);
-      adj.push_back(VertexVector());
+      adj.push_back(std::vector<TypeB>());
       repr[b1] = std::vector<Vertex>();
     }
     repr[b1].push_back(bestVertex);
@@ -88,7 +88,7 @@ void heur_solve_aux(const GraphEnv &genv, const std::vector<TypeA> &as,
     for (int j = 0; j < colorclasses[k].count; ++j) {
       TypeB b = invbs[colorclasses[k].members[j]];
       for (Vertex v : repr[b])
-        col.set_color(v, k);
+        col.set_color(genv.graph, v, k);
     }
   // assert(col.check_coloring());
   return;

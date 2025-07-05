@@ -1,6 +1,6 @@
 #include "col.hpp"
 
-Col::Col(Graph &graph) : graph(graph) {};
+Col::Col(){};
 
 void Col::reset_coloring() {
   coloring.clear();
@@ -9,13 +9,14 @@ void Col::reset_coloring() {
   colorB.clear();
 }
 
-void Col::set_color(const Vertex v, const Color k) {
+void Col::set_color(const Graph &graph, const Vertex v, const Color k) {
   TypeA a = graph[v].first;
   TypeB b = graph[v].second;
   coloring[v] = k;
   classes[k].insert(v);
   colorA[a] = k;
   if (colorB.contains(b))
+    // Al the vertices of V^b must have the same color
     assert(colorB[b] == k);
   else
     colorB[b] = k;
@@ -60,4 +61,29 @@ StableEnv Col::get_stable(const Graph &graph, const Color k) const {
     stab.bs.insert(graph[v].second);
   }
   return stab;
+}
+
+void Col::translate_coloring(const Graph &srcGraph, const Graph &dstGraph,
+                             Col &dstCol) {
+  for (auto &[v, k] : coloring) {
+    size_t id = srcGraph[v].id;
+    // Find original vertex
+    auto u = vertex(id, dstGraph);
+    dstCol.set_color(dstGraph, u, k);
+  }
+}
+
+void Col::color_isolated_vertices(std::list<VertexInfo> &isolated, Col &dstCol,
+                                  const Graph &dstGraph) {
+  for (auto [a, b, id] : isolated) {
+    // Find original vertex
+    auto v = vertex(id, dstGraph);
+    // Decide color
+    Color k;
+    if (dstCol.is_colored_B(b))
+      k = dstCol.get_color_B(b);
+    else
+      k = 0; // First color;
+    dstCol.set_color(dstGraph, v, k);
+  }
 }

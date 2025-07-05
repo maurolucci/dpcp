@@ -4,6 +4,7 @@
 #include "graph.hpp"
 #include "heur.hpp"
 #include "lp.hpp"
+#include "params.hpp"
 #include "random.hpp"
 #include "stats.hpp"
 
@@ -41,6 +42,9 @@ int main() {
     std::cout << "\tVertices: " << hg.nbVertices() << std::endl;
     std::cout << "\tHyperedges: " << hg.hyperedges().size() << std::endl;
 
+    // Read parameters
+    Params params;
+
     // Build conflict graph
     Graph graph;
     get_conflict_graph(hg, graph);
@@ -50,12 +54,8 @@ int main() {
 
     std::cout << std::endl << SEPBAR << std::endl << std::endl;
 
-    // Copy conflict graph
-    Graph gcopy;
-    boost::copy_graph(graph, gcopy);
-
     // Solve with heuristic and fill the pool of columns
-    GraphEnv genv(gcopy);
+    GraphEnv genv(graph, params);
     Col dsaturCol;
     Pool pool;
     std::cout << "Running heuristic..." << std::endl;
@@ -67,9 +67,20 @@ int main() {
 
     // Solve with branch and price
     std::cout << "Running B&P..." << std::endl;
-    Col col;
-    LP *lp = new LP(graph, pool, gcopy, &dsaturCol);
+    // Copy the original graph
+    // boost::copy_graph needs a map from Vertex to size_t
+    // This is very annoying -.-
+    Graph gcopy;
+    std::map<Vertex, size_t> index;
+    for (auto v : boost::make_iterator_range(vertices(graph)))
+      index.insert(std::make_pair(v, index.size()));
+    boost::copy_graph(
+        graph, gcopy,
+        boost::vertex_index_map(boost::make_assoc_property_map(index)));
+    // Now, execute B&P
+    LP *lp = new LP(gcopy, params, pool, graph, &dsaturCol, true);
     Node *root = new Node(lp);
+    Col col;
     BP<Col> bp(col, std::cout, false);
     bp.set_initial_solution(dsaturCol, dsaturCol.get_n_colors());
     Stats stats1 = bp.solve(root);
@@ -81,7 +92,7 @@ int main() {
     // // Solve with compact ilp
     // std::cout << "Running CPLEX with compact ilp formulation..." <<
     // std::endl; Stats stats2 =
-    //     solve_ilp(gcopy, dsaturCol.get_n_colors(), std::cout, dsaturCol);
+    //     solve_ilp(graph, dsaturCol.get_n_colors(), std::cout, dsaturCol);
     // stats2.print_stats(std::cout);
 
     std::cout << std::endl << SEPBAR << std::endl;

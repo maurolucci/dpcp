@@ -14,7 +14,7 @@ using ColorClass = std::map<Color, VertexSet>;
 class Col {
 
 public:
-  Col(Graph &graph);
+  Col();
 
   [[nodiscard]] inline const Coloring &get_coloring() const {
     return coloring;
@@ -30,18 +30,23 @@ public:
     return colorB.contains(b);
   };
 
-  [[nodiscard]] inline bool get_color_B(TypeB b) const { return colorB[b]; };
+  [[nodiscard]] inline bool get_color_B(TypeB b) const { return colorB.at(b); };
 
   void reset_coloring();
 
-  void set_color(const Vertex v, const Color k);
+  void set_color(const Graph &graph, const Vertex v, const Color k);
 
   [[nodiscard]] bool check_coloring(const Graph &graph) const;
 
   [[nodiscard]] StableEnv get_stable(const Graph &graph, const Color k) const;
 
+  void translate_coloring(const Graph &srcGraph, const Graph &dstGraph,
+                          Col &dstCol);
+
+  void color_isolated_vertices(std::list<VertexInfo> &isolated, Col &dstCol,
+                               const Graph &dstGraph);
+
 private:
-  Graph &graph;
   Coloring coloring;
   ColorClass classes;
   std::map<TypeA, Color> colorA;
