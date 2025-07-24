@@ -1,5 +1,7 @@
 #include "graph.hpp"
 
+#include <boost/graph/copy.hpp>
+
 void read_hypergrah(HGraph &hg, std::istream &input) {
 
   size_t n, m, mm, v;
@@ -53,6 +55,21 @@ void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
     if (!edge(tyB2idB[b1], tyB2idB[b2], dst).second)
       add_edge(tyB2idB[b1], tyB2idB[b2], dst);
   }
+}
+
+Graph graph_copy(const Graph &src, const std::map<Vertex, size_t> &getId) {
+  Graph dst;
+  boost::copy_graph(
+      src, dst, boost::vertex_index_map(boost::make_assoc_property_map(getId)));
+  return dst;
+}
+
+Graph graph_copy(const Graph &src) {
+  // boost::copy_graph needs a map from Vertex to size_t
+  std::map<Vertex, size_t> index;
+  for (auto v : boost::make_iterator_range(vertices(src)))
+    index.insert(std::make_pair(v, index.size()));
+  return graph_copy(src, index);
 }
 
 // Vertex branching: v is colored
@@ -238,4 +255,10 @@ bool StableEnv::check(const Graph &graph) {
       if (edge(*it_v, *it_u, graph).second)
         return false;
   return true;
+}
+
+void StableEnv::add_vertex(const Vertex v, const TypeA a, const TypeB b) {
+  stable.push_back(v);
+  as.insert(a);
+  bs.insert(b);
 }

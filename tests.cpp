@@ -9,7 +9,6 @@
 #include "stats.hpp"
 
 #include <algorithm> // shuffle
-#include <boost/graph/copy.hpp>
 #include <filesystem>
 #include <iostream>
 #include <random> // std::default_random_engine
@@ -68,15 +67,7 @@ int main() {
     // Solve with branch and price
     std::cout << "Running B&P..." << std::endl;
     // Copy the original graph
-    // boost::copy_graph needs a map from Vertex to size_t
-    // This is very annoying -.-
-    Graph gcopy;
-    std::map<Vertex, size_t> index;
-    for (auto v : boost::make_iterator_range(vertices(graph)))
-      index.insert(std::make_pair(v, index.size()));
-    boost::copy_graph(
-        graph, gcopy,
-        boost::vertex_index_map(boost::make_assoc_property_map(index)));
+    Graph gcopy = graph_copy(graph);
     // Now, execute B&P
     LP *lp = new LP(gcopy, params, pool, graph, &dsaturCol, true);
     Node *root = new Node(lp);

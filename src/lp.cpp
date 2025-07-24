@@ -2,7 +2,6 @@
 #include "pricing.hpp"
 #include "random.hpp"
 
-#include <boost/graph/copy.hpp>
 #include <cfloat>
 #include <limits>
 #include <numeric>
@@ -561,10 +560,7 @@ void LP::branch(std::vector<LP *> &branches) {
   // *******
 
   // Create a copy of the graph
-  Graph gcopy;
-  boost::copy_graph(
-      in.graph, gcopy,
-      boost::vertex_index_map(boost::make_assoc_property_map(in.getId)));
+  Graph gcopy = graph_copy(in.graph, in.getId);
   Vertex branchVarCopy = vertex(in.getId[branchVar], gcopy);
   vertex_branching1(gcopy, branchVarCopy);
 

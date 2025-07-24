@@ -36,6 +36,9 @@ void get_conflict_graph(const HGraph &src, Graph &dst);
 void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
                    std::vector<TypeB> &idB2TyB);
 
+Graph graph_copy(const Graph &src, const std::map<Vertex, size_t> &getId);
+Graph graph_copy(const Graph &src);
+
 void vertex_branching1(Graph &graph, Vertex v);
 void vertex_branching2(Graph &graph, Vertex v);
 
@@ -87,6 +90,7 @@ struct StableEnv {
             double cost);
 
   bool check(const Graph &graph);
+  void add_vertex(const Vertex v, const TypeA a, const TypeB b);
 };
 
 using Pool = std::vector<StableEnv>;
