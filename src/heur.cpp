@@ -23,14 +23,14 @@ using TimePoint = std::chrono::_V2::system_clock::time_point;
 using Heur2SDegreeFunc = size_t (*)(const GraphEnv &,
                                     const std::map<Vertex, bool> &,
                                     const VertexVector &,
-                                    std::map<TypeB, std::set<TypeB>> &,
+                                    const std::map<TypeB, std::set<TypeB>> &,
                                     const Vertex &);
 
 // Get the current degree of v = (a,b) in Vb, ignoring removed vertices
 size_t get_current_degree_in_Vb(const GraphEnv &genv,
                                 const std::map<Vertex, bool> &removed,
                                 const VertexVector &selected,
-                                std::map<TypeB, std::set<TypeB>> &adj,
+                                const std::map<TypeB, std::set<TypeB>> &adj,
                                 const Vertex &v) {
   size_t degree = 0;
   for (Vertex u : boost::make_iterator_range(adjacent_vertices(v, genv.graph)))
@@ -45,7 +45,7 @@ size_t get_current_degree_in_Vb(const GraphEnv &genv,
 size_t get_current_degree_in_B(const GraphEnv &genv,
                                const std::map<Vertex, bool> &removed,
                                const VertexVector &selected,
-                               std::map<TypeB, std::set<TypeB>> &adj,
+                               const std::map<TypeB, std::set<TypeB>> &adj,
                                const Vertex &v) {
   std::set<TypeB> adjBs;
   for (Vertex u : boost::make_iterator_range(adjacent_vertices(v, genv.graph)))
@@ -57,11 +57,10 @@ size_t get_current_degree_in_B(const GraphEnv &genv,
 // Get the current number of adjacencies of v = (a,b) in B, restricted to the
 // selected vertices, i.e the size of {b' : (a',b') is selected, (a,b) is
 // adjacent to (a',b')}
-size_t get_current_degree_in_selected_B(const GraphEnv &genv,
-                                        const std::map<Vertex, bool> &removed,
-                                        const VertexVector &selected,
-                                        std::map<TypeB, std::set<TypeB>> &adj,
-                                        const Vertex &v) {
+size_t get_current_degree_in_selected_B(
+    const GraphEnv &genv, const std::map<Vertex, bool> &removed,
+    const VertexVector &selected, const std::map<TypeB, std::set<TypeB>> &adj,
+    const Vertex &v) {
   std::set<TypeB> adjBs;
   for (Vertex u : selected)
     if (edge(v, u, genv.graph).second &&
@@ -76,16 +75,17 @@ size_t get_current_degree_in_selected_B(const GraphEnv &genv,
 size_t get_n_new_edges(const GraphEnv &genv,
                        const std::map<Vertex, bool> &removed,
                        const VertexVector &selected,
-                       std::map<TypeB, std::set<TypeB>> &adj, const Vertex &v) {
+                       const std::map<TypeB, std::set<TypeB>> &adj,
+                       const Vertex &v) {
   std::set<TypeB> adjBs;
   TypeB bv = genv.graph[v].second;
   for (Vertex u : selected) {
     if (!edge(v, u, genv.graph).second)
       continue;
     TypeB bu = genv.graph[u].second;
-    if (bv < bu && (!adj.contains(bv) || !adj[bv].contains(bu)))
+    if (bv < bu && (!adj.contains(bv) || !adj.at(bv).contains(bu)))
       adjBs.insert(bu);
-    else if (bv > bu && (!adj.contains(bu) || !adj[bu].contains(bv)))
+    else if (bv > bu && (!adj.contains(bu) || !adj.at(bu).contains(bv)))
       adjBs.insert(bu);
   }
   return adjBs.size();
@@ -105,16 +105,18 @@ Vertex greedy_vertex_selector(const GraphEnv &genv,
                               const VertexVector &selected,
                               std::map<TypeB, std::set<TypeB>> &adj,
                               Heur2SDegreeFunc degreeFunc) {
-  Vertex bestVertex = candidates.front();
-  size_t bestDegree = degreeFunc(genv, removed, selected, adj, bestVertex);
+  Vertex minVertex = NULL;
+  size_t minDegree = std::numeric_limits<size_t>::max();
   for (Vertex v : candidates) {
+    if (removed.at(v))
+      continue;
     size_t currentDegree = degreeFunc(genv, removed, selected, adj, v);
-    if (currentDegree < bestDegree) {
-      bestDegree = currentDegree;
-      bestVertex = v;
+    if (currentDegree < minDegree) {
+      minDegree = currentDegree;
+      minVertex = v;
     }
   }
-  return bestVertex;
+  return minVertex;
 }
 
 // Function to select the next vertex v = (a,b) such that v has the minimum
@@ -132,8 +134,12 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
   // First, find the lowest and highest degree among the candidates
   size_t minDegree = std::numeric_limits<size_t>::max();
   size_t maxDegree = 0;
+  std::map<Vertex, size_t> degreeMap;
   for (Vertex v : candidates) {
+    if (removed.at(v))
+      continue;
     size_t currentDegree = degreeFunc(genv, removed, selected, adj, v);
+    degreeMap[v] = currentDegree;
     if (currentDegree < minDegree)
       minDegree = currentDegree;
     if (currentDegree > maxDegree)
@@ -143,11 +149,12 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
 
   // Build the RCL
   VertexVector rcl;
-  for (Vertex v : candidates) {
-    size_t currentDegree = degreeFunc(genv, removed, selected, adj, v);
-    if (currentDegree <= cutoff)
+  for (auto [v, d] : degreeMap)
+    if (d <= cutoff)
       rcl.push_back(v);
-  }
+
+  if (rcl.empty())
+    return NULL;
 
   // Select randomly a vertex from the RCL
   auto r = rand_int(rng) % rcl.size();
@@ -184,45 +191,36 @@ bool first_step(const GraphEnv &genv, VertexVector &selected,
   // Subset of A that has not been processed yet
   std::set<TypeA> unprocessedA(genv.idA2TyA.begin(), genv.idA2TyA.end());
 
+  // Comparison function for selecting the next a to process
+  std::function<bool(const TypeA, const TypeA)> compareFunc;
+  if (vertexSelector == greedy_vertex_selector) {
+    // For greedy strategy, choose a such that Va has currently the minimum
+    // size, break ties by the index of a
+    compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
+      return (nVa.at(a1) < nVa.at(a2) || (nVa.at(a1) == nVa.at(a2) && a1 < a2));
+    };
+  } else {
+    // Otherwise, choose a such that Va has currently the minimum size,
+    // but break ties randomly
+    compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
+      return (nVa.at(a1) < nVa.at(a2) ||
+              (nVa.at(a1) == nVa.at(a2) && (rand_int(rng) % 2) == 0));
+    };
+  }
+
   while (selected.size() < genv.nA) {
 
     // Choose an unprocessed a
-    std::function<bool(const TypeA, const TypeA)> compareFunc;
-    if (vertexSelector == greedy_vertex_selector) {
-      // For greedy strategy, choose a such that Va has currently the minimum
-      // size, break ties by the index of a
-      compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
-        return (nVa.at(a1) < nVa.at(a2) ||
-                (nVa.at(a1) == nVa.at(a2) && a1 < a2));
-      };
-    } else {
-      // Otherwise, choose a such that Va has currently the minimum size,
-      // but break ties randomly
-      compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
-        return (nVa.at(a1) < nVa.at(a2) ||
-                (nVa.at(a1) == nVa.at(a2) && (rand_int(rng) % 2) == 0));
-      };
-    }
     TypeA a = *std::min_element(unprocessedA.begin(), unprocessedA.end(),
                                 compareFunc);
     unprocessedA.erase(a);
 
-    // Filter removed vertices from Va
-    VertexVector candidates;
-    for (Vertex v : genv.Va.at(a)) {
-      if (!removed.at(v)) {
-        candidates.push_back(v);
-      }
-    }
-
-    // Fail if there are no candidates
-    if (candidates.empty())
-      return false;
-
     // Choose a vertex, with some criterion
     Vertex v =
-        vertexSelector(genv, candidates, removed, selected, adj, degreeFunc);
+        vertexSelector(genv, genv.Va.at(a), removed, selected, adj, degreeFunc);
     // info.at(v).print_info();
+    if (v == NULL)
+      return false; // No vertex can be selected from Va
 
     // Get label b of v
     TypeB b = genv.graph[v].second;
