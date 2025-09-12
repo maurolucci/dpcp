@@ -10,6 +10,7 @@ extern "C" {
 #include <queue>
 #include <random>
 #include <ranges>
+#include <stdexcept>
 
 #define ALPHA_B 0.1 // Parameter for the semigreedy selection
 
@@ -19,12 +20,6 @@ using TimePoint = std::chrono::_V2::system_clock::time_point;
 /******************* */
 /* 2-STEP HEURISTICS */
 /******************* */
-
-using Heur2SDegreeFunc = size_t (*)(const GraphEnv &,
-                                    const std::map<Vertex, bool> &,
-                                    const VertexVector &,
-                                    const std::map<TypeB, std::set<TypeB>> &,
-                                    const Vertex &);
 
 // Get the current degree of v = (a,b) in Vb, ignoring removed vertices
 size_t get_current_degree_in_Vb(const GraphEnv &genv,
@@ -91,36 +86,43 @@ size_t get_n_new_edges(const GraphEnv &genv,
   return adjBs.size();
 }
 
-using Heur2SVertexSelector = Vertex (*)(const GraphEnv &, const VertexVector &,
-                                        const std::map<Vertex, bool> &,
-                                        const VertexVector &,
-                                        std::map<TypeB, std::set<TypeB>> &,
-                                        Heur2SDegreeFunc);
+size_t evaluate_vertex(const GraphEnv &genv,
+                       const std::map<Vertex, bool> &removed,
+                       const VertexVector &selected,
+                       const std::map<TypeB, std::set<TypeB>> &adj,
+                       size_t variant, const Vertex &v) {
+  if (variant == 0)
+    return get_current_degree_in_Vb(genv, removed, selected, adj, v);
+  else if (variant == 1)
+    return get_current_degree_in_B(genv, removed, selected, adj, v);
+  else if (variant == 2)
+    return get_current_degree_in_selected_B(genv, removed, selected, adj, v);
+  else
+    return get_n_new_edges(genv, removed, selected, adj, v);
+}
 
-// Function to select the next vertex v = (a,b) such that v has the minimum
-// degree in Vb following a greedy strategy
+// Function to select the next vertex v following a greedy strategy
 Vertex greedy_vertex_selector(const GraphEnv &genv,
                               const VertexVector &candidates,
                               const std::map<Vertex, bool> &removed,
                               const VertexVector &selected,
                               std::map<TypeB, std::set<TypeB>> &adj,
-                              Heur2SDegreeFunc degreeFunc) {
+                              size_t variant) {
   Vertex minVertex = NULL;
-  size_t minDegree = std::numeric_limits<size_t>::max();
+  size_t minVal = std::numeric_limits<size_t>::max();
   for (Vertex v : candidates) {
     if (removed.at(v))
       continue;
-    size_t currentDegree = degreeFunc(genv, removed, selected, adj, v);
-    if (currentDegree < minDegree) {
-      minDegree = currentDegree;
+    size_t val = evaluate_vertex(genv, removed, selected, adj, variant, v);
+    if (val < minVal) {
+      minVal = val;
       minVertex = v;
     }
   }
   return minVertex;
 }
 
-// Function to select the next vertex v = (a,b) such that v has the minimum
-// degree in Vb following a semigreedy strategy
+// Function to select the next vertex v following a semigreedy strategy
 // We use a restricted candidate list (RCL) of size |RCL| = max(1, alpha*|C|)
 // where C is the set of candidates and alpha in [0,1] is a parameter
 // We store in the RCL the best candidates and we select randomly one of them
@@ -129,27 +131,27 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
                                   const std::map<Vertex, bool> &removed,
                                   const VertexVector &selected,
                                   std::map<TypeB, std::set<TypeB>> &adj,
-                                  Heur2SDegreeFunc degreeFunc) {
+                                  size_t variant) {
 
   // First, find the lowest and highest degree among the candidates
-  size_t minDegree = std::numeric_limits<size_t>::max();
-  size_t maxDegree = 0;
-  std::map<Vertex, size_t> degreeMap;
+  size_t minVal = std::numeric_limits<size_t>::max();
+  size_t maxVal = 0;
+  std::map<Vertex, size_t> valMap;
   for (Vertex v : candidates) {
     if (removed.at(v))
       continue;
-    size_t currentDegree = degreeFunc(genv, removed, selected, adj, v);
-    degreeMap[v] = currentDegree;
-    if (currentDegree < minDegree)
-      minDegree = currentDegree;
-    if (currentDegree > maxDegree)
-      maxDegree = currentDegree;
+    size_t val = evaluate_vertex(genv, removed, selected, adj, variant, v);
+    valMap[v] = val;
+    if (val < minVal)
+      minVal = val;
+    if (val > maxVal)
+      maxVal = val;
   }
-  double cutoff = minDegree + ALPHA_B * (maxDegree - minDegree);
+  double cutoff = minVal + ALPHA_B * (maxVal - minVal);
 
   // Build the RCL
   VertexVector rcl;
-  for (auto [v, d] : degreeMap)
+  for (auto [v, d] : valMap)
     if (d <= cutoff)
       rcl.push_back(v);
 
@@ -161,6 +163,12 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
 
   return rcl[r];
 }
+
+using Heur2SVertexSelector = Vertex (*)(const GraphEnv &, const VertexVector &,
+                                        const std::map<Vertex, bool> &,
+                                        const VertexVector &,
+                                        std::map<TypeB, std::set<TypeB>> &,
+                                        size_t);
 
 // Update the information after removing a vertex v
 void update_info(const Graph &graph, std::map<Vertex, bool> &removed, Vertex v,
@@ -174,9 +182,8 @@ void update_info(const Graph &graph, std::map<Vertex, bool> &removed, Vertex v,
 // Select a set of vertices of size |A|, one from each Va, such that the
 // selected vertices of each Vb are a stable set
 bool first_step(const GraphEnv &genv, VertexVector &selected,
-                std::map<TypeB, std::set<TypeB>> &adj,
-                Heur2SVertexSelector vertexSelector,
-                Heur2SDegreeFunc degreeFunc) {
+                std::map<TypeB, std::set<TypeB>> &adj, size_t variant,
+                Heur2SVertexSelector vertexSelector) {
 
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
@@ -217,7 +224,7 @@ bool first_step(const GraphEnv &genv, VertexVector &selected,
 
     // Choose a vertex, with some criterion
     Vertex v =
-        vertexSelector(genv, genv.Va.at(a), removed, selected, adj, degreeFunc);
+        vertexSelector(genv, genv.Va.at(a), removed, selected, adj, variant);
     // info.at(v).print_info();
     if (v == NULL)
       return false; // No vertex can be selected from Va
@@ -299,8 +306,7 @@ void second_step(const GraphEnv &genv, VertexVector &selected,
 }
 
 // General two-step greedy heuristic for DPCP
-Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
-                              Heur2SDegreeFunc degreeFunc) {
+Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col, size_t variant) {
 
   TimePoint start = ClockType::now();
   Stats stats;
@@ -310,7 +316,7 @@ Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
   std::map<TypeB, std::set<TypeB>> adj; // Adjacent list of the subgraph
                                         // induced by the selected vertices
   bool success =
-      first_step(genv, selected, adj, greedy_vertex_selector, degreeFunc);
+      first_step(genv, selected, adj, variant, greedy_vertex_selector);
   if (!success) {
     stats.state = INFEASIBLE;
   } else {
@@ -329,7 +335,7 @@ Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
 
 // General two-step semigreedy heuristic for DPCP
 Stats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col, size_t nIters,
-                                  Heur2SDegreeFunc degreeFunc) {
+                                  size_t variant) {
 
   TimePoint start = ClockType::now();
   Stats stats;
@@ -341,7 +347,7 @@ Stats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col, size_t nIters,
     std::map<TypeB, std::set<TypeB>> adj; // Adjacent list of the subgraph
                                           // induced by the selected vertices
     bool success =
-        first_step(genv, selected, adj, semigreedy_vertex_selector, degreeFunc);
+        first_step(genv, selected, adj, variant, semigreedy_vertex_selector);
     if (!success) {
       continue;
     } else {
@@ -365,41 +371,6 @@ Stats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col, size_t nIters,
   stats.time = std::chrono::duration<double>(end - start).count();
 
   return stats;
-}
-
-Stats dpcp_2_step_greedy_heur_min_degree_in_Vb(const GraphEnv &genv, Col &col) {
-  return dpcp_2_step_greedy_heur(genv, col, get_current_degree_in_Vb);
-}
-Stats dpcp_2_step_greedy_heur_min_degree_in_B(const GraphEnv &genv, Col &col) {
-  return dpcp_2_step_greedy_heur(genv, col, get_current_degree_in_B);
-}
-Stats dpcp_2_step_greedy_heur_min_degree_in_selected_B(const GraphEnv &genv,
-                                                       Col &col) {
-  return dpcp_2_step_greedy_heur(genv, col, get_current_degree_in_selected_B);
-}
-Stats dpcp_2_step_greedy_heur_min_n_new_edges(const GraphEnv &genv, Col &col) {
-  return dpcp_2_step_greedy_heur(genv, col, get_n_new_edges);
-}
-
-Stats dpcp_2_step_semigreedy_heur_min_degree_in_Vb(const GraphEnv &genv,
-                                                   Col &col, size_t nIters) {
-  return dpcp_2_step_semigreedy_heur(genv, col, nIters,
-                                     get_current_degree_in_Vb);
-}
-Stats dpcp_2_step_semigreedy_heur_min_degree_in_B(const GraphEnv &genv,
-                                                  Col &col, size_t nIters) {
-  return dpcp_2_step_semigreedy_heur(genv, col, nIters,
-                                     get_current_degree_in_B);
-}
-Stats dpcp_2_step_semigreedy_heur_min_degree_in_selected_B(const GraphEnv &genv,
-                                                           Col &col,
-                                                           size_t nIters) {
-  return dpcp_2_step_semigreedy_heur(genv, col, nIters,
-                                     get_current_degree_in_selected_B);
-}
-Stats dpcp_2_step_semigreedy_heur_min_n_new_edges(const GraphEnv &genv,
-                                                  Col &col, size_t nIters) {
-  return dpcp_2_step_semigreedy_heur(genv, col, nIters, get_n_new_edges);
 }
 
 /******************* */
@@ -440,145 +411,186 @@ struct Heur1SVertexInfo {
   }
 };
 
-// Given v = (a,bv) and u = (a,bu), v < u if (lexicographic order)
-// (i) v has a lower saturation degree
-// (ii) v has a lower uncolored degree
-// (iii) bv has a lower index
-bool vertex_comparison_VC1_1(const Heur1SVertexInfo &v,
-                             const Heur1SVertexInfo &u) {
-  assert(v.a == u.a);
-  if (v.adjColors.size() < u.adjColors.size() ||
-      (v.adjColors.size() == u.adjColors.size() &&
-       v.uncolNeighbors.size() < u.uncolNeighbors.size()) ||
-      (v.adjColors.size() == u.adjColors.size() &&
-       v.uncolNeighbors.size() == u.uncolNeighbors.size() && v.b < u.b))
-    return true;
-  return false;
-}
+using InfoMap = std::map<Vertex, Heur1SVertexInfo>;
+using VaSizeMap = std::map<TypeA, size_t>;
 
-// Given v = (av,bv) and u = (au,bu) with av != au, v < u if (lexicographic
-// order)
-// (i) v has a greater saturation degree
-// (ii) v has a greater uncolored degree
-// (iii) av has a lower index
-bool vertex_comparison_VC1_2(const Heur1SVertexInfo &v,
-                             const Heur1SVertexInfo &u) {
-  assert(v.a != u.a);
-  if (v.adjColors.size() > u.adjColors.size() ||
-      (v.adjColors.size() == u.adjColors.size() &&
-       v.uncolNeighbors.size() > u.uncolNeighbors.size()) ||
-      (v.adjColors.size() == u.adjColors.size() &&
-       v.uncolNeighbors.size() == u.uncolNeighbors.size() && v.a < u.a))
-    return true;
-  return false;
-}
+// Select a set of candidate vertices to color, with the following criterion:
+// (i) Among the uncolored a, choose one with the lowest |V_a|
+// (ii) Build a set of candidates, containing every vertex (a,b) of V_a
+// such that: (1) some vertex in V^b is already colored or (2) (a,b) has
+// the lowest degree of saturation in V_a
+VertexVector vertices_selector(const GraphEnv &genv, Col &col,
+                               const InfoMap &info, VaSizeMap &nVa, ASet &A,
+                               bool greedy) {
 
-// Function to select the next vertex to color using the vertex criterion
-// VC1
-Vertex vertex_selector_VC1(const std::set<Vertex> &candidates,
-                           const std::map<Vertex, Heur1SVertexInfo> &info) {
-  std::map<TypeA, Vertex> best;
-  for (Vertex v : candidates) {
-    TypeA a = info.at(v).a;
-    if (!best.contains(a))
-      best.insert(std::make_pair(a, v));
-    else if (vertex_comparison_VC1_1(info.at(v), info.at(best.at(a))))
-      best.at(a) = v;
+  // Comparison function for elements of A
+  std::function<bool(const TypeA, const TypeA)> compareFunc;
+  if (greedy) {
+    // For greedy strategy, choose a such that Va has currently the minimum
+    // size, break ties by the index of a
+    compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
+      return (nVa.at(a1) < nVa.at(a2) || (nVa.at(a1) == nVa.at(a2) && a1 < a2));
+    };
+  } else {
+    // Otherwise, choose a such that Va has currently the minimum size,
+    // but break ties randomly
+    compareFunc = [&nVa](const TypeA a1, const TypeA a2) {
+      return (nVa.at(a1) < nVa.at(a2) ||
+              (nVa.at(a1) == nVa.at(a2) && (rand_int(rng) % 2) == 0));
+    };
   }
-  return std::min_element(best.begin(), best.end(),
-                          [&info](auto p1, auto p2) {
-                            return vertex_comparison_VC1_2(info.at(p1.second),
-                                                           info.at(p2.second));
-                          })
-      ->second;
+
+  // Choose the next a
+  TypeA a = *std::min_element(A.begin(), A.end(), compareFunc);
+  A.erase(a);
+
+  // Set of candidates
+  VertexVector candidates1, candidates2;
+  size_t minDSat = std::numeric_limits<size_t>::max();
+  for (Vertex v : genv.Va.at(a)) {
+    if (info.at(v).removed)
+      continue;
+    TypeB b = genv.graph[v].second;
+    if (col.is_colored_B(b)) {
+      candidates1.push_back(v);
+      continue;
+    }
+    size_t dsat = info.at(v).adjColors.size();
+    if (dsat < minDSat) {
+      minDSat = dsat;
+      candidates2.clear();
+    }
+    if (dsat == minDSat)
+      candidates2.push_back(v);
+  }
+  for (Vertex v : candidates1)
+    candidates2.push_back(v);
+
+  return candidates2;
 }
 
-// Check if painting a vertex v = (a,b) with color i is safe,
-// i.e. it does not invalidate any vertex apart from Va and [Vb cap N(v)]
-bool is_safe_color(const GraphEnv &genv, Col &col,
-                   const std::map<Vertex, Heur1SVertexInfo> &info, Vertex v,
-                   Color i) {
+// Get the set of vertices that are invalidated when vertex v = (a,b) is
+// colored with i, i.e. the returned set contains:
+// (i) neighbors of v in V^b
+// (ii) vertices of V^b that has i as an adjacent color
+// (iii) neighbor (a',b') of v with a != a' and b != b' such
+//       that some vertex of Vb' has color i
+// Raise an exception if v invalidates all the remaining vertices of some V_a'
+VertexSet get_invalidated_vertices(const GraphEnv &genv, Col &col,
+                                   const InfoMap &info, const VaSizeMap &nVa,
+                                   Vertex v, Color i) {
+  VertexSet inv;
+  std::map<TypeA, std::set<Vertex>> invMap;
   for (Vertex u : genv.Vb.at(genv.graph[v].second))
-    if (!info.at(u).removed && !edge(u, v, genv.graph).second &&
-        info.at(u).adjColors.contains(i))
-      return false;
+    if (!info.at(u).removed && info.at(u).color == -1 &&
+        ((!edge(u, v, genv.graph).second && info.at(u).adjColors.contains(i)) ||
+         edge(u, v, genv.graph).second)) {
+      inv.insert(u);
+      invMap[genv.graph[u].first].insert(u);
+    }
   for (Vertex u : info.at(v).uncolNeighbors)
     if (col.is_colored_B(genv.graph[u].second) &&
-        col.get_color_B(genv.graph[u].second) == i)
-      return false;
-  return true;
+        col.get_color_B(genv.graph[u].second) == i) {
+      inv.insert(u);
+      invMap[genv.graph[u].first].insert(u);
+    }
+  for (auto &[a, vs] : invMap)
+    if (vs.size() == nVa.at(a))
+      throw std::exception();
+  return inv;
 }
 
-// Function to select a color for a vertex using the color criterion CC1
-// Criterion CC1: assign the first free and *safe* color
-Color color_selector_CC1(const GraphEnv &genv, Col &col,
-                         const std::map<Vertex, Heur1SVertexInfo> &info,
-                         const Vertex u) {
-  // A new color is needed?
-  if (info.at(u).adjColors.size() == col.get_n_colors())
-    return col.get_n_colors();
+// Select a vertex from the candidates and a used free color, with the following
+// criterion: the one that invalidates the lowest number of vertices.
+// If there is none, do the same with a new color.
+// Return the vertex, the color, and the set of invalidated vertices
+std::tuple<Vertex, Color, VertexSet>
+vertex_color_selector(const GraphEnv &genv, Col &col, const InfoMap &info,
+                      const VaSizeMap &nVa, const VertexVector &vCandidates) {
 
-  // Mark the colors used in the neighborhood of u
-  std::vector<bool> used(std::min(genv.nA, genv.nB));
-  for (Color i : info.at(u).adjColors)
-    used[i] = true;
+  VertexSet minInv;
+  size_t n_minInv = std::numeric_limits<size_t>::max();
+  Vertex v = NULL;
+  Color c = -1;
 
-  // Find the first available and safe color for u
-  Color i;
-  for (i = 0; i < static_cast<int>(used.size()); i++)
-    if (used[i] == false && is_safe_color(genv, col, info, u, i))
-      break;
+  // Iterate over the candidate vertices
+  for (Vertex u : vCandidates) {
 
-  return i;
-}
+    TypeA a = genv.graph[u].first;
+    TypeB b = genv.graph[u].second;
 
-// Get the number of vertices that are invalidated when vertex v = (a,b) is
-// painted with color i
-bool n_invalidated_vertices(const GraphEnv &genv, Col &col,
-                            const std::map<Vertex, Heur1SVertexInfo> &info,
-                            Vertex v, Color i) {
-  size_t nInv = 0;
-  for (Vertex u : genv.Vb.at(genv.graph[v].second))
-    if (!info.at(u).removed && !edge(u, v, genv.graph).second &&
-        info.at(u).adjColors.contains(i))
-      nInv++;
-  for (Vertex u : info.at(v).uncolNeighbors)
-    if (col.is_colored_B(genv.graph[u].second) &&
-        col.get_color_B(genv.graph[u].second) == i)
-      nInv++;
-  return nInv;
-}
+    // Find candidate colors for u
+    std::vector<Color> colors;
+    if (col.is_colored_B(b))
+      colors.push_back(col.get_color_B(b));
+    else {
+      // A new color is needed? Ignore!
+      if (info.at(u).adjColors.size() == col.get_n_colors())
+        continue;
+      // Otherwse, find the non-adjacent colors
+      else {
+        for (size_t i = 0; i < col.get_n_colors(); ++i)
+          if (!info.at(u).adjColors.contains(i))
+            colors.push_back(i);
+      }
+    }
 
-// Function to select a color for a vertex using the color criterion CC2
-// Criterion CC2: between all free colors, assign the one that invalidates
-// the lowest number of vertices
-// TODO: ignore colors that force infeasibility, i.e, those colors that
-// invalidate all the remaining vertices of some Va
-Color color_selector_CC2(const GraphEnv &genv, Col &col,
-                         const std::map<Vertex, Heur1SVertexInfo> &info,
-                         const Vertex u) {
-  // A new color is needed?
-  if (info.at(u).adjColors.size() == col.get_n_colors())
-    return col.get_n_colors();
+    // Among the "safe" vertex-color pairs, i.e. that do not invalidate all the
+    // remaining vertices of any V_a', select the one that minimice the number
+    // of invalidated vertices
+    for (Color k : colors) {
+      VertexSet inv;
+      try {
+        inv = get_invalidated_vertices(genv, col, info, nVa, u, k);
+      } catch (...) {
+        continue;
+      }
+      if (inv.size() < n_minInv) {
+        n_minInv = inv.size();
+        minInv = inv;
+        v = u;
+        c = k;
+      }
+    }
+  }
 
-  // Set of avilable colors (not used in the neighbors)
-  std::set<Color> freeColors;
-  for (size_t i = 0; i < col.get_n_colors(); ++i)
-    if (!info.at(u).adjColors.contains(i))
-      freeColors.insert(i);
+  // If any pair is candidate, find the new color that minimice the number
+  // of invalidated vertices
+  if (v == NULL) {
 
-  // Find the available color that invalidates the lowest number of vertices
-  return *std::min_element(
-      freeColors.begin(), freeColors.end(),
-      [&genv, &col, &info, &u](const Color &i, const Color &j) {
-        return n_invalidated_vertices(genv, col, info, u, i) <
-               n_invalidated_vertices(genv, col, info, u, j);
-      });
+    // Iterate over the candidate vertices
+    for (Vertex u : vCandidates) {
+
+      // Ignore vertices with fixed color
+      if (col.is_colored_B(genv.graph[u].second))
+        continue;
+
+      VertexSet inv;
+      try {
+        inv = get_invalidated_vertices(genv, col, info, nVa, u,
+                                       col.get_n_colors());
+      } catch (...) {
+        continue;
+      }
+      if (inv.size() < n_minInv) {
+        n_minInv = inv.size();
+        minInv = inv;
+        v = u;
+        c = col.get_n_colors();
+      }
+    }
+  }
+
+  // If any pair is candidate yet, throw exception
+  if (v == NULL)
+    throw std::exception();
+
+  return std::make_tuple(v, c, minInv);
 }
 
 // One-step heuristic for DPCP
 // Based on a DSATUR implementation for GCP that runs in O(n^2)
-Stats dpcp_heur_1_step(const GraphEnv &genv, Col &col) {
+Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
   TimePoint start = ClockType::now();
 
   // Map with the necessary information of each vertex
@@ -589,29 +601,34 @@ Stats dpcp_heur_1_step(const GraphEnv &genv, Col &col) {
   for (auto &[a, Va] : genv.Va)
     nVa.emplace(a, Va.size());
 
-  // Set of candidates vertices
-  std::set<Vertex> candidates;
-
   // Fill the information of the vertices and add them to the candidate list
-  for (Vertex u : boost::make_iterator_range(vertices(genv.graph))) {
+  for (Vertex u : boost::make_iterator_range(vertices(genv.graph)))
     info.emplace(u, Heur1SVertexInfo(genv.graph, u));
-    candidates.insert(u);
-  }
 
-  while (!candidates.empty()) {
+  // Subset of A that has not been processed yet
+  ASet A(genv.idA2TyA.begin(), genv.idA2TyA.end());
 
-    // Choose the next vertex
-    Vertex u = vertex_selector_VC1(candidates, info);
-    info.at(u).print_info();
+  while (!A.empty()) {
+
+    auto vCandidates = vertices_selector(genv, col, info, nVa, A, true);
+    std::tuple<Vertex, Color, VertexSet> tuple;
+    try {
+      tuple = vertex_color_selector(genv, col, info, nVa, vCandidates);
+    } catch (...) {
+      TimePoint end = ClockType::now();
+      Stats stats;
+      stats.state = INFEASIBLE;
+      stats.time = std::chrono::duration<double>(end - start).count();
+      return stats;
+    }
+
+    Vertex u = std::get<0>(tuple);
+    Color i = std::get<1>(tuple);
+    VertexSet inv = std::get<2>(tuple);
 
     // Get components (a,b) of u
     TypeA a = genv.graph[u].first;
     TypeB b = genv.graph[u].second;
-
-    // Decide the color of u
-    // Recall: all colored vertices in V^b must have the same color
-    Color i = col.is_colored_B(b) ? col.get_color_B(b)
-                                  : color_selector_CC2(genv, col, info, u);
 
     // Color u with i
     // std::cout << "Pintando: (" << genv.graph[u].first << ","
@@ -619,48 +636,20 @@ Stats dpcp_heur_1_step(const GraphEnv &genv, Col &col) {
     info.at(u).color = i;
     col.set_color(genv.graph, u, i);
 
-    // Set of vertices that must be removed after coloring u
-    std::set<Vertex> toRemove;
-
-    // 1. Remove u and neighbors of u in Va
-    // Recall: Va is a clique
+    // Invalidate the remaining vertices of Va
     for (Vertex v : genv.Va.at(a))
-      if (!info.at(v).removed)
-        toRemove.insert(v);
+      if (v != u && !info.at(v).removed)
+        inv.insert(v);
 
-    // 2. Remove neighbors of u in Vb
-    // 3. Remove the vertices of V^b that has i as an adjacent color
-    for (Vertex v : genv.Vb.at(b))
-      if (!info.at(v).removed && info.at(v).color == -1 &&
-          (edge(u, v, genv.graph).second || info.at(v).adjColors.contains(i)))
-        toRemove.insert(v);
-
-    // 4. Remove every neighbor (a',b') of u with a != a' and b != b' such
-    // that some vertex of Vb' has color i Also, add i as an adjacent color
-    for (Vertex v : info.at(u).uncolNeighbors) {
-      // Get component b of v
-      TypeB bv = genv.graph[v].second;
-      if (col.is_colored_B(bv) && col.get_color_B(bv) == i)
-        toRemove.insert(v);
-      else
-        info.at(v).adjColors.insert(i);
-    }
+    // Add i as an adjacent color
+    for (Vertex v : info.at(u).uncolNeighbors)
+      info.at(v).adjColors.insert(i);
 
     // Remove vertices and update information
-    // Also, check for empty Va
-    for (Vertex v : toRemove) {
-      candidates.erase(v);
-      info.at(v).removed = false;
+    for (Vertex v : inv) {
+      info.at(v).removed = true;
       TypeA av = info.at(v).a;
       nVa.at(av)--;
-      if (av != a && nVa.at(av) == 0) {
-        // Cannot find solution
-        TimePoint end = ClockType::now();
-        Stats stats;
-        stats.state = INFEASIBLE;
-        stats.time = std::chrono::duration<double>(end - start).count();
-        return stats;
-      }
       for (Vertex w : info.at(v).uncolNeighbors)
         info.at(w).uncolNeighbors.erase(v);
     }
@@ -668,116 +657,6 @@ Stats dpcp_heur_1_step(const GraphEnv &genv, Col &col) {
 
   assert(col.check_coloring(genv.graph));
 
-  TimePoint end = ClockType::now();
-
-  Stats stats;
-  stats.state = FEASIBLE;
-  stats.time = std::chrono::duration<double>(end - start).count();
-  stats.ub = static_cast<double>(col.get_n_colors());
-
-  return stats;
-}
-
-bool is_conflict(const GraphEnv &genv, Vertex v, Vertex u) {
-  return edge(v, u, genv.graph).second;
-}
-
-void heur_solve_aux(const GraphEnv &genv, const std::vector<TypeA> &as,
-                    Col &col) {
-  VertexVector vertices;      // Vector of chosen vertices to be colored
-  std::map<TypeB, size_t> bs; // Map from b to its new index (in the subgraph)
-  std::vector<TypeB> invbs;   // Map from new index (in the subgraph) to b
-  std::map<TypeB, VertexVector>
-      repr; // Map from b to the vector of vertices that b represents
-  std::vector<std::vector<TypeB>> adj;  // Adjacent lists of the subgraph
-                                        // : new index -> std::vector<TypeB>
-  int ecount = 0;                       // Number of edges in the subgraph
-  int elist[2 * num_edges(genv.graph)]; // Edgle list of the subgraph
-
-  col.reset_coloring();
-
-  for (TypeA a : as) {
-    // For each a in A, choose v in snd[i_a] such that:
-    // v minimizes the conflicts with the already chosen representatives
-    size_t minNNewConflicts = std::numeric_limits<size_t>::max();
-    // size_t minNAllConflicts = std::numeric_limits<size_t>::max();
-    std::set<TypeB> minNewConflicts;
-    // std::set<TypeB> minAllConflicts;
-    Vertex bestVertex;
-    for (Vertex v : genv.snd[genv.tyA2idA.at(a)]) {
-      std::set<TypeB> newConflicts;
-      std::set<TypeB> allConflicts;
-      TypeB bv = genv.graph[v].second;
-      for (Vertex u : vertices) {
-        TypeB bu = genv.graph[u].second;
-        if (is_conflict(genv, v, u)) {
-          if (!bs.contains(bv) ||
-              find(adj[bs.at(bv)].begin(), adj[bs.at(bv)].end(), bu) ==
-                  adj[bs[bv]].end())
-            newConflicts.insert(bu);
-          // allConflicts.insert(bu);
-        }
-      }
-      if ((newConflicts.size() < minNNewConflicts) ||
-          (newConflicts.size() == minNNewConflicts && rand_double(rng) < 0.5)) {
-        minNNewConflicts = newConflicts.size();
-        // minNAllConflicts = allConflicts.size();
-        // minAllConflicts = allConflicts;
-        minNewConflicts = newConflicts;
-        bestVertex = v;
-      }
-    }
-
-    vertices.push_back(bestVertex);
-    TypeB b1 = genv.graph[bestVertex].second;
-    if (!bs.contains(b1)) {
-      bs[b1] = bs.size();
-      invbs.push_back(b1);
-      adj.push_back(std::vector<TypeB>());
-      repr[b1] = std::vector<Vertex>();
-    }
-    repr[b1].push_back(bestVertex);
-    for (auto b2 : minNewConflicts) {
-      elist[2 * ecount] = bs[b1];
-      elist[2 * ecount++ + 1] = bs[b2];
-      adj[bs[b1]].push_back(b2);
-      adj[bs[b2]].push_back(b1);
-    }
-  }
-
-  int ncolors = 0;
-  COLORset *colorclasses = NULL;
-  COLORdsatur(bs.size(), ecount, elist, &ncolors, &colorclasses);
-
-  // Recover coloring
-  for (int k = 0; k < ncolors; ++k)
-    for (int j = 0; j < colorclasses[k].count; ++j) {
-      TypeB b = invbs[colorclasses[k].members[j]];
-      for (Vertex v : repr[b])
-        col.set_color(genv.graph, v, k);
-    }
-  // assert(col.check_coloring());
-  return;
-}
-
-Stats heur_solve(const GraphEnv &genv, const std::vector<TypeA> &as, Col &col,
-                 size_t repetitions, Pool &pool) {
-  TimePoint start = ClockType::now();
-  Col currentCol;
-  std::vector<TypeA> ascopy(as);
-  size_t minNCol = std::numeric_limits<size_t>::max();
-  for (size_t iter = 0; iter < repetitions; iter++) {
-    std::shuffle(ascopy.begin(), ascopy.end(), rng);
-    heur_solve_aux(genv, ascopy, currentCol);
-    if (currentCol.get_n_colors() < minNCol) {
-      minNCol = currentCol.get_n_colors();
-      col = currentCol;
-    }
-    // Add the stable to the pool
-    for (size_t k = 0; k < currentCol.get_n_colors(); ++k)
-      pool.push_back(currentCol.get_stable(genv.graph, k));
-  }
-  assert(col.check_coloring(genv.graph));
   TimePoint end = ClockType::now();
 
   Stats stats;

@@ -21,6 +21,7 @@ using Vertex = Graph::vertex_descriptor;
 
 using VertexVector = std::vector<Vertex>;
 using VertexSet = std::set<Vertex>;
+using ASet = std::set<TypeA>;
 
 using HGraph = hglib::UndirectedHypergraph<>;
 using HVertex = hglib::VertexIdType;
