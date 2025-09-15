@@ -505,13 +505,15 @@ VertexSet get_invalidated_vertices(const GraphEnv &genv, Col &col,
 // If there is none, do the same with a new color.
 // Return the vertex, the color, and the set of invalidated vertices
 std::tuple<Vertex, Color, VertexSet>
-vertex_color_selector(const GraphEnv &genv, Col &col, const InfoMap &info,
-                      const VaSizeMap &nVa, const VertexVector &vCandidates) {
+greedy_vertex_color_selector(const GraphEnv &genv, Col &col,
+                             const InfoMap &info, const VaSizeMap &nVa,
+                             const VertexVector &vCandidates) {
 
   VertexSet minInv;
   size_t n_minInv = std::numeric_limits<size_t>::max();
   Vertex v = NULL;
   Color c = -1;
+  bool hasNewColor = true;
 
   // Iterate over the candidate vertices
   for (Vertex u : vCandidates) {
@@ -521,59 +523,37 @@ vertex_color_selector(const GraphEnv &genv, Col &col, const InfoMap &info,
     if (col.is_colored_B(genv.graph[u].second))
       colors.push_back(col.get_color_B(genv.graph[u].second));
     else {
-      // A new color is needed? Ignore!
-      if (info.at(u).adjColors.size() == col.get_n_colors())
-        continue;
-      // Otherwse, find the non-adjacent colors
-      else {
-        for (size_t i = 0; i < col.get_n_colors(); ++i)
-          if (!info.at(u).adjColors.contains(i))
-            colors.push_back(i);
-      }
+      for (size_t i = 0; i < col.get_n_colors(); ++i)
+        if (!info.at(u).adjColors.contains(i))
+          colors.push_back(i);              // Free used color
+      colors.push_back(col.get_n_colors()); // New color
     }
 
     // Among the "safe" vertex-color pairs, i.e. that do not invalidate all the
     // remaining vertices of any V_a', select the one that minimice the number
     // of invalidated vertices
+    // Use a new color only if there is no safe pair with a used color
     for (Color k : colors) {
+      bool newColor = (k == static_cast<int>(col.get_n_colors()));
+      // Ignore new colors if there is already a safe pair with a used color
+      if (!hasNewColor && newColor)
+        continue;
       VertexSet inv;
       try {
         inv = get_invalidated_vertices(genv, col, info, nVa, u, k);
       } catch (...) {
         continue;
       }
-      if (inv.size() < n_minInv) {
+      if ((hasNewColor && !newColor) || inv.size() < n_minInv ||
+          (inv.size() == n_minInv && genv.getId.at(u) < genv.getId.at(v)) ||
+          (inv.size() == n_minInv && genv.getId.at(u) == genv.getId.at(v) &&
+           k < c)) {
         n_minInv = inv.size();
         minInv = inv;
         v = u;
         c = k;
-      }
-    }
-  }
-
-  // If any pair is candidate, find the new color that minimice the number
-  // of invalidated vertices
-  if (v == NULL) {
-
-    // Iterate over the candidate vertices
-    for (Vertex u : vCandidates) {
-
-      // Ignore vertices with fixed color
-      if (col.is_colored_B(genv.graph[u].second))
-        continue;
-
-      VertexSet inv;
-      try {
-        inv = get_invalidated_vertices(genv, col, info, nVa, u,
-                                       col.get_n_colors());
-      } catch (...) {
-        continue;
-      }
-      if (inv.size() < n_minInv) {
-        n_minInv = inv.size();
-        minInv = inv;
-        v = u;
-        c = col.get_n_colors();
+        if (!newColor)
+          hasNewColor = false;
       }
     }
   }
@@ -585,10 +565,77 @@ vertex_color_selector(const GraphEnv &genv, Col &col, const InfoMap &info,
   return std::make_tuple(v, c, minInv);
 }
 
+// Incorporate some randomness in the greedy selection
+std::tuple<Vertex, Color, VertexSet>
+semigreedy_vertex_color_selector(const GraphEnv &genv, Col &col,
+                                 const InfoMap &info, const VaSizeMap &nVa,
+                                 const VertexVector &vCandidates) {
+
+  size_t n_minInv = std::numeric_limits<size_t>::max();
+  size_t n_maxInv = 0;
+  std::map<Vertex, std::map<Color, VertexSet>> invMap;
+  std::tuple<Vertex, Color, VertexSet> bestNewColor;
+  size_t nInvNewColor = std::numeric_limits<size_t>::max();
+
+  // Iterate over the candidate vertices
+  for (Vertex u : vCandidates) {
+
+    // Find candidate colors for u
+    std::vector<Color> colors;
+    if (col.is_colored_B(genv.graph[u].second))
+      colors.push_back(col.get_color_B(genv.graph[u].second));
+    else {
+      for (size_t i = 0; i < col.get_n_colors(); ++i)
+        if (!info.at(u).adjColors.contains(i))
+          colors.push_back(i);              // Free used color
+      colors.push_back(col.get_n_colors()); // New color
+    }
+
+    // Find the minimum and maximum number of invalidated vertices
+    for (Color k : colors) {
+      bool newColor = (k == static_cast<int>(col.get_n_colors()));
+      VertexSet inv;
+      try {
+        inv = get_invalidated_vertices(genv, col, info, nVa, u, k);
+      } catch (...) {
+        continue;
+      }
+      invMap[u][k] = inv;
+      if (newColor && inv.size() < nInvNewColor) {
+        bestNewColor = std::make_tuple(u, k, inv);
+        nInvNewColor = inv.size();
+      }
+      if (!newColor && inv.size() < n_minInv)
+        n_minInv = inv.size();
+      if (!newColor && inv.size() > n_maxInv)
+        n_maxInv = inv.size();
+    }
+  }
+
+  // If there is no candidate with a used color, return the best new color
+  if (n_minInv == std::numeric_limits<size_t>::max())
+    return bestNewColor;
+
+  // Build the RCL
+  std::vector<std::tuple<Vertex, Color, VertexSet>> rcl;
+  double cutoff = n_minInv + ALPHA_B * (n_maxInv - n_minInv);
+  for (auto &[u, cmap] : invMap)
+    for (auto &[k, inv] : cmap) {
+      if (k == static_cast<int>(col.get_n_colors()))
+        continue;
+      if (inv.size() <= cutoff)
+        rcl.emplace_back(u, k, inv);
+    }
+
+  if (rcl.empty())
+    throw std::exception();
+
+  return rcl[rand_int(rng) % rcl.size()];
+}
+
 // One-step heuristic for DPCP
-// Based on a DSATUR implementation for GCP that runs in O(n^2)
-Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
-  TimePoint start = ClockType::now();
+// Return false if it is not possible to color the graph
+bool single_step(const GraphEnv &genv, Col &col, bool greedy) {
 
   // Map with the necessary information of each vertex
   std::map<Vertex, Heur1SVertexInfo> info;
@@ -607,16 +654,16 @@ Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
 
   while (!A.empty()) {
 
-    auto vCandidates = vertices_selector(genv, col, info, nVa, A, true);
+    auto vCandidates = vertices_selector(genv, col, info, nVa, A, greedy);
     std::tuple<Vertex, Color, VertexSet> tuple;
     try {
-      tuple = vertex_color_selector(genv, col, info, nVa, vCandidates);
+      if (greedy)
+        tuple = greedy_vertex_color_selector(genv, col, info, nVa, vCandidates);
+      else
+        tuple =
+            semigreedy_vertex_color_selector(genv, col, info, nVa, vCandidates);
     } catch (...) {
-      TimePoint end = ClockType::now();
-      Stats stats;
-      stats.state = INFEASIBLE;
-      stats.time = std::chrono::duration<double>(end - start).count();
-      return stats;
+      return false;
     }
     Vertex u = std::get<0>(tuple);
     Color i = std::get<1>(tuple);
@@ -644,15 +691,58 @@ Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
         info.at(w).uncolNeighbors.erase(v);
     }
   }
+  return true;
+}
+
+// One-step heuristic for DPCP
+// Based on a DSATUR implementation for GCP that runs in O(n^2)
+Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
+  TimePoint start = ClockType::now();
+  Stats stats;
+
+  bool success = single_step(genv, col, true);
+  if (!success) {
+    TimePoint end = ClockType::now();
+    stats.state = INFEASIBLE;
+    stats.time = std::chrono::duration<double>(end - start).count();
+    return stats;
+  }
 
   assert(col.check_coloring(genv.graph));
 
   TimePoint end = ClockType::now();
-
-  Stats stats;
   stats.state = FEASIBLE;
   stats.time = std::chrono::duration<double>(end - start).count();
   stats.ub = static_cast<double>(col.get_n_colors());
 
+  return stats;
+}
+
+// One-step semigreedy heuristic for DPCP
+// Semigreedy version of the one-step heuristic
+Stats dpcp_1_step_semigreedy_heur(const GraphEnv &genv, Col &col,
+                                  size_t nIters) {
+  TimePoint start = ClockType::now();
+  Stats stats;
+
+  while (nIters-- > 0) {
+    Col newCol;
+    bool success = single_step(genv, newCol, false);
+    if (!success)
+      continue;
+    if (col.get_n_colors() == 0 || newCol.get_n_colors() < col.get_n_colors())
+      col = newCol;
+  }
+
+  if (col.get_n_colors() == 0) {
+    stats.state = INFEASIBLE;
+  } else {
+    assert(col.check_coloring(genv.graph));
+    stats.state = FEASIBLE;
+    stats.ub = static_cast<double>(col.get_n_colors());
+  }
+
+  TimePoint end = ClockType::now();
+  stats.time = std::chrono::duration<double>(end - start).count();
   return stats;
 }

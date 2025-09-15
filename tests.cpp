@@ -53,14 +53,28 @@ int main() {
 
     std::cout << std::endl << SEPBAR << std::endl << std::endl;
 
-    // Solve with one-step heuristic
+    // Solve with one-step greedy heuristic
     GraphEnv genv(graph, params);
     Col col0s;
-    std::cout << "1. Running two-step heuristic for DPCP..." << std::endl;
+    std::cout << "1. Running two-step greedy heuristic for DPCP..."
+              << std::endl;
     Stats stats0s = dpcp_1_step_greedy_heur(genv, col0s);
     std::cout << "Time: " << stats0s.time << std::endl;
     if (stats0s.state == FEASIBLE)
       std::cout << "Value: " << stats0s.ub << std::endl;
+    else
+      std::cout << "Value: No solution found :(" << std::endl;
+
+    std::cout << std::endl << SEPBAR << std::endl << std::endl;
+
+    // Solve with one-step semigreedy heuristic
+    Col col3s;
+    std::cout << "1. Running two-step semigreedy heuristic for DPCP..."
+              << std::endl;
+    Stats stats3s = dpcp_1_step_semigreedy_heur(genv, col3s, 50);
+    std::cout << "Time: " << stats3s.time << std::endl;
+    if (stats3s.state == FEASIBLE)
+      std::cout << "Value: " << stats3s.ub << std::endl;
     else
       std::cout << "Value: No solution found :(" << std::endl;
 
