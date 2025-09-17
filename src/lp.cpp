@@ -1,4 +1,5 @@
 #include "lp.hpp"
+#include "heur.hpp"
 #include "pricing.hpp"
 #include "random.hpp"
 
@@ -7,12 +8,10 @@
 #include <numeric>
 
 LP::LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
-       Col *initSol, bool isRoot)
+       bool isRoot)
     : in(GraphEnv(graph, params, isRoot)), params(params), stables(), posVars(),
-      objVal(-1.0), initSol(initSol), pool(pool), origGraph(origGraph),
-      nRemainingAttemptsPool(0), nRemainingAttemptsHeur(0),
-      nRemainingAttemptsMwis1(2 * MAXFAILS),
-      nRemainingAttemptsMwis2(2 * MAXFAILS){
+      objVal(-1.0), initSol(), pool(pool),
+      origGraph(origGraph){
 
           // // Translate original vertices to current vertices and viceversa
           // vertexMap.resize(num_vertices(graph));
@@ -31,8 +30,8 @@ LP::LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
 
 LP::~LP() {}
 
-void LP::add_constraints(CplexEnv &cenv) {
-  // Add constraints
+// Add constraints
+void LP::add_constraints_and_objective(CplexEnv &cenv) {
   // Add ">= 1" constraints, one for each a \in A
   for (auto i = in.nA; i > 0; --i)
     cenv.XrestrA.add(IloRange(cenv.Xenv, 1.0, IloInfinity));
@@ -41,37 +40,9 @@ void LP::add_constraints(CplexEnv &cenv) {
     cenv.XrestrB.add(IloRange(cenv.Xenv, -1.0, IloInfinity));
   cenv.Xmodel.add(cenv.XrestrA);
   cenv.Xmodel.add(cenv.XrestrB);
-
   // Add objective function
   cenv.Xobj = IloMinimize(cenv.Xenv, 0.0);
   cenv.Xmodel.add(cenv.Xobj);
-
-  return;
-}
-
-void LP::add_initial_columns(CplexEnv &cenv) {
-
-  if (initSol != NULL) {
-    for (size_t k = 0; k < initSol->get_n_colors(); ++k) {
-      StableEnv stab = initSol->get_stable(in.graph, k);
-      add_column(cenv, stab);
-    }
-    return;
-  }
-
-  // Add initial columns
-  // ¡TODO: this initialization DO NOT work in general cases!
-  // Color each b \in B with an unique color
-  for (size_t iB = 0; iB < in.nB; ++iB) {
-    StableEnv stab;
-    stab.stable = in.fst[iB];
-    std::set<TypeA> as;
-    for (auto v : stab.stable)
-      stab.as.insert(in.graph[v].first);
-    stab.bs.insert(in.idB2TyB[iB]);
-    add_column(cenv, stab);
-  }
-
   return;
 }
 
@@ -83,24 +54,41 @@ void LP::add_column(CplexEnv &cenv, StableEnv &stab) {
     column += cenv.XrestrB[in.tyB2idB[b]](-1.0);
   cenv.Xvars.add(IloNumVar(column));
   stables.push_back(VertexVector(stab.stable)); // Push a copy
-  // *******************************************************************
-  // // Print some statics
-  // std::cout << "adding column: [";
-  // for (auto v : stab.stable) {
-  //   auto [a, b, id] = in.graph[v];
-  //   std::cout << " " << in.getId[v] << " = (" << a << ", " << b << ")";
-  // }
-  // std::cout << " ]" << std::endl;
-  // std::cout << "cost: " << stab.cost << std::endl;
-  // std::cout << "as: [";
-  // for (auto a : stab.as)
-  //   std::cout << " " << a;
-  // std::cout << " ]" << std::endl;
-  // std::cout << "bs: [";
-  // for (auto b : stab.bs)
-  //   std::cout << " " << b;
-  // std::cout << " ]" << std::endl;
-  // *******************************************************************
+  // print_column(stab);
+}
+
+void LP::print_column(StableEnv &stab) {
+  std::cout << "Column: [";
+  for (auto v : stab.stable) {
+    auto [a, b, id] = in.graph[v];
+    std::cout << " " << in.getId[v] << " = (" << a << ", " << b << ")";
+  }
+  std::cout << " ]" << std::endl;
+  std::cout << "cost: " << stab.cost << std::endl;
+  std::cout << "as: [";
+  for (auto a : stab.as)
+    std::cout << " " << a;
+  std::cout << " ]" << std::endl;
+  std::cout << "bs: [";
+  for (auto b : stab.bs)
+    std::cout << " " << b;
+  std::cout << " ]" << std::endl;
+}
+
+void LP::add_initial_columns(CplexEnv &cenv) {
+
+  // If there is an initial solution, add its columns
+  if (initSol.get_n_colors() > 0) {
+    for (size_t k = 0; k < initSol.get_n_colors(); ++k) {
+      StableEnv stab = initSol.get_stable(in.graph, k);
+      add_column(cenv, stab);
+    }
+  } else {
+    std::cout << "Initialization failed" << std::endl;
+    abort();
+  }
+
+  return;
 }
 
 void LP::set_parameters(CplexEnv &cenv, IloCplex &cplex) {
@@ -157,7 +145,7 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
   CplexEnv cenv;
   IloCplex cplex(cenv.Xmodel);
   set_parameters(cenv, cplex);
-  add_constraints(cenv);
+  add_constraints_and_objective(cenv);
   add_initial_columns(cenv);
 
   // Initialize arrays for dual values
@@ -165,7 +153,7 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
   IloNumArray dualsB(cenv.Xenv, in.nB);
 
   // Initialize pricing environment
-  PricingEnv penv(in);
+  PricingEnv penv(in, params.pricingExactTimeLimit);
 
   while (state == LP_UNSOLVED) {
 
@@ -268,101 +256,89 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
   return state;
 }
 
-int LP::pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
-                IloNumArray &dualsA, IloNumArray &dualsB) {
-
-  // First, look for entering columns in the pool
-  if (nRemainingAttemptsPool > 0) {
-    size_t nPoolCols = 0;
-    for (StableEnv &stab : pool) {
-      auto ret = translate_stable_from_pool(stab, dualsA, dualsB);
-      if (!ret.first)
-        continue;
-      if (ret.second.cost > 1 + EPSILON) {
-        add_column(cenv, ret.second);
-        nPoolCols++;
-        stats.nColsPool++;
-        if (nPoolCols > MAXCOLS)
-          break;
-      }
+int LP::pricing_pool(CplexEnv &cenv, Stats &stats, IloNumArray &dualsA,
+                     IloNumArray &dualsB) {
+  if (!params.usePool)
+    return 0;
+  size_t nPoolCols = 0;
+  for (StableEnv &stab : pool) {
+    auto ret = translate_stable_from_pool(stab, dualsA, dualsB);
+    // Can the stable set be used in the current graph?
+    if (!ret.first)
+      continue;
+    // Is the stable set entering?
+    if (ret.second.cost > 1 + EPSILON) {
+      add_column(cenv, ret.second);
+      nPoolCols++;
+      stats.nColsPool++;
+      // if (nPoolCols > MAXCOLS)
+      //   break;
     }
-    if (nPoolCols > 0) {
-      // std::cout << "** Added " << nPoolCols << " columns from pool"
-      //           << std::endl;
-      return nPoolCols;
-    } else
-      nRemainingAttemptsPool--;
   }
+  return nPoolCols;
+}
 
-  std::pair<StableEnv, PRICING_STATE> res;
-
-  // Second, heuristic resolution of pricing
-  if (nRemainingAttemptsHeur > 0) {
-    size_t nHeurCols = 0;
-    for (size_t i = 0; i < MAXCOLS; ++i) {
-      // Random starting vertex for the stable set
-      int id = rand_int(rng) % num_vertices(in.graph);
-      Vertex v = vertex(id, in.graph);
-      res = penv.heur_solve(dualsA, dualsB, v);
-      stats.nCallsHeur++;
-      if (res.second == PRICING_STABLE_FOUND) {
-        add_column(cenv, res.first);
-        nHeurCols++;
-        stats.nColsHeur++;
-      }
-    }
-    if (nHeurCols > 0) {
-      // std::cout << "** Added " << nHeurCols << " columns from heuristic"
-      //           << std::endl;
-      return nHeurCols;
-    } else
-      nRemainingAttemptsHeur--;
-  }
-
-  // Third, MWSSP heuristic I: the weight of (a,b) is \gamma_a - \mu_b
-  if (nRemainingAttemptsMwis1 > 0) {
-    size_t nMwis1Cols = 0;
-    auto res = penv.mwis1_solve(dualsA, dualsB);
-    stats.nCallsMWis1++;
-    for (auto &[stab, state] : res) {
-      if (state == PRICING_STABLE_FOUND) {
-        add_column(cenv, stab);
-        nMwis1Cols++;
-        stats.nColsMwis1++;
-      }
-    }
-    if (nMwis1Cols > 0) {
-      // std::cout << "** Added " << nMwis2Cols << " columns from MWSSP I"
-      //           << std::endl;
-      return nMwis1Cols;
-    } else
-      nRemainingAttemptsMwis1--;
-  }
-
-  // Fourth, MWSSP heuristic II: the weight of (a,b) is \gamma_a
-  if (nRemainingAttemptsMwis2 > 0) {
-    res = penv.mwis2_solve(dualsA, dualsB);
-    stats.nCallsMWis2++;
+int LP::pricing_greedy(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                       IloNumArray &dualsA, IloNumArray &dualsB) {
+  if (!params.pricingHeur1)
+    return 0;
+  size_t nHeurCols = 0;
+  for (size_t i = 0; i < params.pricingHeur1MaxNCols; ++i) {
+    auto res = penv.heur_solve(dualsA, dualsB);
+    stats.nCallsHeur++;
     if (res.second == PRICING_STABLE_FOUND) {
-      // std::cout << "** Added a column from MWSSP II" << std::endl;
       add_column(cenv, res.first);
-      stats.nColsMwis2++;
-      return 1;
-    } else if (res.second == PRICING_STABLE_NOT_FOUND)
-      nRemainingAttemptsMwis2--;
-    else
-      return 0; // Node solved up to optimality
+      nHeurCols++;
+      stats.nColsHeur++;
+    }
   }
+  return nHeurCols;
+}
 
-  // Fifth, exact resolution of pricing
-  res = penv.exact_solve(dualsA, dualsB);
+// MWSSP heuristic I: the weight of (a,b) is \gamma_a - \mu_b
+int LP::pricing_mwss1(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                      IloNumArray &dualsA, IloNumArray &dualsB) {
+  if (!params.pricingHeur2)
+    return 0;
+  size_t nMwis1Cols = 0;
+  auto res = penv.mwis1_solve(dualsA, dualsB);
+  stats.nCallsMWis1++;
+  for (auto &[stab, state] : res) {
+    if (state == PRICING_STABLE_FOUND) {
+      add_column(cenv, stab);
+      nMwis1Cols++;
+      stats.nColsMwis1++;
+    }
+  }
+  return nMwis1Cols;
+}
+
+// MWSSP heuristic II: the weight of (a,b) is \gamma_a
+int LP::pricing_mwss2(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                      IloNumArray &dualsA, IloNumArray &dualsB) {
+  if (!params.pricingHeur3)
+    return 0;
+  auto res = penv.mwis2_solve(dualsA, dualsB);
+  stats.nCallsMWis2++;
+  if (res.second == PRICING_STABLE_FOUND) {
+    add_column(cenv, res.first);
+    stats.nColsMwis2++;
+    return 1;
+  } else if (res.second == PRICING_STABLE_NOT_FOUND)
+    return -1;
+  else
+    return 0; // Node solved up to optimality
+}
+
+int LP::pricing_exact(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                      IloNumArray &dualsA, IloNumArray &dualsB) {
+  auto res = penv.exact_solve(dualsA, dualsB);
   stats.nCallsExact++;
 
   // Handle exact outputs
   if (res.second == PRICING_STABLE_FOUND) {
     add_column(cenv, res.first);
     stats.nColsExact++;
-    // std::cout << "** Added a column from ILP" << std::endl;
     return 1;
   } else if (res.second == PRICING_STABLE_NOT_EXIST)
     return 0;
@@ -372,6 +348,35 @@ int LP::pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
     return -2;
   else
     return -3;
+}
+
+int LP::pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                IloNumArray &dualsA, IloNumArray &dualsB) {
+
+  int addedCols = 0;
+
+  // First, look for entering columns in the pool
+  addedCols = pricing_pool(cenv, stats, dualsA, dualsB);
+  if (addedCols > 0)
+    return addedCols;
+
+  // Second, look for entering columns with a greedy heuristic
+  addedCols = pricing_greedy(cenv, penv, stats, dualsA, dualsB);
+  if (addedCols > 0)
+    return addedCols;
+
+  // Third, MWSSP heuristic I
+  addedCols = pricing_mwss1(cenv, penv, stats, dualsA, dualsB);
+  if (addedCols > 0)
+    return addedCols;
+
+  // Fourth, MWSSP heuristic II
+  addedCols = pricing_mwss2(cenv, penv, stats, dualsA, dualsB);
+  if (addedCols >= 0)
+    return addedCols;
+
+  // Fifth, exact resolution of pricing
+  return pricing_exact(cenv, penv, stats, dualsA, dualsB);
 }
 
 /* Solve a graph coloring problem instance with exactcolors */
@@ -528,7 +533,21 @@ Vertex LP::get_branching_variable(const IloNumArray &values) {
   return best_v;
 }
 
-void LP::save_solution(Col &col) {
+bool LP::solve_heur(double &obj_value, double &time, bool isRoot) {
+  Stats stats;
+  if (isRoot)
+    stats = dpcp_2_step_semigreedy_heur(in, initSol, 100);
+  else
+    stats = dpcp_2_step_greedy_heur(in, initSol);
+  time = stats.time;
+  if (stats.state == FEASIBLE) {
+    obj_value = initSol.get_n_colors();
+    return true;
+  }
+  return false;
+}
+
+void LP::save_lp_solution(Col &col) {
 
   // Reset coloring
   col.reset_coloring();
@@ -550,6 +569,12 @@ void LP::save_solution(Col &col) {
   currentCol.color_isolated_vertices(in.isolated, col, origGraph);
 
   assert(col.check_coloring(origGraph));
+  return;
+}
+
+void LP::save_heur_solution(Col &col) {
+  col.reset_coloring();
+  col = initSol;
   return;
 }
 

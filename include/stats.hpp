@@ -48,6 +48,7 @@ public:
   double time;
   int nodes;
   int initSol;
+  double initSolTime;
   double rootval;
   double lb;
   int ub;
@@ -65,9 +66,10 @@ public:
 
   Stats()
       : nvars(-1), ncons(-1), state(UNKNOWN), time(-1.0), nodes(-1),
-        initSol(-1), rootval(-1.0), lb(-1.0), ub(-1), gap(-1.0), poolSize(-1),
-        nColsPool(0), nColsHeur(0), nColsMwis1(0), nColsMwis2(0), nColsExact(0),
-        nCallsHeur(0), nCallsMWis1(0), nCallsMWis2(0), nCallsExact(0){};
+        initSol(-1), initSolTime(-1.0), rootval(-1.0), lb(-1.0), ub(-1),
+        gap(-1.0), poolSize(-1), nColsPool(0), nColsHeur(0), nColsMwis1(0),
+        nColsMwis2(0), nColsExact(0), nCallsHeur(0), nCallsMWis1(0),
+        nCallsMWis2(0), nCallsExact(0){};
 
   std::string get_state_as_str();
   void write_stats(std::ostream &file);

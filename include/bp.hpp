@@ -14,9 +14,6 @@
 #define EPSILON_BP 0.001 // For doing ceil(x - EPSILON_BP) during prunning
 
 // #define ONLY_RELAXATION
-#ifndef MAXTIME
-#define MAXTIME 900 // In seconds
-#endif
 
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::_V2::system_clock::time_point;
@@ -39,7 +36,17 @@ public:
     return state;
   }
 
-  template <class Solution> void save(Solution &sol) { lp->save_solution(sol); }
+  template <class Solution> void save(Solution &sol) {
+    lp->save_lp_solution(sol);
+  }
+
+  bool heuristic(double &obj_value, double &time, bool isRoot) {
+    return lp->solve_heur(obj_value, time, isRoot);
+  }
+
+  template <class Solution> void save_heur(Solution &sol) {
+    lp->save_heur_solution(sol);
+  }
 
   void branch(std::vector<Node *> &sons) {
 
@@ -60,14 +67,9 @@ private:
 template <class Solution> class BP {
 
 public:
-  BP(Solution &sol, std::ostream &log, bool DFS = false)
-      : best_integer_solution(sol), primal_bound(DBL_MAX), nodes(0), DFS(DFS),
-        log(log), stats(), initSolValue(-1.0) {}
-
-  void set_initial_solution(Solution &initSol, double initValue) {
-    initSolValue = primal_bound = initValue;
-    best_integer_solution = initSol;
-  }
+  BP(Params &params, std::ostream &log, Solution &sol)
+      : params(params), best_integer_solution(sol), primal_bound(DBL_MAX),
+        nodes(0), log(log), stats(), initSolValue(-1.0), initSolTime(-1.0) {}
 
   Stats solve(Node *root) {
 
@@ -89,56 +91,54 @@ public:
       break;
     }
 
-#ifndef ONLY_RELAXATION
-    while (!L.empty()) {
+    if (!params.onlyRelaxation) {
+      while (!L.empty()) {
 
-      // Pop next node
-      Node *node = top();
-      show_stats(*node); // First show_stats, then pop
-      pop();
+        // Pop next node
+        Node *node = top();
+        show_stats(*node); // First show_stats, then pop
+        pop();
 
-      // Re-try to prune by bound, since primal_bound could have been improved
-      if (ceil(node->get_obj_value() - EPSILON_BP) >= primal_bound) {
-        delete node;
-        continue;
-      }
-
-      // Branch
-      std::vector<Node *> sons;
-      node->branch(sons);
-
-      // Push sons (and solve initial LR)
-      for (auto n : sons) {
-
-        switch (push(n)) {
-        case LP_TIME_EXCEEDED:
+        // Re-try to prune by bound, since primal_bound could have been improved
+        if (ceil(node->get_obj_value() - EPSILON_BP) >= primal_bound) {
           delete node;
-          return return_stats(TIME_EXCEEDED_LP);
-        case LP_TIME_EXCEEDED_PR:
-          delete node;
-          return return_stats(TIME_EXCEEDED_PR);
-        case LP_MEM_EXCEEDED:
-          delete node;
-          return return_stats(MEM_EXCEEDED_LP);
-        case LP_MEM_EXCEEDED_PR:
-          delete node;
-          return return_stats(MEM_EXCEEDED_PR);
-        default:
-          break;
+          continue;
         }
-      }
 
-      delete node;
+        // Branch
+        std::vector<Node *> sons;
+        node->branch(sons);
+
+        // Push sons (and solve initial LR)
+        for (auto n : sons) {
+
+          switch (push(n)) {
+          case LP_TIME_EXCEEDED:
+            delete node;
+            return return_stats(TIME_EXCEEDED_LP);
+          case LP_TIME_EXCEEDED_PR:
+            delete node;
+            return return_stats(TIME_EXCEEDED_PR);
+          case LP_MEM_EXCEEDED:
+            delete node;
+            return return_stats(MEM_EXCEEDED_LP);
+          case LP_MEM_EXCEEDED_PR:
+            delete node;
+            return return_stats(MEM_EXCEEDED_PR);
+          default:
+            break;
+          }
+        }
+
+        delete node;
+      }
     }
-#endif
 
     if (primal_bound == DBL_MAX) // Infeasibility case:
       return return_stats(INFEASIBLE);
 
-#ifdef ONLY_RELAXATION
-    if (!L.empty())
+    if (params.onlyRelaxation && !L.empty())
       return return_stats(FEASIBLE);
-#endif
 
     // Optimality case:
     return return_stats(OPTIMAL);
@@ -163,6 +163,7 @@ public:
 private:
   std::list<Node *> L; // Priority queue
 
+  Params &params;                  // Input parameters
   Solution &best_integer_solution; // Current best integer solution
   double primal_bound; // Primal bound (given by the best integer solution)
   size_t
@@ -172,18 +173,18 @@ private:
   TimePoint last_t;  // used by log
   bool first_call;   // used by log
   int opt_flag;      // Optimality flag
-  bool DFS;
   std::ostream &log;
   Stats stats;
-  double initSolValue; // Value of the provided initial solution
+  double initSolValue; // Value of the initial solution in the root
+  double initSolTime;  // Time of the initial solution in the root
   double rootval;
 
   Stats return_stats(STATE state) {
     stats.state = state;
     stats.time =
         std::chrono::duration<double>(ClockType::now() - start_t).count();
-    if (stats.time > MAXTIME) {
-      stats.time = MAXTIME;
+    if (stats.time > params.timeLimit) {
+      stats.time = params.timeLimit;
       stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
     }
     stats.nodes = static_cast<int>(nodes);
@@ -199,6 +200,7 @@ private:
       stats.gap = get_gap() / 100;
     }
     stats.initSol = static_cast<int>(initSolValue + 0.5);
+    stats.initSolTime = initSolTime;
 
     return stats;
   }
@@ -208,21 +210,37 @@ private:
     nodes++;
     double obj_value;
 
+    // Apply heuristic
+    double heurTime = 0.0;
+    bool solFound = node->heuristic(obj_value, heurTime, root);
+    if (solFound)
+      // Update primal bound if possible
+      if (obj_value < primal_bound) {
+        update_primal_bound(obj_value);
+        node->save_heur(best_integer_solution);
+      }
+
     // Solve the linear relaxation of the node and prune if possible
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(
                          ClockType::now() - start_t)
                          .count();
-    LP_STATE state = node->solve(MAXTIME - elapsed, stats);
+    LP_STATE state = node->solve(params.timeLimit - elapsed, stats);
 
-    if (root)
+    if (root) {
       rootval = node->get_obj_value();
+      initSolTime = heurTime;
+      if (solFound)
+        initSolValue = obj_value;
+    }
 
     switch (state) {
 
     case LP_INTEGER:
       obj_value = node->get_obj_value();
-      if (obj_value < primal_bound)
-        update_primal_bound(*node);
+      if (obj_value < primal_bound) {
+        node->save(best_integer_solution);
+        update_primal_bound(obj_value);
+      }
       delete node; // Prune by optimality
       return state;
 
@@ -242,7 +260,7 @@ private:
     // Continuation for fractional nodes
     // Place the node in the list according to its priority
 
-    if (DFS) { // DFS strategy
+    if (params.dfs) { // DFS strategy
       L.push_back(node);
       return LP_FRACTIONAL;
     }
@@ -274,11 +292,10 @@ private:
     return;
   }
 
-  void update_primal_bound(Node &node) {
+  void update_primal_bound(double obj_value) {
 
-    // Update best integer solution and value
-    node.save(best_integer_solution);
-    primal_bound = node.get_obj_value();
+    // Update best value
+    primal_bound = obj_value;
 
     // Prune if possible
     for (auto it = L.begin(); it != L.end();) {
@@ -294,7 +311,7 @@ private:
 
     double _dual_bound = DBL_MAX; // minimum objective value of unpruned nodes
     if (!L.empty()) {
-      if (DFS) {
+      if (params.dfs) {
         // Traverse the list and search for the minimum objective value
         for (auto it = L.begin(); it != L.end(); ++it)
           if ((*it)->get_obj_value() < _dual_bound)

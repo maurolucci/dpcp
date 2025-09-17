@@ -38,10 +38,11 @@ void ThresholdCallback::invoke(const IloCplex::Callback::Context &context) {
     check_thresolhd(context);
 }
 
-PricingEnv::PricingEnv(GraphEnv &in)
-    : in(in), stab(), cxenv(), cxmodel(cxenv), y(cxenv, num_vertices(in.graph)),
-      w(cxenv, in.nB), cxcons(cxenv), cplex(cxenv), cb(in, stab, y, w),
-      contextMask(0), mwis_env(NULL), mwis_pi(NULL), ecount(0), elist(NULL) {
+PricingEnv::PricingEnv(GraphEnv &in, double exactTimeLimit)
+    : in(in), stab(), exactTimeLimit(exactTimeLimit), cxenv(), cxmodel(cxenv),
+      y(cxenv, num_vertices(in.graph)), w(cxenv, in.nB), cxcons(cxenv),
+      cplex(cxenv), cb(in, stab, y, w), contextMask(0), mwis_env(NULL),
+      mwis_pi(NULL), ecount(0), elist(NULL) {
   exact_init();
   mwis_init();
 }
@@ -388,7 +389,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Solve
   cplex.extract(cxmodel);
-  cplex.setParam(IloCplex::Param::TimeLimit, PRICING_TIMELIMIT);
+  cplex.setParam(IloCplex::Param::TimeLimit, exactTimeLimit);
   cplex.solve();
 
   // Get final state
@@ -452,9 +453,8 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   return std::make_pair(stab, state);
 }
 
-std::pair<StableEnv, PRICING_STATE> PricingEnv::heur_solve(IloNumArray &dualsA,
-                                                           IloNumArray &dualsB,
-                                                           Vertex start_v) {
+std::pair<StableEnv, PRICING_STATE>
+PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Reset stable
   stab.stable.clear();
@@ -464,38 +464,22 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::heur_solve(IloNumArray &dualsA,
 
   // Candidates
   std::list<std::pair<double, Vertex>> candidates;
-  TypeA start_a = in.graph[start_v].first;
-  TypeA start_b = in.graph[start_v].second;
   for (auto v : boost::make_iterator_range(vertices(in.graph))) {
     auto [a, b, id] = in.graph[v];
     double cost_a = dualsA[in.tyA2idA[a]];
     double cost_b = dualsB[in.tyB2idB[b]];
-    if (v == start_v) {
-      stab.stable.push_back(start_v);
-      stab.as.insert(start_a);
-      stab.bs.insert(start_b);
-      stab.cost += cost_a - cost_b;
-      continue;
-    }
-    if (a == start_a || edge(start_v, v, in.graph).second)
-      continue;
-    if (b == start_b) {
-      candidates.push_back(std::make_pair(cost_a, v));
-      continue;
-    }
     candidates.push_back(std::make_pair(cost_a - cost_b, v));
   }
 
   while (!candidates.empty()) {
 
     // Find the best candidate
-    auto it_v = std::max_element(candidates.begin(), candidates.end());
-
-    // Discard best candidate with some low probability
-    if (rand_double(rng) < 0.05) {
-      candidates.erase(it_v);
-      continue;
-    }
+    // If there are multiple best candidates, choose one at random
+    auto it_v = std::max_element(
+        candidates.begin(), candidates.end(), [](auto p1, auto p2) {
+          return (p1.first < p2.first ||
+                  (p1.first == p2.first && rand_int(rng) % 2 < 1));
+        });
 
     Vertex v = it_v->second;
     auto [a, b, id] = in.graph[v];

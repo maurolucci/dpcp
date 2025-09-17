@@ -16,16 +16,6 @@ extern "C" {
 #include <chrono>
 
 #define EPSILON 0.00001 // 10e-5
-#define MAXCOLS 200     // Max number of columns added per round
-#define MAXFAILS 100    // Max number of failed accepted per round
-#ifndef N_BRANCHES
-#define N_BRANCHES 2
-#endif
-
-// typedef struct Column {
-//   std::set<PSet> elements;
-//   Column(int n_best, const nodepnt *best_sol);
-// } Column;
 
 using Column = VertexVector;
 
@@ -33,7 +23,7 @@ class LP {
 
 public:
   LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
-     Col *initSol = NULL, bool isRoot = false);
+     bool isRoot = false);
   ~LP();
 
   // Optimize the linear relaxation by column generation
@@ -42,8 +32,14 @@ public:
   // Get objective value (after calling optimize)
   [[nodiscard]] double get_obj_value() const { return objVal; };
 
+  // Apply heuristic
+  [[nodiscard]] bool solve_heur(double &obj_value, double &time, bool isRoot);
+
   // Save the optimal solution (after calling optimize)
-  void save_solution(Col &col);
+  void save_lp_solution(Col &col);
+
+  // Save the heuristic solution (after calling solve_heur)
+  void save_heur_solution(Col &col);
 
   // Branch (after calling optimize)
   void branch(std::vector<LP *> &branches);
@@ -61,8 +57,8 @@ private:
   Vertex branchVar;
   // Objective value
   double objVal;
-  // Initial solution (only used in the root node)
-  Col *initSol;
+  // Initial solution
+  Col initSol;
   // Pool of columns
   Pool &pool;
   // Original graph
@@ -72,18 +68,15 @@ private:
   // // Map from original vertices to current vertices
   // std::vector<int> invVertexMap;
 
-  // Remaining attempts for pricing
-  size_t nRemainingAttemptsPool;
-  size_t nRemainingAttemptsHeur;
-  size_t nRemainingAttemptsMwis1;
-  size_t nRemainingAttemptsMwis2;
-
   // Initialize the linear relaxation with an initial set of columns
-  void add_constraints(CplexEnv &cenv);
+  void add_constraints_and_objective(CplexEnv &cenv);
   void add_initial_columns(CplexEnv &cenv);
 
   // Add a new column to the linear relaxation
   void add_column(CplexEnv &cenv, StableEnv &stab);
+
+  // Print column
+  void print_column(StableEnv &stab);
 
   // Translate a stable set from the pool in terms of the vertices of the
   // current graph
@@ -97,11 +90,16 @@ private:
   // Solve pricing problem
   int pricing(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
               IloNumArray &dualsA, IloNumArray &dualsB);
-
-  // Check if an stable from de pool is an entering column
-  // Be careful, the stable is assume to be in terms of the original graph
-  // and only coincides with the current graph at the root node
-  bool check_stable(StableEnv &stab, IloNumArray &dualsA, IloNumArray &dualsB);
+  int pricing_pool(CplexEnv &cenv, Stats &stats, IloNumArray &dualsA,
+                   IloNumArray &dualsB);
+  int pricing_greedy(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                     IloNumArray &dualsA, IloNumArray &dualsB);
+  int pricing_mwss1(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                    IloNumArray &dualsA, IloNumArray &dualsB);
+  int pricing_mwss2(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                    IloNumArray &dualsA, IloNumArray &dualsB);
+  int pricing_exact(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
+                    IloNumArray &dualsA, IloNumArray &dualsB);
 
   // Exact solve of a GCP instance
   LP_STATE solve_GCP(double timelimit);

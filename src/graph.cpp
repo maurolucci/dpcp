@@ -109,11 +109,11 @@ GraphEnv::~GraphEnv(){};
 
 void GraphEnv::preprocess() {
   init_preprocess();
-  if (params.preprocess[0] == '1' && isRoot)
+  if (params.preprocStep1 && isRoot)
     preprocess_step1();
-  if (params.preprocess[1] == '1')
+  if (params.preprocStep2)
     preprocess_step2();
-  if (params.preprocess[2] == '1')
+  if (params.preprocStep3)
     preprocess_step3();
 }
 

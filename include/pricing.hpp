@@ -15,7 +15,6 @@ extern "C" {
 
 #define THRESHOLD 1.1           // Threshold for early stop
 #define PRICING_EPSILON 0.00001 // 10e-5
-#define PRICING_TIMELIMIT 300   // 5 minutes
 
 // This is the class implementing the generic callback interface.
 class ThresholdCallback : public IloCplex::Callback::Function {
@@ -49,6 +48,7 @@ class PricingEnv {
 private:
   GraphEnv &in;
   StableEnv stab;
+  double exactTimeLimit;
 
   // CPLEX variables
   IloEnv cxenv;
@@ -80,11 +80,11 @@ private:
                       const std::vector<double> &dbl_weights);
 
 public:
-  PricingEnv(GraphEnv &in);
+  PricingEnv(GraphEnv &in, double exactTimeLimit);
   ~PricingEnv();
 
-  std::pair<StableEnv, PRICING_STATE>
-  heur_solve(IloNumArray &dualsA, IloNumArray &dualsB, Vertex v_first);
+  std::pair<StableEnv, PRICING_STATE> heur_solve(IloNumArray &dualsA,
+                                                 IloNumArray &dualsB);
 
   std::list<std::pair<StableEnv, PRICING_STATE>>
   mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB);

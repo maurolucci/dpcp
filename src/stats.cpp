@@ -27,11 +27,11 @@ std::string Stats::get_state_as_str() {
 
 void Stats::write_stats(std::ostream &file) {
   file << nvars << "," << ncons << "," << get_state_as_str() << "," << time
-       << "," << nodes << "," << initSol << "," << rootval << "," << lb << ","
-       << ub << "," << gap << "," << poolSize << "," << nCallsHeur << ","
-       << nCallsMWis1 << "," << nCallsMWis2 << "," << nCallsExact << ","
-       << nColsPool << "," << nColsHeur << "," << nColsMwis1 << ","
-       << nColsMwis2 << "," << nColsExact << std::endl;
+       << "," << nodes << "," << initSol << "," << initSolTime << "," << rootval
+       << "," << lb << "," << ub << "," << gap << "," << poolSize << ","
+       << nCallsHeur << "," << nCallsMWis1 << "," << nCallsMWis2 << ","
+       << nCallsExact << "," << nColsPool << "," << nColsHeur << ","
+       << nColsMwis1 << "," << nColsMwis2 << "," << nColsExact << std::endl;
 }
 
 void Stats::print_stats(std::ostream &file) {
@@ -44,6 +44,7 @@ void Stats::print_stats(std::ostream &file) {
   file << "Time: " << time << std::endl;
   file << "Nodes: " << nodes << std::endl;
   file << "Initial solution: " << initSol << std::endl;
+  file << "Initial solution time: " << initSolTime << std::endl;
   file << "Root relaxation: " << rootval << std::endl;
   file << "Lower bound: " << lb << std::endl;
   file << "Upper bound: " << ub << std::endl;
