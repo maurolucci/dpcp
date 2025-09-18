@@ -84,8 +84,15 @@ void LP::add_initial_columns(CplexEnv &cenv) {
       add_column(cenv, stab);
     }
   } else {
-    std::cout << "Initialization failed" << std::endl;
-    abort();
+    // Add a new dummy variable z with z_a = 1 forall a \in A and z_b = 0 forall
+    // b \in B and set a high cost for z
+    IloNumColumn z = cenv.Xobj(params.initializationBigWeight);
+    for (size_t i = 0; i < in.nA; ++i)
+      z += cenv.XrestrA[i](1.0);
+    for (size_t i = 0; i < in.nB; ++i)
+      z += cenv.XrestrB[i](0.0);
+    cenv.Xvars.add(IloNumVar(z));
+    stables.push_back(VertexVector()); // Push a null column
   }
 
   return;
@@ -233,22 +240,35 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
     // std::cout << "Columnas exactas: " << nExactColsTotal << std::endl;
     // *******************************************************************
 
-    // Integrality check
-    state = LP_INTEGER;
-    for (int i = 0; i < cenv.Xvars.getSize(); ++i) {
-      if (values[i] < EPSILON)
-        continue;
-      else if (values[i] < 1 - EPSILON)
-        state = LP_FRACTIONAL;
-      posVars.push_back(i);
+    // Check if dummy column is not in the basis
+    // We assume that the dummy column is the first one added
+    if (values[0] < EPSILON) {
+
+      // Integrality check
+      state = LP_INTEGER;
+      for (int i = 0; i < cenv.Xvars.getSize(); ++i) {
+        if (values[i] < EPSILON)
+          continue;
+        else if (values[i] < 1 - EPSILON)
+          state = LP_FRACTIONAL;
+        posVars.push_back(i);
+      }
+
+      if (state == LP_FRACTIONAL) {
+        // Find branching variable
+        branchVar = get_branching_variable(values);
+      } else if (state == LP_INTEGER)
+        objVal = posVars.size();
     }
-
-    if (state == LP_FRACTIONAL) {
-      // Find branching variable
-      branchVar = get_branching_variable(values);
-    } else if (state == LP_INTEGER)
-      objVal = posVars.size();
-
+    // If the dummy columns is in the basis and the objective value is greater
+    // than W, then the instance is infeasible
+    else if (objVal > std::min(in.nA, in.nB) + EPSILON)
+      state = LP_INFEASIBLE;
+    // Otherwise, the initialization failed
+    else {
+      std::cout << "Initialization failed" << std::endl;
+      abort();
+    }
     values.end();
   }
 
@@ -534,6 +554,8 @@ Vertex LP::get_branching_variable(const IloNumArray &values) {
 }
 
 bool LP::solve_heur(double &obj_value, double &time, bool isRoot) {
+  if (!params.initializationUseHeur)
+    return false;
   Stats stats;
   if (isRoot)
     stats = dpcp_2_step_semigreedy_heur(in, initSol, 100);

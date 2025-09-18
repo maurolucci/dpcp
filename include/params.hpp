@@ -11,6 +11,11 @@ struct Params {
   size_t timeLimit;
   bool dfs;
   bool onlyRelaxation;
+  // Initialization options
+  // initializationBigWeight: weight of dummy column during initialization
+  // initializationUseHeur: use heuristic to find an initial solution
+  double initializationBigWeight;
+  bool initializationUseHeur;
   // Preprocessing options
   // preprocStep1: make each V_a a clique
   // preprocStep2: remove vertices for each a with |V_a| = 1
@@ -36,10 +41,12 @@ struct Params {
   size_t pricingHeur1MaxNCols;
   size_t pricingExactTimeLimit;
   Params()
-      : timeLimit(900), dfs(false), onlyRelaxation(false), preprocStep1(true),
-        preprocStep2(true), preprocStep3(true), usePool(false),
-        pricingHeur1(true), pricingHeur2(true), pricingHeur3(true),
-        pricingOrder(1), pricingHeur1MaxNCols(1), pricingExactTimeLimit(300){};
+      : timeLimit(900), dfs(false), onlyRelaxation(false),
+        initializationBigWeight(1000.0), initializationUseHeur(false),
+        preprocStep1(true), preprocStep2(true), preprocStep3(true),
+        usePool(false), pricingHeur1(true), pricingHeur2(true),
+        pricingHeur3(true), pricingOrder(1), pricingHeur1MaxNCols(1),
+        pricingExactTimeLimit(300){};
 };
 
 #endif // _PARAMS_HPP_
