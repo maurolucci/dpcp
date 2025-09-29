@@ -2,6 +2,54 @@
 
 #include <boost/graph/copy.hpp>
 
+// Read a DPCP instance from input stream
+Graph read_dpcp_instance(std::istream &graph, std::istream &partA,
+                         std::istream &partB) {
+  Graph g;
+  size_t n, m, nA, nB;
+  size_t a, nVa, nVb;
+  char c;
+
+  // Read the partitions
+  std::map<size_t, size_t> vertexToA, vertexToB;
+  partA >> n >> c >> nA;
+  for (size_t i = 0; i < nA; ++i) {
+    partA >> a >> nVa;
+    for (size_t j = 0; j < nVa; ++j) {
+      size_t v;
+      partA >> v;
+      vertexToA[v] = a;
+    }
+  }
+  partB >> n >> c >> nB;
+  for (size_t i = 0; i < nB; ++i) {
+    partB >> a >> nVb;
+    for (size_t j = 0; j < nVb; ++j) {
+      size_t v;
+      partB >> v;
+      vertexToB[v] = a;
+    }
+  }
+
+  // Create vertices with their partition info
+  std::vector<Vertex> vertices(n);
+  for (size_t i = 0; i < n; ++i) {
+    TypeA a = vertexToA[i];
+    TypeB b = vertexToB[i];
+    vertices[i] = add_vertex(VertexInfo{a, b, i}, g);
+  }
+
+  // Add edges
+  graph >> n >> c >> m;
+  for (size_t i = 0; i < m; ++i) {
+    size_t u, v;
+    graph >> u >> v;
+    add_edge(vertices[u], vertices[v], g);
+  }
+
+  return g;
+}
+
 void read_hypergrah(HGraph &hg, std::istream &input) {
 
   size_t n, m, mm, v;

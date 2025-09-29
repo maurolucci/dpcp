@@ -30,7 +30,10 @@ using HEdge = hglib::HyperedgeIdType;
 using GCPGraph =
     boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, TypeB>;
 
-void read_hypergrah(HGraph &hg, std::istream &input);
+Graph read_dpcp_instance(std::istream &graph, std::istream &partA,
+                         std::istream &partB);
+
+void read_hypergraph(HGraph &hg, std::istream &input);
 
 void get_conflict_graph(const HGraph &src, Graph &dst);
 
