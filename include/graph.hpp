@@ -30,8 +30,9 @@ using HEdge = hglib::HyperedgeIdType;
 using GCPGraph =
     boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, TypeB>;
 
-Graph read_dpcp_instance(std::istream &graph, std::istream &partA,
-                         std::istream &partB);
+std::tuple<Graph, size_t, size_t> read_dpcp_instance(std::istream &graph,
+                                                     std::istream &partA,
+                                                     std::istream &partB);
 
 void read_hypergraph(HGraph &hg, std::istream &input);
 
@@ -50,7 +51,7 @@ class GraphEnv {
 
 public:
   Graph graph;                    // Graph G = (V,E) with V c AxB
-  Params &params;                 // Parameters
+  const Params &params;           // Parameters
   std::map<Vertex, size_t> getId; // Map from V to {0,..,|V|-1}
   size_t nA, nB;                  // |A| and |B|
 
@@ -69,8 +70,8 @@ public:
   bool isInfeasible;              // Is the instance infeasible?
   std::list<VertexInfo> isolated; // List of isolated vertices
 
-  GraphEnv(const Graph &graph, Params &param, bool isRoot = false);
-  GraphEnv(const Graph &&graph, Params &param, bool isRoot = false);
+  GraphEnv(const Graph &graph, const Params &param, bool isRoot = false);
+  GraphEnv(const Graph &&graph, const Params &param, bool isRoot = false);
   ~GraphEnv();
 
 private:

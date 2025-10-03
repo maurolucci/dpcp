@@ -28,18 +28,27 @@ std::string Stats::get_state_as_str() {
 }
 
 void Stats::write_stats(std::ostream &file) {
-  file << nvars << "," << ncons << "," << get_state_as_str() << "," << time
-       << "," << nodes << "," << initSol << "," << initSolTime << "," << rootval
-       << "," << lb << "," << ub << "," << gap << "," << poolSize << ","
-       << nCallsHeur << "," << nCallsMWis1 << "," << nCallsMWis2 << ","
-       << nCallsExact << "," << nColsPool << "," << nColsHeur << ","
-       << nColsMwis1 << "," << nColsMwis2 << "," << nColsExact << ","
-       << nTimePool << "," << nTimeHeur << "," << nTimeMwis1 << ","
-       << nTimeMwis2 << "," << nTimeExact << std::endl;
+  file << instance << "," << solver << "," << run << "," << nvertices << ","
+       << nedges << "," << nA << "," << nB << "," << nvars << "," << ncons
+       << "," << get_state_as_str() << "," << time << "," << nodes << ","
+       << nodesLeft << "," << initSol << "," << initSolTime << "," << rootval
+       << "," << lb << "," << ub << "," << gap << "," << ninfeas << "," << ngcp
+       << "," << poolSize << "," << nCallsHeur << "," << nCallsMWis1 << ","
+       << nCallsMWis2 << "," << nCallsExact << "," << nColsPool << ","
+       << nColsHeur << "," << nColsMwis1 << "," << nColsMwis2 << ","
+       << nColsExact << "," << nTimePool << "," << nTimeHeur << ","
+       << nTimeMwis1 << "," << nTimeMwis2 << "," << nTimeExact << std::endl;
 }
 
 void Stats::print_stats(std::ostream &file) {
   file << std::endl << "*** Stats ***" << std::endl;
+  file << "Instance: " << instance << std::endl;
+  file << "Solver: " << solver << std::endl;
+  file << "Run: " << run << std::endl;
+  file << "Vertices: " << nvertices << std::endl;
+  file << "Edges: " << nedges << std::endl;
+  file << "|A|: " << nA << std::endl;
+  file << "|B|: " << nB << std::endl;
   if (nvars != -1)
     file << "Variables: " << nvars << std::endl;
   if (ncons != -1)
@@ -47,12 +56,15 @@ void Stats::print_stats(std::ostream &file) {
   file << "State: " << get_state_as_str() << std::endl;
   file << "Time: " << time << std::endl;
   file << "Nodes: " << nodes << std::endl;
+  file << "Nodes left: " << nodesLeft << std::endl;
   file << "Initial solution: " << initSol << std::endl;
   file << "Initial solution time: " << initSolTime << std::endl;
   file << "Root relaxation: " << rootval << std::endl;
   file << "Lower bound: " << lb << std::endl;
   file << "Upper bound: " << ub << std::endl;
   file << "Gap: " << gap << std::endl;
+  file << "Infeasible instances detected: " << ninfeas << std::endl;
+  file << "GCP instances reached: " << ngcp << std::endl;
   file << "Size of pool: " << poolSize << std::endl;
   file << "Pricing (calls, cols, time):" << std::endl;
   file << "\tPool: " << nCallsPool << ", " << nColsPool << ", " << nTimePool

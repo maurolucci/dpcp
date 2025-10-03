@@ -14,6 +14,7 @@ extern "C" {
 }
 
 #include <chrono>
+#include <iostream>
 
 #define EPSILON 0.00001 // 10e-5
 
@@ -23,7 +24,7 @@ class LP {
 
 public:
   LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
-     bool isRoot = false);
+     std::ostream &log, bool isRoot = false);
   ~LP();
 
   // Optimize the linear relaxation by column generation
@@ -65,6 +66,8 @@ private:
   Graph &origGraph;
   // Whether a dummy column was used to initialize the LP
   bool initializedWithDummy;
+  // Log file
+  std::ostream &log;
 
   // // Map from current vertices to original vertices
   // std::vector<Vertex> vertexMap;

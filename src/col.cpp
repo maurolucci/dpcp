@@ -90,3 +90,10 @@ void Col::color_isolated_vertices(std::list<VertexInfo> &isolated, Col &dstCol,
     dstCol.set_color(dstGraph, v, k);
   }
 }
+
+void Col::write_coloring(std::ostream &out) const {
+  out << coloring.size() << " " << classes.size() << "\n";
+  for (auto [v, k] : coloring) {
+    out << v << " " << k << "\n";
+  }
+}

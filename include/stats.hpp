@@ -44,17 +44,27 @@ enum STATE {
 class Stats {
 
 public:
+  std::string instance;
+  std::string solver;
+  int run;
+  int nvertices;
+  int nedges;
+  int nA;
+  int nB;
   int nvars;
   int ncons;
   STATE state;
   double time;
   int nodes;
+  int nodesLeft;
   int initSol;
   double initSolTime;
   double rootval;
   double lb;
   int ub;
   double gap;
+  int ninfeas;
+  int ngcp;
   int poolSize;
   int nColsPool;
   int nColsHeur;
@@ -73,12 +83,14 @@ public:
   double nTimeExact;
 
   Stats()
-      : nvars(-1), ncons(-1), state(UNKNOWN), time(-1.0), nodes(-1),
-        initSol(-1), initSolTime(-1.0), rootval(-1.0), lb(-1.0), ub(-1),
-        gap(-1.0), poolSize(-1), nColsPool(0), nColsHeur(0), nColsMwis1(0),
-        nColsMwis2(0), nColsExact(0), nCallsPool(0), nCallsHeur(0),
-        nCallsMWis1(0), nCallsMWis2(0), nCallsExact(0), nTimePool(0.0),
-        nTimeHeur(0.0), nTimeMwis1(0.0), nTimeMwis2(0.0), nTimeExact(0.0) {}
+      : instance(""), solver(""), run(-1), nvertices(-1), nedges(-1), nA(-1),
+        nB(-1), nvars(-1), ncons(-1), state(UNKNOWN), time(-1.0), nodes(0),
+        nodesLeft(0), initSol(-1), initSolTime(-1.0), rootval(-1.0), lb(-1.0),
+        ub(-1), gap(-1.0), ninfeas(0), ngcp(0), poolSize(-1), nColsPool(0),
+        nColsHeur(0), nColsMwis1(0), nColsMwis2(0), nColsExact(0),
+        nCallsPool(0), nCallsHeur(0), nCallsMWis1(0), nCallsMWis2(0),
+        nCallsExact(0), nTimePool(0.0), nTimeHeur(0.0), nTimeMwis1(0.0),
+        nTimeMwis2(0.0), nTimeExact(0.0) {}
 
   std::string get_state_as_str();
   void write_stats(std::ostream &file);

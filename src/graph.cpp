@@ -3,8 +3,10 @@
 #include <boost/graph/copy.hpp>
 
 // Read a DPCP instance from input stream
-Graph read_dpcp_instance(std::istream &graph, std::istream &partA,
-                         std::istream &partB) {
+// Returns the graph and the sizes of the two partitions
+std::tuple<Graph, size_t, size_t> read_dpcp_instance(std::istream &graph,
+                                                     std::istream &partA,
+                                                     std::istream &partB) {
   Graph g;
   size_t n, m, nA, nB;
   size_t a, nVa, nVb;
@@ -47,7 +49,7 @@ Graph read_dpcp_instance(std::istream &graph, std::istream &partA,
     add_edge(vertices[u], vertices[v], g);
   }
 
-  return g;
+  return std::make_tuple(g, nA, nB);
 }
 
 void read_hypergrah(HGraph &hg, std::istream &input) {
@@ -142,10 +144,10 @@ void vertex_branching2(Graph &graph, Vertex v) {
   remove_vertex(v, graph);
 }
 
-GraphEnv::GraphEnv(const Graph &graph, Params &params, bool isRoot)
+GraphEnv::GraphEnv(const Graph &graph, const Params &params, bool isRoot)
     : GraphEnv(Graph{graph}, params, isRoot){};
 
-GraphEnv::GraphEnv(const Graph &&graph, Params &params, bool isRoot)
+GraphEnv::GraphEnv(const Graph &&graph, const Params &params, bool isRoot)
     : graph(graph), params(params), getId(), nA(0), nB(0), tyA2idA(), tyB2idB(),
       idA2TyA(), idB2TyB(), snd(), fst(), isRoot(isRoot), isGCP(true),
       isInfeasible(false), isolated() {

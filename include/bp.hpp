@@ -193,6 +193,7 @@ private:
       stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
     }
     stats.nodes = static_cast<int>(nodes);
+    stats.nodesLeft = static_cast<int>(L.size());
     stats.rootval = rootval;
     stats.ub = static_cast<int>(primal_bound + 0.5);
     if (state == OPTIMAL) {

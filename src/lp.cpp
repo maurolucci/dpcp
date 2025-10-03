@@ -8,10 +8,11 @@
 #include <numeric>
 
 LP::LP(const Graph &graph, Params &params, Pool &pool, Graph &origGraph,
-       bool isRoot)
+       std::ostream &log, bool isRoot)
     : in(GraphEnv(graph, params, isRoot)), params(params), stables(), posVars(),
       objVal(-1.0), initSol(), pool(pool), origGraph(origGraph),
-      initializedWithDummy(false){
+      initializedWithDummy(false),
+      log(log){
 
           // // Translate original vertices to current vertices and viceversa
           // vertexMap.resize(num_vertices(graph));
@@ -141,13 +142,17 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
 
   // Check if the instance is infeasible
   if (in.isInfeasible) {
-    std::cout << "Infeasibility detected" << std::endl;
+    log << "# infeasible instance detected" << std::endl;
+    stats.ninfeas++;
     return LP_INFEASIBLE;
   }
 
   // Check if the input is a GCP instance
-  if (in.isGCP)
+  if (in.isGCP) {
+    log << "# GCP instance reached" << std::endl;
+    stats.ngcp++;
     return solve_GCP(timelimit);
+  }
 
   // Initialize cplex environment
   CplexEnv cenv;
@@ -162,6 +167,13 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
 
   // Initialize pricing environment
   PricingEnv penv(in, params.pricingExactTimeLimit);
+
+  // Save last number of columns
+  size_t nPoolColsTotal = stats.nColsPool;
+  size_t nHeurColsTotal = stats.nColsHeur;
+  size_t nMwis1ColsTotal = stats.nColsMwis1;
+  size_t nMwis2ColsTotal = stats.nColsMwis2;
+  size_t nExactColsTotal = stats.nColsExact;
 
   while (state == LP_UNSOLVED) {
 
@@ -205,7 +217,9 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
     // std::cout << std::endl;
     // *******************************************************************
 
+    // Pricing
     int ret = pricing(cenv, penv, stats, dualsA, dualsB);
+
     if (ret > 0)
       continue;
     else if (ret == 0)
@@ -281,6 +295,16 @@ LP_STATE LP::optimize(double timelimit, Stats &stats) {
 
     values.end();
   }
+
+  // Log stats
+  log << "# Dummy init: " << (initializedWithDummy ? "yes" : "no")
+      << ", Pool: " << (stats.nColsPool - nPoolColsTotal)
+      << ", Heur: " << (stats.nColsHeur - nHeurColsTotal)
+      << ", MWIS I: " << (stats.nColsMwis1 - nMwis1ColsTotal)
+      << ", MWIS II: " << (stats.nColsMwis2 - nMwis2ColsTotal)
+      << ", Exact: " << (stats.nColsExact - nExactColsTotal)
+      << ", Time: " << get_elapsed_time(startTime)
+      << ", Obj: " << cplex.getObjValue() << "\n";
 
   cplex.end();
   return state;
@@ -684,8 +708,8 @@ void LP::branch(std::vector<LP *> &branches) {
   // *******
 
   branches.resize(2);
-  branches[0] = new LP(gcopy, params, pool, origGraph);
-  branches[1] = new LP(in.graph, params, pool, origGraph);
+  branches[0] = new LP(gcopy, params, pool, origGraph, log);
+  branches[1] = new LP(in.graph, params, pool, origGraph, log);
 
   // for (auto v : boost::make_iterator_range(vertices(graph1)))
   //   std::cout << v << ": (" << graph1[v].first << "," << graph1[v].second
