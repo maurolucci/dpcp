@@ -6,7 +6,7 @@
 
 # Parámetros del AW(n,p)
 n = 20  # número de nodos
-p = 7  # no-vecinos consecutivos, p=1 es la clique, p=2 es el anticiclo
+p = 2  # no-vecinos consecutivos, p=1 es la clique, p=2 es el anticiclo
 # número cromático del AW(n,p):
 r = n // p if n % p ==0 else (n // p) + 1
 
