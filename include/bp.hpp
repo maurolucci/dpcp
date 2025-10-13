@@ -27,8 +27,8 @@ public:
 
   double get_obj_value() const { return lp->get_obj_value(); }
 
-  bool operator<(const Node &n) const {
-    return (get_obj_value() < n.get_obj_value());
+  bool operator>(const Node &n) const {
+    return (get_obj_value() > n.get_obj_value());
   }
 
   LP_STATE solve(double timelimit, Stats &stats) {
@@ -271,7 +271,7 @@ private:
 
     // list is not empty
     for (auto it = L.begin(); it != L.end(); ++it)
-      if (*node < **it) {
+      if (*node > **it) {
         L.insert(it, node);
         return state;
       }
