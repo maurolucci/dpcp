@@ -239,15 +239,6 @@ PricingEnv::mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   mwis_pi2 = (COLORNWT *)COLOR_SAFE_MALLOC(weights2.size(), COLORNWT);
   double2COLORNWT(mwis_pi2, &mwis_pi_scalef, weights2);
 
-  // Assert for non-negative costs
-  for (size_t i = 0; i < weights2.size(); ++i) {
-    if (weights2[i] < 0) {
-      std::cerr << "Error: negative weight in mwis1_solve: w[" << i
-                << "] = " << weights2[i] << std::endl;
-      exit(1);
-    }
-  }
-
   if (ecount2 == 0) {
     // Edge-less graphs raise error in COLORstable_wrapper
     // So, they are manually solved
