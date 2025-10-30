@@ -83,8 +83,8 @@ public:
   PricingEnv(GraphEnv &in, double exactTimeLimit);
   ~PricingEnv();
 
-  std::pair<StableEnv, PRICING_STATE> heur_solve(IloNumArray &dualsA,
-                                                 IloNumArray &dualsB);
+  std::pair<StableEnv, PRICING_STATE>
+  heur_solve(IloNumArray &dualsA, IloNumArray &dualsB, double alpha = 0.1);
 
   std::list<std::pair<StableEnv, PRICING_STATE>>
   mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB);

@@ -239,6 +239,15 @@ PricingEnv::mwis1_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
   mwis_pi2 = (COLORNWT *)COLOR_SAFE_MALLOC(weights2.size(), COLORNWT);
   double2COLORNWT(mwis_pi2, &mwis_pi_scalef, weights2);
 
+  // Assert for non-negative costs
+  for (size_t i = 0; i < weights2.size(); ++i) {
+    if (weights2[i] < 0) {
+      std::cerr << "Error: negative weight in mwis1_solve: w[" << i
+                << "] = " << weights2[i] << std::endl;
+      exit(1);
+    }
+  }
+
   if (ecount2 == 0) {
     // Edge-less graphs raise error in COLORstable_wrapper
     // So, they are manually solved
@@ -326,12 +335,27 @@ PricingEnv::mwis2_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Compute vertex weight array
   std::vector<double> weights(num_vertices(in.graph));
-  for (auto v : boost::make_iterator_range(vertices(in.graph)))
-    weights[in.getId[v]] = dualsA[in.tyA2idA[in.graph[v].first]];
+  for (auto v : boost::make_iterator_range(vertices(in.graph))) {
+    double w = dualsA[in.tyA2idA[in.graph[v].first]];
+    assert(w >= -PRICING_EPSILON);
+    if (w < PRICING_EPSILON)
+      weights[in.getId[v]] = 0.0;
+    else
+      weights[in.getId[v]] = w;
+  }
 
   // Scale weights
   double2COLORNWT(mwis_pi, &mwis_pi_scalef, weights);
   mwis_pi_scalef = INT_MAX; // Force optimality
+
+  // Assert for non-negative costs
+  for (size_t i = 0; i < weights.size(); ++i) {
+    if (weights[i] < 0) {
+      std::cerr << "Error: negative weight in mwis2_solve: w[" << i
+                << "] = " << weights[i] << std::endl;
+      exit(1);
+    }
+  }
 
   // Solve the MWIS problem up to optimality
   COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, num_vertices(in.graph),
@@ -458,7 +482,7 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 }
 
 std::pair<StableEnv, PRICING_STATE>
-PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
+PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB, double alpha) {
 
   // Reset stable
   stab.stable.clear();
@@ -468,23 +492,32 @@ PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
   // Candidates
   std::list<std::pair<double, Vertex>> candidates;
+  double max_cost = std::numeric_limits<double>::lowest();
+  double min_cost = std::numeric_limits<double>::max();
   for (auto v : boost::make_iterator_range(vertices(in.graph))) {
     auto [a, b, id] = in.graph[v];
     double cost_a = dualsA[in.tyA2idA[a]];
     double cost_b = dualsB[in.tyB2idB[b]];
-    candidates.push_back(std::make_pair(cost_a - cost_b, v));
+    double cost = cost_a - cost_b;
+    candidates.push_back(std::make_pair(cost, v));
+    if (cost > max_cost)
+      max_cost = cost;
+    if (cost < min_cost)
+      min_cost = cost;
   }
 
   while (!candidates.empty()) {
 
-    // Find the best candidate
-    // If there are multiple best candidates, choose one at random
-    auto it_v = std::max_element(
-        candidates.begin(), candidates.end(), [](auto p1, auto p2) {
-          return (p1.first < p2.first ||
-                  (p1.first == p2.first && rand_int(rng) % 2 < 1));
-        });
+    // Build RCL list
+    std::list<std::pair<double, Vertex>> rcl;
+    for (auto &[cost, v] : candidates)
+      if (cost >= max_cost - alpha * (max_cost - min_cost) - PRICING_EPSILON)
+        rcl.push_back(std::make_pair(cost, v));
 
+    // Choose a random candidate from the RCL
+    size_t random_index = rand_int(rng) % rcl.size();
+    auto it_v = rcl.begin();
+    std::advance(it_v, random_index);
     Vertex v = it_v->second;
     auto [a, b, id] = in.graph[v];
 
@@ -495,6 +528,8 @@ PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
     stab.cost += it_v->first;
 
     // Remove and update weights in the candidate list
+    max_cost = std::numeric_limits<double>::lowest();
+    min_cost = std::numeric_limits<double>::max();
     for (auto it = candidates.begin(); it != candidates.end();) {
       Vertex u = it->second;
       auto [au, bu, idu] = in.graph[u];
@@ -504,6 +539,10 @@ PricingEnv::heur_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
       }
       if (bu == b)
         it->first = dualsA[in.tyA2idA[au]];
+      if (it->first > max_cost)
+        max_cost = it->first;
+      if (it->first < min_cost)
+        min_cost = it->first;
       ++it;
     }
   }
