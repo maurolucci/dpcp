@@ -156,14 +156,12 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
 
   // Check if the instance is infeasible
   if (in.isInfeasible) {
-    log << "# infeasible instance detected during preprocessing" << std::endl;
     stats.ninfeasPrepro++;
     return LP_INFEASIBLE;
   }
 
   // Check if the input is a GCP instance
   if (in.isGCP) {
-    log << "# GCP instance reached" << std::endl;
     return solve_GCP(stats, timelimit, ub);
   }
 
@@ -197,8 +195,6 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
 
     // If instance is infeasible, return
     if (feasStats.state == INFEASIBLE) {
-      log << "# infeasible instance detected during feasibility check"
-          << std::endl;
       stats.ninfeasCheck++;
       return LP_INFEASIBLE;
     }
@@ -344,7 +340,8 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
 
       if (state == LP_FRACTIONAL) {
         // Find branching variable
-        branchVar = get_branching_variable(values);
+        branchVar = params.branchingFMS ? get_branching_variable_FMS(values)
+                                        : get_branching_variable(values);
       } else if (state == LP_INTEGER) {
         objVal = posVars.size();
         stats.nint++;
@@ -731,6 +728,68 @@ Vertex LP::get_branching_variable(const IloNumArray &values) {
   return best_v;
 }
 
+Vertex LP::get_branching_variable_FMS(const IloNumArray &values) {
+
+  // Given v in V, stabs[v] is the sum of the values of the variables
+  // x_S such that v \in S, i.e., stabs[v] = \sum_{S : v \in S} x_S
+  std::map<Vertex, double> stabs;
+  for (auto i : posVars)
+    for (auto v : stables[i]) {
+      if (!stabs.contains(v))
+        stabs[v] = 0.0;
+      stabs[v] += values[i];
+    }
+
+  // Branching criterion
+  // 1. Find a such that V_a has the maximum number of partially colored
+  //    vertices, i.e, |{v in V_a: stabs[v] > 0}| is maximum,
+  //    breaking ties by |V_a| (the smaller, the better)
+  //    and further ties by the index of a
+  TypeA best_a;
+  size_t best_nPartial = 0;
+  for (auto &[a, va] : in.Va) {
+    size_t nPartial = 0;
+    for (auto v : va) {
+      if (stabs.contains(v) && stabs[v] > EPSILON)
+        nPartial++;
+    }
+    if (nPartial > best_nPartial) {
+      best_nPartial = nPartial;
+      best_a = a;
+    } else if (nPartial == best_nPartial &&
+               (va.size() < in.Va[best_a].size())) {
+      best_a = a;
+    } else if (nPartial == best_nPartial &&
+               (va.size() == in.Va[best_a].size()) &&
+               (in.tyA2idA[a] < in.tyA2idA[best_a])) {
+      best_a = a;
+    }
+  }
+
+  // 2. Choose v in V_{best_a} such that stabs[v] is maximum
+  Vertex best_v = NULL;
+  double best_value = 0.0;
+  for (auto v : in.Va[best_a]) {
+    if (stabs.contains(v) && stabs[v] > best_value) {
+      best_value = stabs[v];
+      best_v = v;
+    }
+  }
+
+  assert(best_v != NULL);
+
+  // *******************************************************************
+  // // Print some statics
+  // std::cout << "branching variable: " << best_v << " ["
+  //           << in.graph[best_v].first << " " << in.graph[best_v].second
+  //           << "] with size " << best_nPartial << " and cardinality "
+  //           << in.Va[best_a].size() << " and value " << best_value <<
+  //           std::endl;
+  // *******************************************************************
+
+  return best_v;
+}
+
 // Heuristic solution of the DPCP instances at the current node
 // The heuristic used is selected depending on the parameters
 void LP::heuristic(Stats &stats, Params &params) {
@@ -772,8 +831,12 @@ void LP::save_lp_solution(Col &col) {
   Col currentCol;
   Color k = 0;
   for (auto i : posVars) {
-    for (auto v : stables[i])
+    for (auto v : stables[i]) {
+      // Ignore already colored vertices
+      if (currentCol.is_colored(v))
+        continue;
       currentCol.set_color(in.graph, v, k);
+    }
     ++k;
   }
   assert(currentCol.check_coloring(in.graph));

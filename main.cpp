@@ -108,6 +108,8 @@ int main(int argc, const char **argv) {
   desc.add_options()("pricing-exact-time",
                      po::value<size_t>()->default_value(300),
                      "time limit for exact pricing (in seconds)");
+  desc.add_options()("branching-fms",
+                     "use Furini-Malaguti-Santini branching rule");
 
   po::positional_options_description pos;
   pos.add("graph", -1);
@@ -155,6 +157,7 @@ int main(int argc, const char **argv) {
   params.pricingOrder = vm["pricing-order"].as<int>();
   params.pricingHeur1MaxNCols = vm["pricing-greedy-max-cols"].as<size_t>();
   params.pricingExactTimeLimit = vm["pricing-exact-time"].as<size_t>();
+  params.branchingFMS = vm.count("branching-fms");
 
   // Parse input files
   std::vector<std::string> inputs;

@@ -26,6 +26,14 @@ public:
 
   [[nodiscard]] inline size_t get_n_colors() const { return classes.size(); };
 
+  [[nodiscard]] inline bool is_colored(Vertex v) const {
+    return coloring.contains(v);
+  };
+
+  [[nodiscard]] inline Color get_color(Vertex v) const {
+    return coloring.at(v);
+  };
+
   [[nodiscard]] inline bool is_colored_B(TypeB b) const {
     return colorB.contains(b);
   };

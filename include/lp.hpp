@@ -130,6 +130,7 @@ private:
 
   // Get branching variable
   Vertex get_branching_variable(const IloNumArray &values);
+  Vertex get_branching_variable_FMS(const IloNumArray &values);
 };
 
 #endif // _LP_HPP_

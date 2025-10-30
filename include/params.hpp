@@ -87,6 +87,8 @@ struct Params {
   int pricingOrder;
   size_t pricingHeur1MaxNCols;
   size_t pricingExactTimeLimit;
+  // branchingFMS: use Furini-Malaguti-Santini branching rule
+  bool branchingFMS;
 
   Params()
       : timeLimit(900), dfs(false), onlyRelaxation(false), heuristicRootNode(4),
@@ -96,7 +98,8 @@ struct Params {
         inheritColumns(0), initializationBigWeight(1000.0), preprocStep1(true),
         preprocStep2(true), preprocStep3(true), usePool(false),
         pricingHeur1(true), pricingHeur2(true), pricingHeur3(true),
-        pricingOrder(1), pricingHeur1MaxNCols(1), pricingExactTimeLimit(300){};
+        pricingOrder(1), pricingHeur1MaxNCols(1), pricingExactTimeLimit(300),
+        branchingFMS(false){};
 
   void print_params(std::ostream &out) {
     out << "*** Parameters ***:" << std::endl;
