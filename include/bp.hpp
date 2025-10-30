@@ -66,9 +66,9 @@ private:
 template <class Solution> class BP {
 
 public:
-  BP(Params &params, std::ostream &log, Solution &sol)
-      : params(params), best_integer_solution(sol), primal_bound(DBL_MAX),
-        nodes(0), log(log), stats() {}
+  BP(Params &params, std::ostream &log, Solution &sol, double ub = DBL_MAX)
+      : params(params), best_integer_solution(sol), primal_bound(ub), nodes(0),
+        log(log), stats() {}
 
   Stats solve(Node *root) {
 
@@ -221,6 +221,8 @@ private:
       obj_value = node->feas_value();
       if (obj_value < primal_bound) {
         node->save_heur(best_integer_solution);
+        log << "New best integer solution found by heuristic with value: "
+            << obj_value << std::endl;
         update_primal_bound(obj_value);
       }
     }
@@ -231,6 +233,8 @@ private:
       obj_value = node->get_obj_value();
       if (obj_value < primal_bound) {
         node->save(best_integer_solution);
+        log << "New best integer solution found by LR with value: " << obj_value
+            << std::endl;
         update_primal_bound(obj_value);
       }
       delete node; // Prune by optimality

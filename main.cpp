@@ -58,6 +58,8 @@ int main(int argc, const char **argv) {
                      "number of experiment repetitions");
   desc.add_options()("dfs", "use depth-first strategy in the B&P tree");
   desc.add_options()("relax", "solve only the root node");
+  desc.add_options()("ub", po::value<double>()->default_value(DBL_MAX),
+                     "initial upper bound on the optimal solution value");
   desc.add_options()("heur-root", po::value<int>()->default_value(4),
                      "type of heuristic for the root node (0: no heuristic, "
                      "1: greedy 1-step, 2: semi-greedy 1-step, 3: greedy "
@@ -84,7 +86,7 @@ int main(int argc, const char **argv) {
       "feas-nodes-time", po::value<int>()->default_value(60),
       "time limit for feasibility check (in seconds). Only for ILP");
   desc.add_options()(
-      "inherit-cols", po::value<int>()->default_value(0),
+      "inherit-cols", po::value<int>()->default_value(1),
       "type of column inheritance from parent (0: no inheritance, 1: inherit "
       "all columns, 2: inherit only basic columns)");
   desc.add_options()("dummy-weight", po::value<double>()->default_value(1000.0),
@@ -244,7 +246,7 @@ int main(int argc, const char **argv) {
         Pool pool;
         LP *lp = new LP(gcopy, params, pool, graph, out.colFile, true);
         Node *root = new Node(lp);
-        BP<Col> bp(params, out.logFile, col);
+        BP<Col> bp(params, out.logFile, col, vm["ub"].as<double>());
         stats = bp.solve(root);
       } else if (solver == "compact") {
         out.logFile << "Solving instance " << path << " with compact ILP"
