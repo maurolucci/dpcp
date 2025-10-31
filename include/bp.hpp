@@ -39,12 +39,12 @@ public:
   bool feas_sol() const { return lp->has_feas_sol(); }
   size_t feas_value() const { return lp->get_feas_value(); }
 
-  template <class Solution> void save(Solution &sol) {
-    lp->save_lp_solution(sol);
+  template <class Solution> void save(Stats &stats, Solution &sol) {
+    lp->save_lp_solution(stats, sol);
   }
 
-  template <class Solution> void save_heur(Solution &sol) {
-    lp->save_heur_solution(sol);
+  template <class Solution> void save_heur(Stats &stats, Solution &sol) {
+    lp->save_heur_solution(stats, sol);
   }
 
   void branch(std::vector<Node *> &sons) {
@@ -220,7 +220,7 @@ private:
     if (node->feas_sol()) {
       obj_value = node->feas_value();
       if (obj_value < primal_bound) {
-        node->save_heur(best_integer_solution);
+        node->save_heur(stats, best_integer_solution);
         log << "New best integer solution found by heuristic with value: "
             << obj_value << std::endl;
         update_primal_bound(obj_value);
@@ -232,7 +232,7 @@ private:
     case LP_INTEGER:
       obj_value = node->get_obj_value();
       if (obj_value < primal_bound) {
-        node->save(best_integer_solution);
+        node->save(stats, best_integer_solution);
         log << "New best integer solution found by LR with value: " << obj_value
             << std::endl;
         update_primal_bound(obj_value);

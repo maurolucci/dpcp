@@ -45,10 +45,10 @@ public:
   };
 
   // Save the optimal solution (after calling optimize)
-  void save_lp_solution(Col &col);
+  void save_lp_solution(Stats &stats, Col &col);
 
   // Save the heuristic solution (after calling optimize)
-  void save_heur_solution(Col &col);
+  void save_heur_solution(Stats &stats, Col &col);
 
   // Branch (after calling optimize)
   void branch(std::vector<LP *> &branches);

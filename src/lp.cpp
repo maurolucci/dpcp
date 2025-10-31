@@ -822,7 +822,9 @@ void LP::feasibility_check(Stats &stats, Params &params) {
   return;
 }
 
-void LP::save_lp_solution(Col &col) {
+void LP::save_lp_solution(Stats &stats, Col &col) {
+
+  stats.nsolLR++;
 
   // Reset coloring
   col.reset_coloring();
@@ -851,9 +853,10 @@ void LP::save_lp_solution(Col &col) {
   return;
 }
 
-void LP::save_heur_solution(Col &col) {
+void LP::save_heur_solution(Stats &stats, Col &col) {
 
   assert(initSol.get_n_colors() > 0);
+  stats.nsolHeur++;
 
   // Reset coloring
   col.reset_coloring();

@@ -35,7 +35,8 @@ void Stats::write_stats(std::ostream &file) {
        << nodesLeft << "," << lb << "," << ub << "," << gap << ","
        << ninfeasPrepro + ninfeasCheck + ninfeasAux << "," << ninfeasPrepro
        << "," << ninfeasCheck << "," << ninfeasAux << "," << nint << "," << ngcp
-       << "," << gcpTime / (ngcp > 0 ? ngcp : 1) << std::endl;
+       << "," << gcpTime / (ngcp > 0 ? ngcp : 1) << "," << nsolHeur + nsolLR
+       << "," << nsolHeur << "," << nsolLR << std::endl;
   file << rootlb << "," << rootub << "," << rootHeurTime << "," << rootFeasTime
        << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
@@ -103,6 +104,8 @@ void Stats::print_stats(std::ostream &file) {
   file << "Integer nodes: " << nint << std::endl;
   file << "GCP nodes: " << ngcp << std::endl;
   file << "GCP avg time: " << gcpTime / (ngcp > 0 ? ngcp : 1) << std::endl;
+  file << "Solutions found: " << nsolHeur + nsolLR << " (total), " << nsolHeur
+       << " (heuristic), " << nsolLR << " (linear relaxation)" << std::endl;
   file << "Root node stats:" << std::endl;
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;
