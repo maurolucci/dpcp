@@ -1,7 +1,66 @@
 # cfcol
-B&amp;P algorithm to solve conflict-free (partial) coloring
 
-Compile with:
+Implementación del algoritmo Branch & Price para resolver coloraciones parciales sin conflictos (conflict-free partial coloring).
 
-g++ main.cpp src/graph.cpp src/col.cpp src/lp.cpp include/bp.hpp exactcolors/color.o exactcolors/color_version.h exactcolors/util.o exactcolors/rounding_mode.o exactcolors/cliq_enum.o exactcolors/color_parms.o exactcolors/graph.o exactcolors/lpcplex.o exactcolors/bbsafe.o exactcolors/mwis_grdy.o exactcolors/heap.o exactcolors/mwis.o exactcolors/mwis_sewell/mwss_ext.o exactcolors/mwis_sewell/wstable.o exactcolors/color_backup.o exactcolors/greedy.o -I include/ -I hglib/include/ -I hglib/lib/filtered_vector/include/ -I /opt/ibm/ILOG/CPLEX_Studio2211/cplex/include/ -I /opt/ibm/ILOG/CPLEX_Studio2211/concert/include/ -I exactcolors/ -ldl -L /opt/ibm/ILOG/CPLEX_Studio2211/cplex/lib/x86-64_linux/static_pic -L /opt/ibm/ILOG/CPLEX_Studio2211/concert/lib/x86-64_linux/static_pic -lconcert -lilocplex -lcplex -std=c++20 -g
+## Requisitos
+- Compilador C++ con soporte C++20 (g++ recomendado)
+- IBM ILOG CPLEX (paths usados en la línea de compilación)
+- Librerías y objetos en el directorio `exactcolors/`
+- Sistema operativo Linux
 
+## Compilación
+
+Primero, compilar las dependencias de `exactcolors/`:
+
+```bash
+cd exactcolors/
+make
+cd ..
+```
+
+Luego, ejecutar desde la raíz del repositorio:
+
+```bash
+make
+```
+
+**Nota:** Ajustar rutas de include y librería de CPLEX en el Makefile según la instalación local.
+
+## Uso
+
+Tras compilar se generará el ejecutable `dpcp`. Ejecutar con:
+
+```bash
+./dpcp [opciones] <archivos_entrada>
+```
+
+Revisar `main.cpp` para detalles sobre opciones y formato de entrada.
+
+## Estructura del proyecto
+
+```
+cfcol/
+├── main.cpp              # Punto de entrada del programa
+├── src/                  # Código fuente principal
+│   ├── graph.cpp
+│   ├── col.cpp
+│   └── lp.cpp
+|   └── ...
+├── include/              # Cabeceras del proyecto
+│   └── bp.hpp
+│   └── ...
+├── exactcolors/          # Dependencias externas (objetos compilados)
+├── hglib/                # Librería auxiliar
+├── input/                # Archivos de entrada
+├── instances/            # Instancias de prueba
+├── Makefile              # Script de compilación
+└── README.md             # Este archivo
+```
+
+## Contribuciones
+
+Reportar issues o enviar pull requests. Incluir descripción del cambio y pruebas mínimas.
+
+## Licencia
+
+Ver archivo LICENSE para detalles.
