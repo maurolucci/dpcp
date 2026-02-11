@@ -11,7 +11,7 @@
 LP::LP(Graph *graph, Params &params, Pool &pool, Graph &origGraph,
        std::ostream &log, bool isRoot)
     : in(GraphEnv(graph, params.preprocStep1, params.preprocStep2,
-                  params.preprocStep3, isRoot)),
+                  params.preprocStep3, params.preprocStep4, isRoot)),
       params(params), stables(), posVars(), objVal(-1.0), initSol(), pool(pool),
       origGraph(origGraph), initializedWithDummy(false), log(log),
       isRoot(isRoot), state(LP_UNSOLVED) {}
@@ -158,6 +158,13 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
   if (in.isInfeasible) {
     stats.ninfeasPrepro++;
     return LP_INFEASIBLE;
+  }
+
+  // Check if the instance has a trivial integer solution
+  if (in.hasTrivialSolution) {
+    stats.ntrivial++;
+    objVal = 1.0;
+    return LP_INTEGER;
   }
 
   // Check if the input is a GCP instance
@@ -824,22 +831,27 @@ void LP::feasibility_check(Stats &stats, Params &params) {
 
 void LP::save_lp_solution(Stats &stats, Col &col) {
 
-  stats.nsolLR++;
-
   // Reset coloring
   col.reset_coloring();
 
   // Recover the coloring of the current graph
   Col currentCol;
-  Color k = 0;
-  for (auto i : posVars) {
-    for (auto v : stables[i]) {
-      // Ignore already colored vertices
-      if (currentCol.is_colored(v))
-        continue;
-      currentCol.set_color(in.graph, v, k);
+
+  if (in.hasTrivialSolution) {
+    Vertex v = *(vertices(in.graph).first);
+    currentCol.set_color(in.graph, v, 0);
+  } else {
+    stats.nsolLR++;
+    Color k = 0;
+    for (auto i : posVars) {
+      for (auto v : stables[i]) {
+        // Ignore already colored vertices
+        if (currentCol.is_colored(v))
+          continue;
+        currentCol.set_color(in.graph, v, k);
+      }
+      ++k;
     }
-    ++k;
   }
   assert(currentCol.check_coloring(in.graph));
 

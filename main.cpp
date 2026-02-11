@@ -153,6 +153,7 @@ int main(int argc, const char **argv) {
   params.preprocStep1 = !vm.count("preproc-off");
   params.preprocStep2 = !vm.count("preproc-off");
   params.preprocStep3 = !vm.count("preproc-off");
+  params.preprocStep4 = !vm.count("preproc-off");
   params.usePool = vm.count("pool");
   params.pricingHeur1 = !vm.count("pricing-greedy-off");
   params.pricingHeur2 = !vm.count("pricing-pq-mwsp-off");
@@ -262,13 +263,14 @@ int main(int argc, const char **argv) {
         out.logFile << "Deciding feasibility of instance " << path
                     << " with enumerative method" << std::endl;
         stats = dpcp_decide_feasibility_enumerative(
-            GraphEnv(&graph, false, false, false, true), col, out.logFile);
+            GraphEnv(&graph, false, false, false, false, true), col,
+            out.logFile);
       } else if (solver == "feas-ilp") {
         out.logFile << "Deciding feasibility of instance " << path
                     << " with ILP" << std::endl;
         stats = dpcp_decide_feasibility_ilp(
-            GraphEnv(&graph, false, false, false, true), col, params.timeLimit,
-            out.logFile);
+            GraphEnv(&graph, false, false, false, false, true), col,
+            params.timeLimit, out.logFile);
       } else {
         std::cerr << "Unknown solver: " << solver << std::endl;
         return 2;

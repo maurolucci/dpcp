@@ -22,7 +22,7 @@ Stats dpcp_decide_feasibility_enumerative(const GraphEnv &_genv, Col &col,
   // First make a copy of the graph
   Graph g;
   graph_copy(_genv.graph, g);
-  GraphEnv genv(&g, true, false, false, true);
+  GraphEnv genv(&g, true, false, false, false, true);
 
   // Remove edges whose endpoints do not belongs to the same Va and Vb
   Graph::edge_iterator ei, ei_end, next;
@@ -155,7 +155,7 @@ Stats dpcp_decide_feasibility_ilp(const GraphEnv &_genv, Col &col,
   // First make a copy of the graph
   Graph g;
   graph_copy(_genv.graph, g);
-  GraphEnv genv(&g, true, false, false, true);
+  GraphEnv genv(&g, true, false, false, false, true);
 
   // Remove edges whose endpoints do not belongs to the same Va and Vb
   Graph::edge_iterator ei, ei_end, next;

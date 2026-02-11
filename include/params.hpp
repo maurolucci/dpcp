@@ -68,9 +68,11 @@ struct Params {
   // preprocStep1: make each V_a a clique
   // preprocStep2: remove vertices for each a with |V_a| = 1
   // preprocStep3: vanish isolated vertices
+  // preprocStep4: check if n = 1
   bool preprocStep1;
   bool preprocStep2;
   bool preprocStep3;
+  bool preprocStep4;
 
   // Column generation options
   // usePool: use a pool of columns (not implemented yet)
@@ -101,9 +103,9 @@ struct Params {
         feasibilityRootNodeTimeLimit(300), feasibilityOtherNodes(2),
         feasibilityOtherNodesTimeLimit(60), inheritColumns(0),
         initializationBigWeight(1000.0), preprocStep1(true), preprocStep2(true),
-        preprocStep3(true), usePool(false), pricingHeur1(true),
-        pricingHeur2(true), pricingHeur3(true), pricingOrder(1),
-        pricingHeur1MaxNCols(1), pricingExactTimeLimit(300),
+        preprocStep3(true), preprocStep4(true), usePool(false),
+        pricingHeur1(true), pricingHeur2(true), pricingHeur3(true),
+        pricingOrder(1), pricingHeur1MaxNCols(1), pricingExactTimeLimit(300),
         branchingFMS(false){};
 
   std::string get_heur_name(int heur) {
@@ -204,6 +206,8 @@ struct Params {
         << (preprocStep2 ? "enabled" : "disabled") << std::endl;
     out << "Preprocessing step 3 (vanish isolated): "
         << (preprocStep3 ? "enabled" : "disabled") << std::endl;
+    out << "Preprocessing step 4 (check if n = 1): "
+        << (preprocStep4 ? "enabled" : "disabled") << std::endl;
     out << "Use column pool: " << (usePool ? "enabled" : "disabled")
         << std::endl;
     out << "Pricing heuristic 1 (greedy): "

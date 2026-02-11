@@ -144,20 +144,20 @@ void vertex_branching2(Graph &graph, Vertex v) {
 }
 
 GraphEnv::GraphEnv(Graph *graph, bool preprocess1, bool preprocess2,
-                   bool preprocess3, bool isRoot)
+                   bool preprocess3, bool preprocess4, bool isRoot)
     : graphPtr(graph), graph(*graph), getId(), nA(0), nB(0), tyA2idA(),
       tyB2idB(), idA2TyA(), idB2TyB(), snd(), fst(), isRoot(isRoot),
       isGCP(true), isInfeasible(false), isolated() {
   // First, apply preprocessing
-  preprocess(preprocess1, preprocess2, preprocess3);
+  preprocess(preprocess1, preprocess2, preprocess3, preprocess4);
   // Then, initialize the other struct members
   init_graphenv();
 };
 
 GraphEnv::~GraphEnv(){};
 
-void GraphEnv::preprocess(bool preprocess1, bool preprocess2,
-                          bool preprocess3) {
+void GraphEnv::preprocess(bool preprocess1, bool preprocess2, bool preprocess3,
+                          bool preprocess4) {
   init_preprocess();
   if (preprocess1 && isRoot)
     preprocess_step1();
@@ -165,6 +165,8 @@ void GraphEnv::preprocess(bool preprocess1, bool preprocess2,
     preprocess_step2();
   if (preprocess3)
     preprocess_step3();
+  if (preprocess4)
+    preprocess_step4();
 }
 
 // Initialize preprocessing
@@ -254,8 +256,15 @@ void GraphEnv::preprocess_step3() {
       isolated.push_back(vi);
       clear_vertex(*it_u, graph);
       remove_vertex(*it_u, graph);
+      nA--;
     }
   }
+}
+
+void GraphEnv::preprocess_step4() {
+  // 4. Check if n = 1
+  if (nA == 1)
+    hasTrivialSolution = true;
 }
 
 void GraphEnv::init_graphenv() {

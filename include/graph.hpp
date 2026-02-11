@@ -69,10 +69,12 @@ public:
   bool isRoot;                    // Is the root node?
   bool isGCP;                     // Is a GCP instance?
   bool isInfeasible;              // Is the instance infeasible?
+  bool hasTrivialSolution;        // Does the instance have a trivial solution?
   std::list<VertexInfo> isolated; // List of isolated vertices
 
   GraphEnv(Graph *graph, bool preprocess1 = true, bool preprocess2 = true,
-           bool preprocess3 = true, bool isRoot = false);
+           bool preprocess3 = true, bool preprocess4 = true,
+           bool isRoot = false);
   ~GraphEnv();
 
 private:
@@ -80,11 +82,13 @@ private:
   void init_graphenv();
 
   // Preprocessing
-  void preprocess(bool preprocess1, bool preprocess2, bool preprocess3);
+  void preprocess(bool preprocess1, bool preprocess2, bool preprocess3,
+                  bool preprocess4);
   void init_preprocess();
   void preprocess_step1();
   void preprocess_step2();
   void preprocess_step3();
+  void preprocess_step4();
 };
 
 struct StableEnv {
