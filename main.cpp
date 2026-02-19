@@ -266,10 +266,10 @@ int main(int argc, const char **argv) {
         GraphEnv genv(&graph, params.preprocStep1, params.preprocStep2,
                       params.preprocStep3, params.preprocStep4, false);
         switch (params.heuristicRootNode) {
-        case 0:
+        case 1:
           stats = dpcp_1_step_greedy_heur(genv, col);
           break;
-        case 1:
+        case 2:
           stats =
               dpcp_2_step_greedy_heur(genv, col, params.heuristic2stepVariant);
           break;
