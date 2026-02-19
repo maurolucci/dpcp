@@ -349,6 +349,8 @@ Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col, size_t variant) {
     assert(col.check_coloring(genv.graph));
     stats.state = FEASIBLE;
     stats.ub = static_cast<double>(col.get_n_colors());
+    stats.bestTime = stats.time;
+    stats.bestIter = 0;
   }
 
   TimePoint end = ClockType::now();
@@ -364,7 +366,7 @@ Stats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col, size_t nIters,
   TimePoint start = ClockType::now();
   Stats stats;
 
-  while (nIters-- > 0) {
+  for (size_t i = 0; i < nIters; ++i) {
 
     // First step
     VertexVector selected;                // Vector of selected vertices
@@ -378,8 +380,13 @@ Stats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col, size_t nIters,
       // Second step
       Col newCol;
       dpcp_dsatur_heur(genv, selected, adj, newCol);
-      if (col.get_n_colors() == 0 || newCol.get_n_colors() < col.get_n_colors())
+      if (col.get_n_colors() == 0 ||
+          newCol.get_n_colors() < col.get_n_colors()) {
         col = newCol;
+        stats.bestTime =
+            std::chrono::duration<double>(ClockType::now() - start).count();
+        stats.bestIter = i;
+      }
     }
   }
 
@@ -666,6 +673,8 @@ Stats dpcp_1_step_greedy_heur(const GraphEnv &genv, Col &col) {
   stats.state = FEASIBLE;
   stats.time = std::chrono::duration<double>(end - start).count();
   stats.ub = static_cast<double>(col.get_n_colors());
+  stats.bestTime = stats.time;
+  stats.bestIter = 0;
 
   return stats;
 }

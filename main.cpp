@@ -3,6 +3,7 @@
 #include "compact_ilp.hpp"
 #include "feas.hpp"
 #include "graph.hpp"
+#include "heur.hpp"
 #include "lp.hpp"
 #include "params.hpp"
 #include "stats.hpp"
@@ -44,7 +45,7 @@ int main(int argc, const char **argv) {
   desc.add_options()("help,h", "show this help");
   desc.add_options()("solver,s", po::value<std::string>()->required(),
                      "solver, can be any of "
-                     "[byp, compact, feas-enum, feas-ilp]");
+                     "[byp, compact, heur, feas-enum, feas-ilp]");
   desc.add_options()(
       "graph,f",
       po::value<std::vector<std::string>>()->required()->multitoken(),
@@ -259,6 +260,29 @@ int main(int argc, const char **argv) {
         out.logFile << "Solving instance " << path << " with compact ILP"
                     << std::endl;
         stats = solve_ilp(graph, params, out.logFile, col);
+      } else if (solver == "heur") {
+        out.logFile << "Solving instance " << path << " with DPCP heuristic"
+                    << std::endl;
+        GraphEnv genv(&graph, params.preprocStep1, params.preprocStep2,
+                      params.preprocStep3, params.preprocStep4, false);
+        switch (params.heuristicRootNode) {
+        case 0:
+          stats = dpcp_1_step_greedy_heur(genv, col);
+          break;
+        case 1:
+          stats =
+              dpcp_2_step_greedy_heur(genv, col, params.heuristic2stepVariant);
+          break;
+        case 3:
+          stats =
+              dpcp_2_step_semigreedy_heur(genv, col, params.heuristicRootIter,
+                                          params.heuristic2stepVariant);
+          break;
+        default:
+          std::cerr << "Unknown heuristic root node: "
+                    << params.heuristicRootNode << std::endl;
+          return 2;
+        }
       } else if (solver == "feas-enum") {
         out.logFile << "Deciding feasibility of instance " << path
                     << " with enumerative method" << std::endl;

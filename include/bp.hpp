@@ -224,6 +224,10 @@ private:
         log << "New best integer solution found by heuristic with value: "
             << obj_value << std::endl;
         update_primal_bound(obj_value);
+        stats.bestTime = std::chrono::duration_cast<std::chrono::seconds>(
+                             ClockType::now() - start_t)
+                             .count();
+        stats.bestIter = nodes;
       }
     }
 
@@ -236,6 +240,10 @@ private:
         log << "New best integer solution found by LR with value: " << obj_value
             << std::endl;
         update_primal_bound(obj_value);
+        stats.bestTime = std::chrono::duration_cast<std::chrono::seconds>(
+                             ClockType::now() - start_t)
+                             .count();
+        stats.bestIter = nodes;
       }
       delete node; // Prune by optimality
       return state;
