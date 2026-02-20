@@ -52,46 +52,6 @@ std::tuple<Graph, size_t, size_t> read_dpcp_instance(std::istream &graph,
   return std::make_tuple(g, nA, nB);
 }
 
-void read_hypergraph(HGraph &hg, std::istream &input) {
-
-  size_t n, m, mm, v;
-  input >> n >> m;
-
-  // Add vertices
-  for (size_t v = 0; v < n; ++v)
-    hg.addVertex();
-
-  // Add hyperedges
-  for (size_t e = 0; e < m; ++e) {
-    input >> mm;
-    std::vector<HVertex> vertices;
-    for (size_t i = 0; i < mm; ++i) {
-      input >> v;
-      vertices.push_back(v);
-    }
-    hg.addHyperedge(vertices);
-  }
-}
-
-void get_conflict_graph(const HGraph &hg, Graph &graph) {
-  // Add vertices (pointed sets)
-  size_t nVertices = 0;
-  for (const auto &e : hg.hyperedges())
-    for (const auto &v : *hg.impliedVertices(e->id()))
-      add_vertex(VertexInfo{e->id(), v->id(), nVertices++}, graph);
-  // Add edge ((e1,v1), (e2,v2)) such that v2 in e1 - v1
-  auto [it1, end] = vertices(graph);
-  for (; it1 != end; ++it1)
-    for (auto it2 = std::next(it1); it2 != end; ++it2) {
-      // Unpack PSets
-      TypeA e1 = graph[*it1].first, e2 = graph[*it2].first;
-      TypeB v1 = graph[*it1].second, v2 = graph[*it2].second;
-      if (v1 != v2 &&
-          (hg.isVertexOfHyperedge(v2, e1) || hg.isVertexOfHyperedge(v1, e2)))
-        add_edge(*it1, *it2, graph);
-    }
-  return;
-}
 
 void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
                    std::vector<TypeB> &idB2TyB) {

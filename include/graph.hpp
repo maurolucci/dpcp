@@ -6,7 +6,6 @@
 #include "params.hpp"
 
 #include "boost/graph/adjacency_list.hpp"
-#include "hglib.h"
 
 using TypeA = size_t;
 using TypeB = size_t;
@@ -23,20 +22,12 @@ using VertexVector = std::vector<Vertex>;
 using VertexSet = std::set<Vertex>;
 using ASet = std::set<TypeA>;
 
-using HGraph = hglib::UndirectedHypergraph<>;
-using HVertex = hglib::VertexIdType;
-using HEdge = hglib::HyperedgeIdType;
-
 using GCPGraph =
     boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, TypeB>;
 
 std::tuple<Graph, size_t, size_t> read_dpcp_instance(std::istream &graph,
                                                      std::istream &partA,
                                                      std::istream &partB);
-
-void read_hypergraph(HGraph &hg, std::istream &input);
-
-void get_conflict_graph(const HGraph &src, Graph &dst);
 
 void get_gcp_graph(Graph &src, GCPGraph &dst, std::map<TypeB, size_t> &tyB2idB,
                    std::vector<TypeB> &idB2TyB);
