@@ -349,7 +349,8 @@ Stats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col, size_t variant) {
     assert(col.check_coloring(genv.graph));
     stats.state = FEASIBLE;
     stats.ub = static_cast<double>(col.get_n_colors());
-    stats.bestTime = std::chrono::duration<double>(ClockType::now() - start).count();
+    stats.bestTime =
+        std::chrono::duration<double>(ClockType::now() - start).count();
     stats.bestIter = 0;
   }
 
