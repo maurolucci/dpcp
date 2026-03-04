@@ -72,7 +72,7 @@ int main(int argc, const char **argv) {
                      po::value<size_t>()->default_value(3),
                      "variant of the 2-step heuristic");
   desc.add_options()("heur-semigreedy-alpha",
-                     po::value<double>()->default_value(0.1),
+                     po::value<double>()->default_value(0.2),
                      "alpha parameter for the semi-greedy heuristic");
   desc.add_options()("heur-semigreedy-iter",
                      po::value<size_t>()->default_value(100),

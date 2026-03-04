@@ -97,7 +97,7 @@ struct Params {
   Params()
       : timeLimit(900), dfs(false), onlyRelaxation(false), heuristicRootNode(3),
         heuristicOtherNodes(2), heuristic2stepVariant(3),
-        heuristicSemigreedyAlpha(0.1), heuristicSemigreedyIter(100),
+        heuristicSemigreedyAlpha(0.2), heuristicSemigreedyIter(100),
         feasibilityRootNode(2), feasibilityRootNodeTimeLimit(300),
         feasibilityOtherNodes(2), feasibilityOtherNodesTimeLimit(60),
         inheritColumns(0), initializationBigWeight(1000.0), preprocStep1(true),
