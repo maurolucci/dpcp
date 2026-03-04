@@ -16,7 +16,7 @@ void Col::set_color(const Graph &graph, const Vertex v, const Color k) {
   classes[k].insert(v);
   colorA[a] = k;
   if (colorB.contains(b))
-    // Al the vertices of V^b must have the same color
+    // All the vertices of V^b must have the same color
     assert(colorB[b] == k);
   else {
     colorB[b] = k;
@@ -91,9 +91,9 @@ void Col::color_isolated_vertices(std::list<VertexInfo> &isolated, Col &dstCol,
   }
 }
 
-void Col::write_coloring(std::ostream &out) const {
+void Col::write_coloring(const Graph &graph, std::ostream &out) const {
   out << coloring.size() << " " << classes.size() << "\n";
   for (auto [v, k] : coloring) {
-    out << v << " " << k << "\n";
+    out << graph[v].id << " " << k << "\n";
   }
 }

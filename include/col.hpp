@@ -56,7 +56,7 @@ public:
   void color_isolated_vertices(std::list<VertexInfo> &isolated, Col &dstCol,
                                const Graph &dstGraph);
 
-  void write_coloring(std::ostream &out) const;
+  void write_coloring(const Graph &graph, std::ostream &out) const;
 
 private:
   Coloring coloring;
