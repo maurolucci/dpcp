@@ -363,14 +363,12 @@ HeurStats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
 }
 
 // General two-step semigreedy heuristic for DPCP
-// Stopping criterion: if no improvement after nIters iterations
 HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
                                       size_t nIters, size_t variant) {
 
   TimePoint start = ClockType::now();
   HeurStats stats;
-  size_t totalIters = 0;
-  for (size_t i = 0; i < nIters; ++i, ++totalIters) {
+  for (size_t i = 0; i < nIters; ++i) {
 
     // First step
     VertexVector selected;                // Vector of selected vertices
@@ -389,13 +387,12 @@ HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
         col = newCol;
         stats.bestTime =
             std::chrono::duration<double>(ClockType::now() - start).count();
-        stats.bestIter = totalIters;
-        i = 0;
+        stats.bestIter = i;
       }
     }
   }
 
-  stats.totalIters = totalIters;
+  stats.totalIters = nIters;
 
   if (col.get_n_colors() == 0) {
     stats.state = UNKNOWN;
