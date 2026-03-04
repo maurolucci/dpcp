@@ -65,16 +65,18 @@ int main(int argc, const char **argv) {
       "heur-root", po::value<int>()->default_value(3),
       "type of heuristic for the root node (0: no heuristic, "
       "1: greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
-  desc.add_options()("heur-root-iter", po::value<size_t>()->default_value(100),
-                     "number of iterations for the root heuristic");
   desc.add_options()("heur-nodes", po::value<int>()->default_value(2),
                      "type of heuristic for other nodes (0: no heuristic, 1: "
                      "greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
-  desc.add_options()("heur-nodes-iter", po::value<size_t>()->default_value(50),
-                     "number of iterations for the other nodes heuristic");
   desc.add_options()("heur-2step-variant",
                      po::value<size_t>()->default_value(3),
                      "variant of the 2-step heuristic");
+  desc.add_options()("heur-semigreedy-alpha",
+                     po::value<double>()->default_value(0.1),
+                     "alpha parameter for the semi-greedy heuristic");
+  desc.add_options()("heur-semigreedy-iter",
+                     po::value<size_t>()->default_value(100),
+                     "number of iterations for the semi-greedy heuristic");
   desc.add_options()("feas-root", po::value<int>()->default_value(2),
                      "type of feasibility check for the root node (0: no "
                      "check, 1: enumerative, 2: ILP)");
@@ -141,10 +143,10 @@ int main(int argc, const char **argv) {
   params.dfs = vm.count("dfs");
   params.onlyRelaxation = vm.count("relax");
   params.heuristicRootNode = vm["heur-root"].as<int>();
-  params.heuristicRootIter = vm["heur-root-iter"].as<size_t>();
   params.heuristicOtherNodes = vm["heur-nodes"].as<int>();
-  params.heuristicOtherIter = vm["heur-nodes-iter"].as<size_t>();
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
+  params.heuristicSemigreedyAlpha = vm["heur-semigreedy-alpha"].as<double>();
+  params.heuristicSemigreedyIter = vm["heur-semigreedy-iter"].as<size_t>();
   params.feasibilityRootNode = vm["feas-root"].as<int>();
   params.feasibilityRootNodeTimeLimit = vm["feas-root-time"].as<int>();
   params.feasibilityOtherNodes = vm["feas-nodes"].as<int>();
@@ -301,13 +303,10 @@ int main(int argc, const char **argv) {
           heurStats = dpcp_1_step_greedy_heur(genv, col);
           break;
         case 2:
-          heurStats =
-              dpcp_2_step_greedy_heur(genv, col, params.heuristic2stepVariant);
+          heurStats = dpcp_2_step_greedy_heur(genv, col, params);
           break;
         case 3:
-          heurStats =
-              dpcp_2_step_semigreedy_heur(genv, col, params.heuristicRootIter,
-                                          params.heuristic2stepVariant);
+          heurStats = dpcp_2_step_semigreedy_heur(genv, col, params);
           break;
         default:
           std::cerr << "Unknown heuristic root node: "

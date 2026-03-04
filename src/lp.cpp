@@ -803,14 +803,12 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray &values) {
 // The heuristic used is selected depending on the parameters
 void LP::heuristic(HeurStats &stats, Params &params) {
   int heur = isRoot ? params.heuristicRootNode : params.heuristicOtherNodes;
-  int iters = isRoot ? params.heuristicRootIter : params.heuristicOtherIter;
   if (heur == 1)
     stats = dpcp_1_step_greedy_heur(in, initSol);
   else if (heur == 2)
-    stats = dpcp_2_step_greedy_heur(in, initSol, params.heuristic2stepVariant);
+    stats = dpcp_2_step_greedy_heur(in, initSol, params);
   else if (heur == 3)
-    stats = dpcp_2_step_semigreedy_heur(in, initSol, iters,
-                                        params.heuristic2stepVariant);
+    stats = dpcp_2_step_semigreedy_heur(in, initSol, params);
   return;
 }
 

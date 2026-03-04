@@ -12,8 +12,6 @@ extern "C" {
 #include <ranges>
 #include <stdexcept>
 
-#define ALPHA_B 0.1 // Parameter for the semigreedy selection
-
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::_V2::system_clock::time_point;
 
@@ -123,14 +121,15 @@ Vertex greedy_vertex_selector(const GraphEnv &genv,
                               const std::map<Vertex, bool> &removed,
                               const VertexVector &selected,
                               std::map<TypeB, std::set<TypeB>> &adj,
-                              size_t variant) {
+                              const Params &params) {
   Vertex minVertex = NULL;
   size_t minVal = std::numeric_limits<size_t>::max();
   size_t minTie = std::numeric_limits<size_t>::max();
   for (Vertex v : candidates) {
     if (removed.at(v))
       continue;
-    size_t val = evaluate_vertex(genv, removed, selected, adj, variant, v);
+    size_t val = evaluate_vertex(genv, removed, selected, adj,
+                                 params.heuristic2stepVariant, v);
     if (val < minVal) {
       minVal = val;
       minTie = evaluate_vertex(genv, removed, selected, adj, 1, v);
@@ -155,7 +154,7 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
                                   const std::map<Vertex, bool> &removed,
                                   const VertexVector &selected,
                                   std::map<TypeB, std::set<TypeB>> &adj,
-                                  size_t variant) {
+                                  const Params &params) {
 
   // First, find the lowest and highest degree among the candidates
   size_t minVal = std::numeric_limits<size_t>::max();
@@ -164,14 +163,15 @@ Vertex semigreedy_vertex_selector(const GraphEnv &genv,
   for (Vertex v : candidates) {
     if (removed.at(v))
       continue;
-    size_t val = evaluate_vertex(genv, removed, selected, adj, variant, v);
+    size_t val = evaluate_vertex(genv, removed, selected, adj,
+                                 params.heuristic2stepVariant, v);
     valMap[v] = val;
     if (val < minVal)
       minVal = val;
     if (val > maxVal)
       maxVal = val;
   }
-  double cutoff = minVal + ALPHA_B * (maxVal - minVal);
+  double cutoff = minVal + params.heuristicSemigreedyAlpha * (maxVal - minVal);
 
   // Build the RCL
   VertexVector rcl;
@@ -192,7 +192,7 @@ using Heur2SVertexSelector = Vertex (*)(const GraphEnv &, const VertexVector &,
                                         const std::map<Vertex, bool> &,
                                         const VertexVector &,
                                         std::map<TypeB, std::set<TypeB>> &,
-                                        size_t);
+                                        const Params &params);
 
 // Update the information after removing a vertex v
 void update_info(const Graph &graph, std::map<Vertex, bool> &removed, Vertex v,
@@ -206,7 +206,7 @@ void update_info(const Graph &graph, std::map<Vertex, bool> &removed, Vertex v,
 // Select a set of vertices of size |A|, one from each Va, such that the
 // selected vertices of each Vb are a stable set
 bool first_step(const GraphEnv &genv, VertexVector &selected,
-                std::map<TypeB, std::set<TypeB>> &adj, size_t variant,
+                std::map<TypeB, std::set<TypeB>> &adj, const Params &params,
                 Heur2SVertexSelector vertexSelector) {
 
   // Map with the removed vertices
@@ -248,7 +248,7 @@ bool first_step(const GraphEnv &genv, VertexVector &selected,
 
     // Choose a vertex, with some criterion
     Vertex v =
-        vertexSelector(genv, genv.Va.at(a), removed, selected, adj, variant);
+        vertexSelector(genv, genv.Va.at(a), removed, selected, adj, params);
     // info.at(v).print_info();
     if (v == NULL)
       return false; // No vertex can be selected from Va
@@ -331,7 +331,7 @@ void dpcp_dsatur_heur(const GraphEnv &genv, VertexVector &selected,
 
 // General two-step greedy heuristic for DPCP
 HeurStats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
-                                  size_t variant) {
+                                  const Params &params) {
 
   TimePoint start = ClockType::now();
   HeurStats stats;
@@ -341,7 +341,7 @@ HeurStats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
   std::map<TypeB, std::set<TypeB>> adj; // Adjacent list of the subgraph
                                         // induced by the selected vertices
   bool success =
-      first_step(genv, selected, adj, variant, greedy_vertex_selector);
+      first_step(genv, selected, adj, params, greedy_vertex_selector);
   if (!success) {
     stats.state = UNKNOWN;
   } else {
@@ -364,18 +364,19 @@ HeurStats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
 
 // General two-step semigreedy heuristic for DPCP
 HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
-                                      size_t nIters, size_t variant) {
+                                      const Params &params) {
 
   TimePoint start = ClockType::now();
   HeurStats stats;
-  for (size_t i = 0; i < nIters; ++i) {
+  stats.totalIters = params.heuristicSemigreedyIter * num_vertices(genv.graph);
+  for (size_t i = 0; i < stats.totalIters; ++i) {
 
     // First step
     VertexVector selected;                // Vector of selected vertices
     std::map<TypeB, std::set<TypeB>> adj; // Adjacent list of the subgraph
                                           // induced by the selected vertices
     bool success =
-        first_step(genv, selected, adj, variant, semigreedy_vertex_selector);
+        first_step(genv, selected, adj, params, semigreedy_vertex_selector);
     if (!success) {
       continue;
     } else {
@@ -391,8 +392,6 @@ HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
       }
     }
   }
-
-  stats.totalIters = nIters;
 
   if (col.get_n_colors() == 0) {
     stats.state = UNKNOWN;
