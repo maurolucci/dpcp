@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# exp1: Evaluate number of repetitions in the semigreedy heuristic
+# exp2: Evaluate number of repetitions in the semigreedy heuristic
 
 declare -a HEURS=("semigreedy2s")
 declare -a VARIANTS=("2" "3")
@@ -11,7 +11,7 @@ declare INSTANCES="$INPUT/instances.txt"
 declare BIN="../../dpcp"
 declare OUT="out/"
 
-echo "Running experiment #1"
+echo "Running experiment #2"
 
 # First, create output directories
 for h in "${HEURS[@]}"
