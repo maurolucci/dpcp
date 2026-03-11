@@ -38,6 +38,9 @@ nB = args.nB
 ninst = args.ninst
 path = args.path
 
+# Set a fixed seed
+random.seed(0)
+
 for id in range(ninst):
 
     nombre_base = f"{path}/r_n{n}_p{p}_nA{nA}_nB{nB}_i{id}"
