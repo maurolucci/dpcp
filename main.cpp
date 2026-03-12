@@ -110,6 +110,9 @@ int main(int argc, const char **argv) {
   desc.add_options()("pricing-greedy-max-cols",
                      po::value<size_t>()->default_value(1),
                      "maximum number of columns to add with greedy pricing");
+  desc.add_options()("pricing-greedy-alpha",
+                     po::value<double>()->default_value(0.1),
+                     "alpha parameter for the greedy pricing heuristic");
   desc.add_options()("pricing-exact-time",
                      po::value<size_t>()->default_value(300),
                      "time limit for exact pricing (in seconds)");
@@ -163,6 +166,7 @@ int main(int argc, const char **argv) {
   params.pricingHeur3 = !vm.count("pricing-p-mwsp-off");
   params.pricingOrder = vm["pricing-order"].as<int>();
   params.pricingHeur1MaxNCols = vm["pricing-greedy-max-cols"].as<size_t>();
+  params.pricingHeur1Alpha = vm["pricing-greedy-alpha"].as<double>();
   params.pricingExactTimeLimit = vm["pricing-exact-time"].as<size_t>();
   params.branchingFMS = vm.count("branching-fms");
 

@@ -407,7 +407,7 @@ int LP::pricing_greedy(CplexEnv &cenv, PricingEnv &penv, Stats &stats,
   auto startTime = std::chrono::high_resolution_clock::now();
   size_t nHeurCols = 0;
   for (size_t i = 0; i < params.pricingHeur1MaxNCols; ++i) {
-    auto res = penv.heur_solve(dualsA, dualsB);
+    auto res = penv.heur_solve(dualsA, dualsB, params.pricingHeur1Alpha);
     if (res.second == PRICING_STABLE_FOUND) {
       add_column(cenv, res.first);
       nHeurCols++;

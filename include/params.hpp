@@ -89,6 +89,7 @@ struct Params {
   bool pricingHeur2;
   bool pricingHeur3;
   int pricingOrder;
+  double pricingHeur1Alpha;
   size_t pricingHeur1MaxNCols;
   size_t pricingExactTimeLimit;
   // branchingFMS: use Furini-Malaguti-Santini branching rule
@@ -103,8 +104,9 @@ struct Params {
         inheritColumns(0), initializationBigWeight(1000.0), preprocStep1(true),
         preprocStep2(true), preprocStep3(true), preprocStep4(true),
         usePool(false), pricingHeur1(true), pricingHeur2(true),
-        pricingHeur3(true), pricingOrder(1), pricingHeur1MaxNCols(1),
-        pricingExactTimeLimit(300), branchingFMS(false){};
+        pricingHeur3(true), pricingOrder(1), pricingHeur1Alpha(0.1),
+        pricingHeur1MaxNCols(1), pricingExactTimeLimit(300),
+        branchingFMS(false){};
 
   std::string get_heur_name(int heur) {
     switch (heur) {
@@ -218,6 +220,7 @@ struct Params {
     out << "Pricing heuristic 3 (P-MWSSP): "
         << (pricingHeur3 ? "enabled" : "disabled") << std::endl;
     out << "Pricing order: " << pricingOrder << std::endl;
+    out << "Pricing heuristic 1 alpha: " << pricingHeur1Alpha << std::endl;
     out << "Pricing exact time limit: " << pricingExactTimeLimit << " seconds"
         << std::endl;
   }
