@@ -104,8 +104,8 @@ void vertex_branching2(Graph &graph, Vertex v) {
 
 GraphEnv::GraphEnv(Graph *graph, bool preprocess1, bool preprocess2,
                    bool preprocess3, bool preprocess4, bool isRoot)
-    : graphPtr(graph), graph(*graph), getId(), nA(0), nB(0), tyA2idA(),
-      tyB2idB(), idA2TyA(), idB2TyB(), snd(), fst(), isRoot(isRoot),
+    : graphPtr(graph), graph(*graph), getId(), nA(0), nB(0), Va(), Vb(),
+      tyA2idA(), tyB2idB(), idA2TyA(), idB2TyB(), snd(), isRoot(isRoot),
       isGCP(true), isInfeasible(false), hasTrivialSolution(false), isolated() {
   // Density
   density = static_cast<double>((num_edges(*graph)) * 2) /
@@ -257,12 +257,9 @@ void GraphEnv::init_graphenv() {
       isGCP = false;
     }
     if (retB) {
-      // idB2TyB.push_back(b);
-      fst.push_back(std::vector<Vertex>{v});
       Vb.emplace(b, std::vector<Vertex>{v});
       nB++;
     } else {
-      // fst[tyB2idB[b]].push_back(v);
       Vb[b].push_back(v);
     }
   }

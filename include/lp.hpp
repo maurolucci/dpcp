@@ -99,6 +99,9 @@ private:
   // Add a new column to the linear relaxation
   void add_column(CplexEnv &cenv, StableEnv &stab, bool addStable);
 
+  // Check column validity
+  bool check_column(StableEnv &stab);
+
   // Print column
   void print_column(StableEnv &stab);
 

@@ -55,7 +55,6 @@ public:
   std::vector<TypeA> idA2TyA;           // Map from idA to TypeA
   std::vector<TypeB> idB2TyB;           // Map from idB to TypeB
   std::vector<std::vector<Vertex>> snd; // V_a = {v : v = (a,b) for some b}
-  std::vector<std::vector<Vertex>> fst; // V^b = {v : v = (a,b) for some a}
 
   bool isRoot;                    // Is the root node?
   bool isGCP;                     // Is a GCP instance?

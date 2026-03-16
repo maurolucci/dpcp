@@ -17,9 +17,10 @@ void ThresholdCallback::check_threshold(
       for (size_t iB = 0; iB < in.nB; ++iB) {
         if (valWb[iB] < 0.5)
           continue;
+        TypeB b = in.idB2TyB[iB];
         // Postprocessing: force w_b \leq \sum_{v \in B^b} y_v
         size_t sum_y = 0;
-        for (auto v : in.fst[iB])
+        for (auto v : in.Vb[b])
           if (valY[in.getId[v]] > 0.5)
             sum_y += 1;
         if (sum_y == 0)
@@ -301,7 +302,7 @@ PricingEnv::mwis_P_Q_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
 
     // Maximalize stable set
     for (TypeB b : st.bs)
-      for (Vertex v : in.fst[in.tyB2idB[b]]) {
+      for (Vertex v : in.Vb[b]) {
         // Check adjacencies
         bool ok = true;
         for (Vertex u : st.stable)
@@ -452,9 +453,10 @@ PricingEnv::exact_solve(IloNumArray &dualsA, IloNumArray &dualsB) {
     for (size_t iB = 0; iB < in.nB; ++iB) {
       if (valW[iB] < 0.5)
         continue;
+      TypeB b = in.idB2TyB[iB];
       // Postprocessing: force w_b \leq \sum_{v \in B^b} y_v
       size_t sum_y = 0;
-      for (auto v : in.fst[iB])
+      for (auto v : in.Vb[b])
         if (valY[in.getId[v]] > 0.5)
           sum_y += 1;
       if (sum_y == 0)

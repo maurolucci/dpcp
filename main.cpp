@@ -299,26 +299,33 @@ int main(int argc, const char **argv) {
       } else if (solver == "heur") {
         out.logFile << "Solving instance " << path << " with DPCP heuristic"
                     << std::endl;
-        GraphEnv genv(&graph, params.preprocStep1, params.preprocStep2,
+        Graph *gcopy = new Graph;
+        graph_copy(graph, *gcopy);
+        GraphEnv genv(gcopy, params.preprocStep1, params.preprocStep2,
                       params.preprocStep3, params.preprocStep4, false);
         HeurStats heurStats;
+        Col gcol;
         switch (params.heuristicRootNode) {
         case 1:
-          heurStats = dpcp_1_step_greedy_heur(genv, col);
+          heurStats = dpcp_1_step_greedy_heur(genv, gcol);
           break;
         case 2:
-          heurStats = dpcp_2_step_greedy_heur(genv, col, params);
+          heurStats = dpcp_2_step_greedy_heur(genv, gcol, params);
           break;
         case 3:
         case 4:
-          heurStats = dpcp_2_step_semigreedy_heur(genv, col, params);
+          heurStats = dpcp_2_step_semigreedy_heur(genv, gcol, params);
           break;
         default:
           std::cerr << "Unknown heuristic root node: "
                     << params.heuristicRootNode << std::endl;
           return 2;
         }
+        // Recover coloring for the original graph
+        gcol.translate_coloring(*gcopy, graph, col);
+        assert(col.check_coloring(graph));
         handle_output(heurStats);
+        delete gcopy;
         return 0;
       } else if (solver == "feas-enum") {
         out.logFile << "Deciding feasibility of instance " << path

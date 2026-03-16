@@ -51,7 +51,18 @@ void LP::add_column(CplexEnv &cenv, StableEnv &stab, bool addStable = true) {
   cenv.Xvars.add(IloNumVar(column));
   if (addStable)
     stables.push_back(VertexVector(stab.stable)); // Push a copy
+  // assert(check_column(stab));
   // print_column(stab);
+}
+
+bool LP::check_column(StableEnv &stab) {
+  // Check if the column is valid
+  for (auto v : stab.stable) {
+    if (stab.as.find(in.graph[v].first) == stab.as.end() ||
+        stab.bs.find(in.graph[v].second) == stab.bs.end())
+      return false;
+  }
+  return true;
 }
 
 void LP::print_column(StableEnv &stab) {
@@ -631,7 +642,7 @@ LP_STATE LP::solve_GCP(Stats &stats, double timelimit, double ub) {
       // Find the correct size
       int newCount = 0;
       for (int j = 0; j < colorclasses[i].count; ++j)
-        newCount += in.fst[colorclasses[i].members[j]].size();
+        newCount += in.Vb[colorclasses[i].members[j]].size();
 
       VertexVector stable;
       stable.reserve(newCount);
@@ -644,7 +655,7 @@ LP_STATE LP::solve_GCP(Stats &stats, double timelimit, double ub) {
 
       // Write translated stable set
       for (int j = 0; j < colorclasses[i].count; ++j)
-        for (auto v : in.fst[colorclasses[i].members[j]])
+        for (auto v : in.Vb[colorclasses[i].members[j]])
           // nset->members[l++] = v;
           stable.push_back(v);
 
