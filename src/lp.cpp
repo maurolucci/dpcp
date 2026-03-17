@@ -297,6 +297,11 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
     }
   }
 
+  // Save root lower bound
+  if (in.isRoot) {
+    stats.rootlb = objVal;
+  }
+
   if (state == LP_UNSOLVED) {
 
     // Recover primal values and objective value
@@ -339,11 +344,6 @@ LP_STATE LP::optimize(double timelimit, double ub, Stats &stats) {
                   << " <= " << std::min(in.nA, in.nB) + EPSILON << std::endl;
         state = LP_INIT_FAIL;
       }
-    }
-
-    // Save root lower bound
-    if (in.isRoot) {
-      stats.rootlb = objVal;
     }
 
     // Integrality check
