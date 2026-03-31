@@ -6,6 +6,7 @@ extern "C" {
 }
 
 #include <chrono>
+#include <fstream>
 #include <limits>
 #include <queue>
 #include <random>
@@ -370,11 +371,13 @@ HeurStats dpcp_2_step_greedy_heur(const GraphEnv &genv, Col &col,
 
 // General two-step semigreedy heuristic for DPCP
 HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
-                                      const Params &params) {
+                                      const Params &params,
+                                      std::ofstream &iterFile) {
 
   TimePoint start = ClockType::now();
   HeurStats stats;
   stats.totalIters = params.heuristicSemigreedyIter * num_vertices(genv.graph);
+
   for (size_t i = 0; i < stats.totalIters; ++i) {
 
     // First step
@@ -384,6 +387,10 @@ HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
     bool success =
         first_step(genv, selected, adj, params, semigreedy_vertex_selector);
     if (!success) {
+      iterFile << ","
+               << (col.get_n_colors() == 0
+                       ? -1
+                       : static_cast<int>(col.get_n_colors()));
       continue;
     } else {
       // Second step
@@ -396,6 +403,7 @@ HeurStats dpcp_2_step_semigreedy_heur(const GraphEnv &genv, Col &col,
             std::chrono::duration<double>(ClockType::now() - start).count();
         stats.bestIter = i;
       }
+      iterFile << "," << col.get_n_colors();
     }
   }
 

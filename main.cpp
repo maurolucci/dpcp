@@ -21,21 +21,24 @@ std::map<std::string, fs::path> outDirs = {
     {"log", fs::path()},  // Directory for log file
     {"stat", fs::path()}, // Directory for stats file
     {"sol", fs::path()},  // Directory for solution file
-    {"col", fs::path()}   // Directory for column generation log file
+    {"col", fs::path()},  // Directory for column generation log file
+    {"iter", fs::path()}  // Directory for iteration log file for semigreedy
 };
 
 // Output class to handle std::ostream and file streams
 class Output {
 public:
-  std::ofstream logFileAux, colFileAux;
-  std::ostream &logFile, &colFile;
+  std::ofstream logFileAux, colFileAux, iterFileAux;
+  std::ostream &logFile, &colFile, &iterFile;
   Output(std::ostream &logStream = std::cout,
-         std::ostream &colStream = std::cout)
-      : logFileAux(), colFileAux(), logFile(logStream), colFile(colStream) {}
-  Output(std::string logPath, std::string colPath)
+         std::ostream &colStream = std::cout,
+         std::ostream &iterStream = std::cout)
+      : logFileAux(), colFileAux(), logFile(logStream), colFile(colStream),
+        iterFile(iterStream) {}
+  Output(std::string logPath, std::string colPath, std::string iterPath)
       : logFileAux(logPath, std::ofstream::app),
         colFileAux(colPath, std::ofstream::app), logFile(this->logFileAux),
-        colFile(this->colFileAux) {}
+        colFile(this->colFileAux), iterFile(this->iterFileAux) {}
 };
 
 int main(int argc, const char **argv) {
@@ -243,7 +246,8 @@ int main(int argc, const char **argv) {
 
       // Prepare log and col output files
       Output out = (vm.count("out")) ? Output(outDirs["log"].string(),
-                                              outDirs["col"].string())
+                                              outDirs["col"].string(),
+                                              outDirs["iter"].string())
                                      : Output();
 
       // Print params
@@ -314,7 +318,9 @@ int main(int argc, const char **argv) {
           break;
         case 3:
         case 4:
-          heurStats = dpcp_2_step_semigreedy_heur(genv, gcol, params);
+          out.iterFile << stats.instance << "," << stats.solver;
+          heurStats =
+              dpcp_2_step_semigreedy_heur(genv, gcol, params, out.iterFile);
           break;
         default:
           std::cerr << "Unknown heuristic root node: "
