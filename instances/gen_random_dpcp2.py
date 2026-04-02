@@ -87,10 +87,10 @@ for i in V2:
     assert(len([L for L in P if i in L])==1) 
     assert(len([L for L in Q if i in L])==1) 
 # Verificar que cada a en la primera partición aparece al menos una vez
-for a in range(nP):
+for pi in range(nP):
     assert(len(P[pi]) > 0)
 # Verificar que cada b en la segunda partición aparece al menos una vez
-for b in range(nQ):
+for qj in range(nQ):
     assert(len(Q[qj]) > 0)
 # Verificar si las etiquetas (pi,qj) se repiten
 etiquetas = list(V2dict.values())
