@@ -116,7 +116,7 @@ for id in range(ninst):
         f.write(f"{i} {V2dict[i][0]} {V2dict[i][1]}\n")
 
     # Archivo de primera partición
-    archivo_partA = nombre_base + ".partA"
+    archivo_partA = nombre_base + ".partP"
     f = open(archivo_partA, "w")
     f.write(f"{n2}:{nA}\n")
     for a in range(len(PA)):
@@ -125,7 +125,7 @@ for id in range(ninst):
         f.write(s)
 
     # Archivo de segunda partición
-    archivo_partB = nombre_base + ".partB"
+    archivo_partB = nombre_base + ".partQ"
     f = open(archivo_partB, "w")
     f.write(f"{n2}:{nB}\n")
     for b in range(len(PB)):
