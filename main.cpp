@@ -337,11 +337,13 @@ int main(int argc, const char** argv) {
         out.logFile << "Deciding feasibility of instance " << path
                     << " with enumerative method" << std::endl;
         DPCPInst dpcp(graph, P, Q);
+        dpcp.preprocess();
         stats = dpcp_decide_feasibility_enumerative(dpcp, col, out.logFile);
       } else if (solver == "feas-ilp") {
         out.logFile << "Deciding feasibility of instance " << path
                     << " with ILP" << std::endl;
         DPCPInst dpcp(graph, P, Q);
+        dpcp.preprocess();
         stats = dpcp_decide_feasibility_ilp(dpcp, col, params.timeLimit,
                                             out.logFile);
       } else {

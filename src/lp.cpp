@@ -357,18 +357,23 @@ bool LP::feasibility_solve() {
   Stats feasStats;
   int check =
       isRoot ? params.feasibilityRootNode : params.feasibilityOtherNodes;
+  if (check == 0) return true;
   int timeLimit = isRoot ? params.feasibilityRootNodeTimeLimit
                          : params.feasibilityOtherNodesTimeLimit;
   struct NullBuffer : std::streambuf {
     int overflow(int c) override { return c; }
   } nullBuffer;
   std::ostream nullstream(&nullBuffer);
-  if (check == 0) return true;
+
+  // Make a copy of the DPCP instance to avoid modifying the one at the current
+  // node
+  DPCPInst dpcpCopy(dpcp);
   if (check == 1)
-    feasStats = dpcp_decide_feasibility_enumerative(dpcp, coloring, nullstream);
+    feasStats =
+        dpcp_decide_feasibility_enumerative(dpcpCopy, coloring, nullstream);
   else if (check == 2)
     feasStats =
-        dpcp_decide_feasibility_ilp(dpcp, coloring, timeLimit, nullstream);
+        dpcp_decide_feasibility_ilp(dpcpCopy, coloring, timeLimit, nullstream);
   else {
     log << "Warning: unknown feasibility check code " << check
         << ", skipping feasibility solve." << std::endl;
@@ -412,7 +417,9 @@ void LP::add_constraints_and_objective(CplexEnv& cenv) {
 }
 
 // Add initial columns to the LR from a heuristic solution if it exists, or a
-// dummy column otherwise
+// dummy column otherwise. The heuristic soluction may be found by the
+// heuristic_solve() method or the feasibility_solve() method, depending on the
+// parameters of the algorithm. The
 void LP::add_initial_columns(CplexEnv& cenv) {
   // Try to initialize with the heuristic solution
   if (has_heur_solution()) {

@@ -1,4 +1,5 @@
 #include "feas.hpp"
+
 #include "heur.hpp"
 
 extern "C" {
@@ -6,32 +7,20 @@ extern "C" {
 #include "color_private.h"
 #include "mwis.h"
 }
-#include <cfloat>
-#include <chrono>
 #include <ilcplex/cplex.h>
 #include <ilcplex/ilocplex.h>
 
-#define FEASIBILITY_EPSILON 0.00001 // 10e-5
+#include <cfloat>
+#include <chrono>
 
-Stats dpcp_decide_feasibility_enumerative(const DPCPInst &inputDpcp, Col &col,
-                                          std::ostream &log) {
+#define FEASIBILITY_EPSILON 0.00001  // 10e-5
 
+Stats dpcp_decide_feasibility_enumerative(DPCPInst& inputDpcp, Col& col,
+                                          std::ostream& log) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
 
-  // First make a copy of the graph
-  Graph g;
-  graph_copy(inputDpcp.get_graph(), g);
-  std::map<Vertex, size_t> pmap, qmap;
-  for (auto v : boost::make_iterator_range(vertices(inputDpcp.get_graph()))) {
-    Vertex vv = vertex(inputDpcp.get_current_id(v), g);
-    pmap[vv] = inputDpcp.get_P_part(v);
-    qmap[vv] = inputDpcp.get_Q_part(v);
-  }
-  DPCPInst dpcp(&g, std::move(pmap), std::move(qmap), true, false, false,
-                false, true);
-
-  // Remove edges whose endpoints do not belongs to the same Va and Vb
+  // Remove edges whose endpoints do not belongs to the same Pi and Qj
   Graph::edge_iterator ei, ei_end, next;
   boost::tie(ei, ei_end) = edges(g);
   for (next = ei; ei != ei_end; ei = next) {
@@ -45,29 +34,29 @@ Stats dpcp_decide_feasibility_enumerative(const DPCPInst &inputDpcp, Col &col,
   }
 
   // Initalize stable environment
-  MWISenv *mwis_env = NULL;
+  MWISenv* mwis_env = NULL;
   COLORstable_initenv(&mwis_env, NULL, 0);
 
   // Intialize vectors of weights
-  COLORNWT *mwis_pi = NULL;
-  mwis_pi = (COLORNWT *)COLOR_SAFE_MALLOC(num_vertices(g), COLORNWT);
-  for (size_t i = 0; i < num_vertices(g); ++i)
-    mwis_pi[i] = 1;
-  COLORNWT mwis_pi_scalef = INT_MAX; // Force optimality
+  COLORNWT* mwis_pi = NULL;
+  mwis_pi = (COLORNWT*)COLOR_SAFE_MALLOC(num_vertices(g), COLORNWT);
+  for (size_t i = 0; i < num_vertices(g); ++i) mwis_pi[i] = 1;
+  COLORNWT mwis_pi_scalef = INT_MAX;  // Force optimality
 
   // Initialize edge array
   int ecount = 0;
-  int *elist = (int *)malloc(sizeof(int) * 2 * num_edges(g));
+  int* elist = (int*)malloc(sizeof(int) * 2 * num_edges(g));
   for (auto e : boost::make_iterator_range(edges(g))) {
     elist[2 * ecount] = dpcp.get_current_id(source(e, g));
     elist[2 * ecount++ + 1] = dpcp.get_current_id(target(e, g));
   }
 
   // Solve the MWIS problem up to optimality
-  COLORset *newsets = NULL;
+  COLORset* newsets = NULL;
   int nnewsets = 0;
-  COLORstable_wrapper(&mwis_env, &newsets, &nnewsets, num_vertices(dpcp.get_graph()),
-                      ecount, elist, mwis_pi, mwis_pi_scalef, 0, 0, 2);
+  COLORstable_wrapper(&mwis_env, &newsets, &nnewsets,
+                      num_vertices(dpcp.get_graph()), ecount, elist, mwis_pi,
+                      mwis_pi_scalef, 0, 0, 2);
 
   assert(nnewsets > 0);
 
@@ -85,12 +74,12 @@ Stats dpcp_decide_feasibility_enumerative(const DPCPInst &inputDpcp, Col &col,
         // Warning: adjacencies must be checked in the original graph, as the
         // new graph may not contain all edges
         if (edge(u, v, inputDpcp.get_graph()).second) {
-          size_t bb = inputDpcp.get_Q_part(u);
-          size_t b = inputDpcp.get_Q_part(v);
-          if (b < bb)
-            adj[b].insert(bb);
-          else if (bb > b)
-            adj[bb].insert(b);
+          size_t qj1 = inputDpcp.get_Q_part(u);
+          size_t qj2 = inputDpcp.get_Q_part(v);
+          if (qj1 < qj2)
+            adj[qj1].insert(qj2);
+          else if (qj2 > qj1)
+            adj[qj2].insert(qj1);
         }
       }
       selected.push_back(v);
@@ -102,16 +91,16 @@ Stats dpcp_decide_feasibility_enumerative(const DPCPInst &inputDpcp, Col &col,
 
   // Save stats
   Stats stats;
-  stats.state =
-      newsets[0].count == static_cast<int>(dpcp.get_nP()) ? FEASIBLE : INFEASIBLE;
+  stats.state = newsets[0].count == static_cast<int>(dpcp.get_nP())
+                    ? FEASIBLE
+                    : INFEASIBLE;
   stats.time = std::chrono::duration<double>(
                    std::chrono::high_resolution_clock::now() - start)
                    .count();
   stats.lb = newsets[0].count;
 
   // Free memory
-  for (int i = 0; i < nnewsets; ++i)
-    free(newsets[i].members);
+  for (int i = 0; i < nnewsets; ++i) free(newsets[i].members);
   free(newsets);
   free(elist);
   free(mwis_pi);
@@ -122,18 +111,16 @@ Stats dpcp_decide_feasibility_enumerative(const DPCPInst &inputDpcp, Col &col,
 
 // This is the class implementing the generic callback interface.
 class EarlyStopCallback : public IloCplex::Callback::Function {
-
-private:
+ private:
   size_t nP;
-  std::ostream &log;
+  std::ostream& log;
 
-public:
+ public:
   // Constructor with data.
-  EarlyStopCallback(size_t nP, std::ostream &log) : nP(nP), log(log){};
+  EarlyStopCallback(size_t nP, std::ostream& log) : nP(nP), log(log) {};
 
   // Check if we can stop early: abort if the best bound is below nP
-  inline void check_early_stop(const IloCplex::Callback::Context &context) {
-
+  inline void check_early_stop(const IloCplex::Callback::Context& context) {
     if (context.inGlobalProgress())
       if (context.getDoubleInfo(IloCplex::Callback::Context::Info::BestBound) <
           nP - FEASIBILITY_EPSILON) {
@@ -144,34 +131,20 @@ public:
 
   // This is the function that we have to implement and that CPLEX will call
   // during the solution process at the places that we asked for.
-  virtual void invoke(const IloCplex::Callback::Context &context) ILO_OVERRIDE {
-    if (context.inGlobalProgress())
-      check_early_stop(context);
+  virtual void invoke(const IloCplex::Callback::Context& context) ILO_OVERRIDE {
+    if (context.inGlobalProgress()) check_early_stop(context);
   }
 
   /// Destructor
-  ~EarlyStopCallback(){};
+  ~EarlyStopCallback() {};
 };
 
-Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
-                                  int timeLimit, std::ostream &log) {
-
+Stats dpcp_decide_feasibility_ilp(DPCPInst& inputDpcp, Col& col, int timeLimit,
+                                  std::ostream& log) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
 
-  // First make a copy of the graph
-  Graph g;
-  graph_copy(inputDpcp.get_graph(), g);
-  std::map<Vertex, size_t> pmap, qmap;
-  for (auto v : boost::make_iterator_range(vertices(inputDpcp.get_graph()))) {
-    Vertex vv = vertex(inputDpcp.get_current_id(v), g);
-    pmap[vv] = inputDpcp.get_P_part(v);
-    qmap[vv] = inputDpcp.get_Q_part(v);
-  }
-  DPCPInst dpcp(&g, std::move(pmap), std::move(qmap), true, false, false,
-                false, true);
-
-  // Remove edges whose endpoints do not belongs to the same Va and Vb
+  // Remove edges whose endpoints do not belongs to the same Pi and Qj
   Graph::edge_iterator ei, ei_end, next;
   boost::tie(ei, ei_end) = edges(g);
   for (next = ei; ei != ei_end; ei = next) {
@@ -211,7 +184,8 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
   // Constraints
   for (auto e : boost::make_iterator_range(edges(g))) {
     IloExpr expr(cxenv);
-    expr += x[dpcp.get_current_id(source(e, g))] + x[dpcp.get_current_id(target(e, g))];
+    expr += x[dpcp.get_current_id(source(e, g))] +
+            x[dpcp.get_current_id(target(e, g))];
     cxcons.add(expr <= 1);
     expr.end();
   }
@@ -221,8 +195,8 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
   cplex.extract(cxmodel);
   cplex.setOut(log);
   cplex.setDefaults();
-  cplex.setParam(IloCplex::Param::Parallel, 1); // Deterministic mode
-  cplex.setParam(IloCplex::Param::Threads, 1);  // Single thread
+  cplex.setParam(IloCplex::Param::Parallel, 1);  // Deterministic mode
+  cplex.setParam(IloCplex::Param::Threads, 1);   // Single thread
   cplex.setParam(IloCplex::Param::TimeLimit, timeLimit);
 
   // Create the callback object
@@ -231,8 +205,7 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
   // We instantiate a ThresholdCallback and set the contextMask parameter.
   CPXLONG contextMask = IloCplex::Callback::Context::Id::GlobalProgress;
   // If contextMask is not zero we add the callback.
-  if (contextMask != 0)
-    cplex.use(&cb, contextMask);
+  if (contextMask != 0) cplex.use(&cb, contextMask);
 
   // Finally, we can solve the model
   cplex.solve();
@@ -253,12 +226,12 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
         // Add adjacencies
         for (auto u : selected) {
           if (edge(u, v, inputDpcp.get_graph()).second) {
-            size_t bb = inputDpcp.get_Q_part(u);
-            size_t b = inputDpcp.get_Q_part(v);
-            if (b < bb)
-              adj[b].insert(bb);
-            else if (bb > b)
-              adj[bb].insert(b);
+            size_t qj1 = inputDpcp.get_Q_part(u);
+            size_t qj2 = inputDpcp.get_Q_part(v);
+            if (qj1 < qj2)
+              adj[qj1].insert(qj2);
+            else if (qj2 > qj1)
+              adj[qj2].insert(qj1);
           }
         }
         // Add new selected vertex
@@ -291,8 +264,7 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
 
   // Free memory
   cxobj.end();
-  for (size_t v = 0; v < num_vertices(g); ++v)
-    x[v].end();
+  for (size_t v = 0; v < num_vertices(g); ++v) x[v].end();
   cxcons.end();
   cxmodel.end();
   cplex.end();
@@ -300,4 +272,3 @@ Stats dpcp_decide_feasibility_ilp(const DPCPInst &inputDpcp, Col &col,
 
   return stats;
 }
-
