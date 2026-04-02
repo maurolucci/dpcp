@@ -67,8 +67,8 @@ std::tuple<Graph, Partition, Partition> read_dpcp_instance(
 DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
     : graph(),
       vertex2CurrentId(),
-      P(P),
-      Q(Q),
+      P(),
+      Q(),
       vertex2Ppart(),
       vertex2Qpart(),
       isolated(),
@@ -77,18 +77,34 @@ DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
       hasTrivialSolution(false),
       density(0.0) {
   // Copy the graph structure
+  // Careful: vertex descriptors difer!
   graph_copy(graph, this->graph);
 
-  // Initialize vertex2CurrentId, vertex2Ppart and vertex2Qpart maps
+  // Initialize vertex2CurrentId
   for (Vertex v : boost::make_iterator_range(vertices(this->graph)))
     vertex2CurrentId[v] = vertex2CurrentId.size();
+
+  // Initialize P and Q with the same size as the input partitions, but empty
+  this->P.resize(P.size(), std::vector<Vertex>());
+  this->Q.resize(Q.size(), std::vector<Vertex>());
+
+  // Fill P and Q with descriptors of the new graph
+  // Also, fill vertex2Ppart and vertex2Qpart
   isGCP = true;
-  for (size_t pi = 0; pi < this->P.size(); ++pi) {
+  for (size_t pi = 0; pi < P.size(); ++pi) {
     if (P[pi].size() > 1) isGCP = false;
-    for (Vertex v : this->P[pi]) vertex2Ppart[v] = pi;
+    for (Vertex vOld : P[pi]) {
+      Vertex vNew = vertex(graph[vOld].id, this->graph);
+      this->P[pi].push_back(vNew);
+      vertex2Ppart[vNew] = pi;
+    }
   }
-  for (size_t qj = 0; qj < this->Q.size(); ++qj)
-    for (Vertex v : this->Q[qj]) vertex2Qpart[v] = qj;
+  for (size_t qj = 0; qj < Q.size(); ++qj)
+    for (Vertex vOld : Q[qj]) {
+      Vertex vNew = vertex(graph[vOld].id, this->graph);
+      this->Q[qj].push_back(vNew);
+      vertex2Qpart[vNew] = qj;
+    }
 
   // Compute density before preprocessing
   size_t n = num_vertices(this->graph);
