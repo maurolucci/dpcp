@@ -2,32 +2,32 @@
 
 std::string Stats::get_state_as_str() {
   switch (state) {
-  case OPTIMAL:
-    return "OPTIMAL";
-  case FEASIBLE:
-    return "FEASIBLE";
-  case INFEASIBLE:
-    return "INFEASIBLE";
-  case TIME_EXCEEDED:
-    return "TIME_EXCEEDED";
-  case TIME_EXCEEDED_LP:
-    return "TIME_EXCEEDED_LP";
-  case TIME_EXCEEDED_PR:
-    return "TIME_EXCEEDED_PR";
-  case MEM_EXCEEDED:
-    return "MEM_EXCEEDED";
-  case MEM_EXCEEDED_LP:
-    return "MEM_EXCEEDED_LP";
-  case MEM_EXCEEDED_PR:
-    return "MEM_EXCEEDED_PR";
-  case INIT_FAIL:
-    return "INIT_FAIL";
-  default:
-    return "UNKNOWN";
+    case OPTIMAL:
+      return "OPTIMAL";
+    case FEASIBLE:
+      return "FEASIBLE";
+    case INFEASIBLE:
+      return "INFEASIBLE";
+    case TIME_EXCEEDED:
+      return "TIME_EXCEEDED";
+    case TIME_EXCEEDED_LP:
+      return "TIME_EXCEEDED_LP";
+    case TIME_EXCEEDED_PR:
+      return "TIME_EXCEEDED_PR";
+    case MEM_EXCEEDED:
+      return "MEM_EXCEEDED";
+    case MEM_EXCEEDED_LP:
+      return "MEM_EXCEEDED_LP";
+    case MEM_EXCEEDED_PR:
+      return "MEM_EXCEEDED_PR";
+    case INIT_FAIL:
+      return "INIT_FAIL";
+    default:
+      return "UNKNOWN";
   }
 }
 
-void Stats::write_stats(std::ostream &file) {
+void Stats::write_stats(std::ostream& file) {
   size_t onodes = nodes == 1 ? 1 : nodes - 1;
   file << instance << "," << solver << "," << run << "," << nvertices << ","
        << nedges << "," << nP << "," << nQ << "," << nvars << "," << ncons
@@ -82,7 +82,7 @@ void Stats::write_stats(std::ostream &file) {
        << otherNodesTimeExact / onodes << std::endl;
 }
 
-void Stats::print_stats(std::ostream &file) {
+void Stats::print_stats(std::ostream& file) {
   file << std::endl << "*** Stats ***" << std::endl;
   file << "Instance: " << instance << std::endl;
   file << "Solver: " << solver << std::endl;
@@ -175,22 +175,22 @@ void Stats::print_stats(std::ostream &file) {
 
 std::string HeurStats::get_state_as_str() {
   switch (state) {
-  case FEASIBLE:
-    return "FEASIBLE";
-  default:
-    return "UNKNOWN";
+    case FEASIBLE:
+      return "FEASIBLE";
+    default:
+      return "UNKNOWN";
   }
 }
 
-void HeurStats::print_stats(std::ostream &file) {
+void HeurStats::print_stats(std::ostream& file) {
   file << std::endl << "*** Stats ***" << std::endl;
   file << "Instance: " << instance << std::endl;
   file << "Solver: " << solver << std::endl;
   file << "Run: " << run << std::endl;
   file << "Vertices: " << nvertices << std::endl;
   file << "Edges: " << nedges << std::endl;
-  file << "n: " << nA << std::endl;
-  file << "m: " << nB << std::endl;
+  file << "n: " << nP << std::endl;
+  file << "m: " << nQ << std::endl;
   file << "State: " << get_state_as_str() << std::endl;
   file << "Value: " << value << std::endl;
   file << "Total Time: " << totalTime << std::endl;
@@ -199,9 +199,9 @@ void HeurStats::print_stats(std::ostream &file) {
   file << "Best Iteration: " << bestIter << std::endl;
 }
 
-void HeurStats::write_stats(std::ostream &file) {
+void HeurStats::write_stats(std::ostream& file) {
   file << instance << "," << solver << "," << run << "," << nvertices << ","
-       << nedges << "," << nA << "," << nB << "," << get_state_as_str() << ","
+       << nedges << "," << nP << "," << nQ << "," << get_state_as_str() << ","
        << value << "," << totalTime << "," << totalIters << "," << bestTime
        << "," << bestIter << std::endl;
 }
