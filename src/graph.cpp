@@ -105,10 +105,10 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
       Q(),
       vertex2Ppart(),
       vertex2Qpart(),
+      isolated(dpcp.get_isolated_vertices()),
       isGCP(dpcp.is_gcp_instance()),
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
-      isolated(dpcp.get_isolated_vertices()),
       density(dpcp.get_density()) {
   const Graph& srcGraph = dpcp.get_graph();
   const VertexMap<size_t>& srcVertex2CurrentId = dpcp.get_vertex2CurrentId();
