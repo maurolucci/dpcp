@@ -71,10 +71,10 @@ DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
       Q(Q),
       vertex2Ppart(),
       vertex2Qpart(),
+      isolated(),
       isGCP(false),
       isInfeasible(false),
       hasTrivialSolution(false),
-      isolated(),
       density(0.0) {
   // Copy the graph structure
   graph_copy(graph, this->graph);
