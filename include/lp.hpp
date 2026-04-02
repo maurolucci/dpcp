@@ -48,7 +48,7 @@ class LP {
   DPCPInst dpcp;  // DPCP instance at the current node
   Pool pool;      // Pool of stable sets at the current node (herited from the
                   // parent)
-  DPCPInst& origDpcp;  // Reference to the original DPCP instance
+  const DPCPInst& origDpcp;  // Reference to the original DPCP instance
   Params& params;      // Reference to the parameters of the algorithm
   Stats& stats;  // Reference to the stats object to update during the algorithm
   std::ostream& log;  // Reference to the log stream

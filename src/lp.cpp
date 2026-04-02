@@ -866,7 +866,6 @@ std::vector<LP> LP::branch() {
   const Vertex null_v = boost::graph_traits<Graph>::null_vertex();
   Vertex v = branchingVertex;
   assert(v != null_v);
-  const size_t branchVertexId = dpcp.get_current_id(v);
 
   // *******
   // ** Left branch: v is preselected
