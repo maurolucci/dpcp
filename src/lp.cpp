@@ -946,6 +946,11 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray& values) {
     }
   }
 
+  // If no such v exists, choose the first v in P[best_pi]
+  if (best_v == null_v) {
+    best_v = P[best_pi].front();
+  }
+
   assert(best_v != null_v);
 
   // *******************************************************************
