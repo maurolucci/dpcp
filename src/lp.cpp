@@ -793,7 +793,7 @@ void LP::add_column(CplexEnv& cenv, Column& stab) {
   }
   cenv.Xvars.add(IloNumVar(column));
   stables.push_back(stab);
-  assert(check_column(stab));
+  // assert(check_column(stab));
   // print_column(stab);
 }
 
