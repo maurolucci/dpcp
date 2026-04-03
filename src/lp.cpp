@@ -823,13 +823,12 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray& values) {
   assert(best_v != null_v);
 
   // *******************************************************************
-  // // Print some statics
-  // std::cout << "branching variable: " << best_v << " ["
-  //           << dpcp.get_graph()[best_v].pi << " " <<
-  //           dpcp.get_graph()[best_v].qj
-  //           << "] with size " << best_nPartial << " and cardinality "
-  //           << dpcp.get_P()[best_pi].size() << " and value " <<
-  //           best_value << std::endl;
+  // Print some statics
+  std::cout << "branching variable: " << best_v << " ["
+            << dpcp.get_graph()[best_v].pi << " " << dpcp.get_graph()[best_v].qj
+            << "] with size " << best_nPartial << " and cardinality "
+            << dpcp.get_P()[best_pi].size() << " and value " << best_value
+            << std::endl;
   // *******************************************************************
 
   return best_v;
