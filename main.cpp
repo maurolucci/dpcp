@@ -74,7 +74,7 @@ int main(int argc, const char** argv) {
   desc.add_options()("time,t", po::value<size_t>()->default_value(900),
                      "time limit in seconds (default: 900)");
   desc.add_options()(
-      "verbose,v", po::value<int>()->implicit_value(1)->default_value(0),
+      "verbose,v", po::value<int>()->implicit_value(1)->default_value(1),
       "verbosity level (0: quiet, 1: low logging, 2: detailed logging)");
   desc.add_options()("repeat,n", po::value<size_t>()->default_value(1),
                      "number of experiment repetitions");
@@ -218,7 +218,8 @@ int main(int argc, const char** argv) {
   std::ostream nullstream(&nullBuffer);
   for (const std::string& file : inputs) {
     auto path = fs::path(file);
-    if (params.is_verbose()) std::cout << "-> Input file: " << path << std::endl;
+    if (params.is_verbose())
+      std::cout << "-> Input file: " << path << std::endl;
 
     // Open input files
     std::ifstream inGraph(path.string() + ".graph");
@@ -235,6 +236,26 @@ int main(int argc, const char** argv) {
     std::tie(graph, P, Q) = read_dpcp_instance(inGraph, inPartP, inPartQ);
     size_t nP = P.size();
     size_t nQ = Q.size();
+
+    // Print P and Q
+    if (params.is_verbose(2)) {
+      std::cout << "P:" << std::endl;
+      for (size_t i = 0; i < P.size(); ++i) {
+        std::cout << "P" << i << ": ";
+        for (Vertex v : P[i]) {
+          std::cout << graph[v].id << " ";
+        }
+        std::cout << std::endl;
+      }
+      std::cout << "Q:" << std::endl;
+      for (size_t j = 0; j < Q.size(); ++j) {
+        std::cout << "Q" << j << ": ";
+        for (Vertex v : Q[j]) {
+          std::cout << graph[v].id << " ";
+        }
+        std::cout << std::endl;
+      }
+    }
 
     for (size_t run = 0; run < repetitions; ++run) {
       // Get name for the current run
@@ -365,12 +386,12 @@ int main(int argc, const char** argv) {
         stats = dpcp_decide_feasibility_enumerative(dpcp, col, lowLog);
       } else if (solver == "feas-ilp") {
         if (params.is_verbose())
-          lowLog << "Deciding feasibility of instance " << path
-                 << " with ILP" << std::endl;
+          lowLog << "Deciding feasibility of instance " << path << " with ILP"
+                 << std::endl;
         DPCPInst dpcp(graph, P, Q);
         dpcp.preprocess();
-        stats = dpcp_decide_feasibility_ilp(dpcp, col, params.timeLimit,
-                                            lowLog);
+        stats =
+            dpcp_decide_feasibility_ilp(dpcp, col, params.timeLimit, lowLog);
       } else {
         std::cerr << "Unknown solver: " << solver << std::endl;
         return 2;
