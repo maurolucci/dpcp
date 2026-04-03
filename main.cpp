@@ -313,10 +313,10 @@ int main(int argc, const char** argv) {
         DPCPInst origDpcp(graph, P, Q);
         DPCPInst rootDpcp(origDpcp);
         Pool pool;
-        LP lp(std::move(rootDpcp), std::move(pool), origDpcp, params, stats,
-              lpLog, true);
-        Node root(std::move(lp));
         BP bp(params, lowLog, col, vm["ub"].as<double>());
+        LP lp(std::move(rootDpcp), std::move(pool), origDpcp, params,
+              bp.get_stats(), lpLog, true);
+        Node root(std::move(lp));
         stats = bp.solve(std::move(root));
       } else if (solver == "compact") {
         if (params.is_verbose())

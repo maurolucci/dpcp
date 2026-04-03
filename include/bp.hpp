@@ -47,6 +47,7 @@ class BP {
   size_t get_nodes();
   double get_gap();
   double get_primal_bound();
+  Stats& get_stats() { return stats; }
 
  private:
   std::list<Node> L;  // Priority queue
