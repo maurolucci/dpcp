@@ -127,6 +127,9 @@ int main(int argc, const char** argv) {
   desc.add_options()("pricing-greedy-max-cols",
                      po::value<size_t>()->default_value(1000),
                      "maximum number of columns to add with greedy pricing");
+  desc.add_options()("pricing-max-cols-per-iter",
+                     po::value<size_t>()->default_value(10),
+                     "maximum number of best columns added per pricing call (pool and greedy)");
   desc.add_options()("pricing-greedy-alpha",
                      po::value<double>()->default_value(0.2),
                      "alpha parameter for the greedy pricing heuristic");
@@ -190,6 +193,7 @@ int main(int argc, const char** argv) {
     return 2;
   }
   params.pricingHeur1MaxNCols = vm["pricing-greedy-max-cols"].as<size_t>();
+  params.pricingMaxColsPerIter = vm["pricing-max-cols-per-iter"].as<size_t>();
   params.pricingHeur1Alpha = vm["pricing-greedy-alpha"].as<double>();
   params.pricingExactTimeLimit = vm["pricing-exact-time"].as<size_t>();
   params.branchingVariable = vm["branching-variable"].as<int>();

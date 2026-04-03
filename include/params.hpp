@@ -81,10 +81,13 @@ struct Params {
   //    6: automatic (depends on graph density)
   // pricingHeur1MaxNCols: maximum number of columns to add with greedy
   // pricing
+  // pricingMaxColsPerIter: maximum number of columns added per pricing call
+  //   (applies to pool and greedy; best k selected via partial sort)
   // pricingExactTimeLimit: time limit for exact pricing (in seconds)
   int pricingMethod;
   double pricingHeur1Alpha;
   size_t pricingHeur1MaxNCols;
+  size_t pricingMaxColsPerIter;
   size_t pricingExactTimeLimit;
   // branchingVariable: branching variable rule
   //   1: Furini-Malaguti-Santini (FMS)
@@ -111,6 +114,7 @@ struct Params {
         pricingMethod(4),
         pricingHeur1Alpha(0.1),
         pricingHeur1MaxNCols(1),
+        pricingMaxColsPerIter(10),
         pricingExactTimeLimit(300),
         branchingVariable(1) {};
 
@@ -274,6 +278,7 @@ struct Params {
     out << "Branching variable: " << branchingVariable
         << get_branching_name(branchingVariable) << std::endl;
     out << "Pricing greedy max columns: " << pricingHeur1MaxNCols << std::endl;
+    out << "Pricing max columns per iter: " << pricingMaxColsPerIter << std::endl;
     out << "Pricing heuristic 1 alpha: " << pricingHeur1Alpha << std::endl;
     out << "Pricing exact time limit: " << pricingExactTimeLimit << " seconds"
         << std::endl;

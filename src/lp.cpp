@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <limits>
 #include <numeric>
+#include <queue>
 
 #include "feas.hpp"
 #include "heur.hpp"
@@ -163,7 +164,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
     // Pricing
     int ret = pricing(cenv, penv, dualsP, dualsQ);
     if (params.is_verbose(2)) {
-      log << "LP pricing: ret=" << ret << ", objVal=" << objVal
+      log << "pricing iter: ret=" << ret << ", objVal=" << objVal
           << ", time=" << get_elapsed_time(startTime) << std::endl;
     }
 
@@ -507,66 +508,67 @@ int LP::pricing(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
       break;
   }
 
-  // Helper lambda: log which method found columns, with their reduced costs
-  auto log_pricing = [&](const std::string& method, int nCols) {
-    if (!params.is_verbose(2) || nCols <= 0) return;
-    log << "  Pricing [" << method << "]: " << nCols << " col(s) found, rc:";
-    for (size_t k = stables.size() - nCols; k < stables.size(); ++k)
-      log << " " << stables[k].cost - 1.0;
-    log << std::endl;
-  };
-
   // First, look for entering columns in the pool
   addedCols = pricing_pool(cenv, dualsP, dualsQ);
-  log_pricing("pool", addedCols);
   if (addedCols > 0) return addedCols;
 
   // Second, look for entering columns with a greedy heuristic
   addedCols = pricing_greedy(cenv, penv, dualsP, dualsQ, useGreedy);
-  log_pricing("greedy", addedCols);
   if (addedCols > 0) return addedCols;
 
   if (pricingOrder == 1) {
     // Third, P,Q-MWSSP heuristic
     addedCols = pricing_P_Q_mwss(cenv, penv, dualsP, dualsQ, usePQmwss);
-    log_pricing("P,Q-MWSS", addedCols);
     if (addedCols > 0) return addedCols;
 
     // Fourth, P-MWSSP heuristic
     addedCols = pricing_P_mwss(cenv, penv, dualsP, dualsQ, usePmwss);
-    log_pricing("P-MWSS", addedCols);
     if (addedCols >= 0) return addedCols;
   } else {
     // Third, P-MWSSP heuristic
     addedCols = pricing_P_mwss(cenv, penv, dualsP, dualsQ, usePmwss);
-    log_pricing("P-MWSS", addedCols);
     if (addedCols >= 0) return addedCols;
 
     // Fourth, P,Q-MWSSP heuristic
     addedCols = pricing_P_Q_mwss(cenv, penv, dualsP, dualsQ, usePQmwss);
-    log_pricing("P,Q-MWSS", addedCols);
     if (addedCols > 0) return addedCols;
   }
 
   // Fifth, exact resolution of pricing
-  addedCols = pricing_exact(cenv, penv, dualsP, dualsQ);
-  log_pricing("exact", addedCols);
-  return addedCols;
+  return pricing_exact(cenv, penv, dualsP, dualsQ);
 }
 
 int LP::pricing_pool(CplexEnv& cenv, IloNumArray& dualsP, IloNumArray& dualsQ) {
   auto startTime = std::chrono::high_resolution_clock::now();
   size_t nPoolCols = 0;
-  for (Column& column : pool) {
-    // Compute the cost of the columns
+  std::vector<double> foundCosts;
+  const size_t k = params.pricingMaxColsPerIter;
+
+  // Min-heap of (cost, pool_index): keeps the k best candidates seen so far.
+  // The root is always the worst of the current top-k, so eviction is O(log k).
+  using Entry = std::pair<double, size_t>;
+  std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> heap;
+  for (size_t i = 0; i < pool.size(); ++i) {
     double cost = 0.0;
-    for (auto pi : column.ps) cost += dualsP[pi];
-    for (auto qj : column.qs) cost -= dualsQ[qj];
-    if (cost > 1 + EPSILON) {
-      add_column(cenv, column);
-      nPoolCols++;
+    for (auto pi : pool[i].ps) cost += dualsP[pi];
+    for (auto qj : pool[i].qs) cost -= dualsQ[qj];
+    if (cost <= 1 + EPSILON) continue;
+    if (heap.size() < k)
+      heap.push({cost, i});
+    else if (cost > heap.top().first) {
+      heap.pop();
+      heap.push({cost, i});
     }
   }
+
+  while (!heap.empty()) {
+    auto [cost, i] = heap.top();
+    heap.pop();
+    add_column(cenv, pool[i]);
+    nPoolCols++;
+    if (params.is_verbose(2)) foundCosts.push_back(cost);
+  }
+
   if (isRoot) {
     stats.rootNCallsPool++;
     stats.rootNColsPool += nPoolCols;
@@ -576,6 +578,11 @@ int LP::pricing_pool(CplexEnv& cenv, IloNumArray& dualsP, IloNumArray& dualsQ) {
     stats.otherNodesNColsPool += nPoolCols;
     stats.otherNodesTimePool += get_elapsed_time(startTime);
   }
+  if (params.is_verbose(2)) {
+    log << "  pricing [pool]: found=" << nPoolCols;
+    for (double cost : foundCosts) log << ", cost=" << cost;
+    log << ", time=" << get_elapsed_time(startTime) << std::endl;
+  }
   return nPoolCols;
 }
 
@@ -584,13 +591,32 @@ int LP::pricing_greedy(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   if (!enabled) return 0;
   auto startTime = std::chrono::high_resolution_clock::now();
   size_t nHeurCols = 0;
+  std::vector<double> foundCosts;
+  const size_t k = params.pricingMaxColsPerIter;
+
+  // Min-heap of Column by cost: keeps the k best candidates seen so far.
+  // The root is always the worst of the current top-k, so eviction is O(log k).
+  auto cmp = [](const Column& a, const Column& b) { return a.cost > b.cost; };
+  std::priority_queue<Column, std::vector<Column>, decltype(cmp)> heap(cmp);
   for (size_t i = 0; i < params.pricingHeur1MaxNCols; ++i) {
     auto res = penv.heur_solve(dualsP, dualsQ, params.pricingHeur1Alpha);
-    if (res.second == PRICING_STABLE_FOUND) {
-      add_column(cenv, res.first);
-      nHeurCols++;
+    if (res.second != PRICING_STABLE_FOUND) continue;
+    if (heap.size() < k)
+      heap.push(std::move(res.first));
+    else if (res.first.cost > heap.top().cost) {
+      heap.pop();
+      heap.push(std::move(res.first));
     }
   }
+
+  while (!heap.empty()) {
+    Column col = heap.top();
+    heap.pop();
+    add_column(cenv, col);
+    nHeurCols++;
+    if (params.is_verbose(2)) foundCosts.push_back(col.cost);
+  }
+
   if (isRoot) {
     stats.rootNCallsHeur += params.pricingHeur1MaxNCols;
     stats.rootNColsHeur += nHeurCols;
@@ -599,6 +625,11 @@ int LP::pricing_greedy(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
     stats.otherNodesNCallsHeur += params.pricingHeur1MaxNCols;
     stats.otherNodesNColsHeur += nHeurCols;
     stats.otherNodesTimeHeur += get_elapsed_time(startTime);
+  }
+  if (params.is_verbose(2)) {
+    log << "  pricing [greedy]: found=" << nHeurCols;
+    for (double cost : foundCosts) log << ", cost=" << cost;
+    log << ", time=" << get_elapsed_time(startTime) << std::endl;
   }
   return nHeurCols;
 }
@@ -609,11 +640,13 @@ int LP::pricing_P_Q_mwss(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   if (!enabled) return 0;
   auto startTime = std::chrono::high_resolution_clock::now();
   size_t nMwis1Cols = 0;
+  std::vector<double> foundCosts;
   auto res = penv.mwis_P_Q_solve(dualsP, dualsQ);
   for (auto& [stab, priState] : res) {
     if (priState == PRICING_STABLE_FOUND) {
       add_column(cenv, stab);
       nMwis1Cols++;
+      if (params.is_verbose(2)) foundCosts.push_back(stab.cost);
     }
   }
   if (isRoot) {
@@ -624,6 +657,11 @@ int LP::pricing_P_Q_mwss(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
     stats.otherNodesNCallsMwis1++;
     stats.otherNodesNColsMwis1 += nMwis1Cols;
     stats.otherNodesTimeMwis1 += get_elapsed_time(startTime);
+  }
+  if (params.is_verbose(2)) {
+    log << "  pricing [P,Q-MWSS]: found=" << nMwis1Cols;
+    for (double cost : foundCosts) log << ", cost=" << cost;
+    log << ", time=" << get_elapsed_time(startTime) << std::endl;
   }
   return nMwis1Cols;
 }
@@ -651,6 +689,11 @@ int LP::pricing_P_mwss(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
     stats.otherNodesNCallsMwis2++;
     stats.otherNodesNColsMwis2 += (ret == 1) ? 1 : 0;
     stats.otherNodesTimeMwis2 += get_elapsed_time(startTime);
+  }
+  if (params.is_verbose(2)) {
+    log << "  pricing [P-MWSS]: found=" << (ret == 1 ? 1 : 0);
+    if (ret == 1) log << ", cost=" << res.first.cost;
+    log << ", time=" << get_elapsed_time(startTime) << std::endl;
   }
   return ret;
 }
@@ -681,6 +724,11 @@ int LP::pricing_exact(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
     stats.otherNodesNCallsExact++;
     stats.otherNodesNColsExact += (ret == 1) ? 1 : 0;
     stats.otherNodesTimeExact += get_elapsed_time(startTime);
+  }
+  if (params.is_verbose(2)) {
+    log << "  pricing [exact]: found=" << (ret == 1 ? 1 : 0);
+    if (ret == 1) log << ", cost=" << res.first.cost;
+    log << ", time=" << get_elapsed_time(startTime) << std::endl;
   }
   return ret;
 }
@@ -805,9 +853,9 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray& values) {
 
   // Branching criterion
   // 1. Find pi in P such that P[pi] has the maximum number of partially colored
-  //    vertices, i.e, |{v in P[pi]: stabs[v] > 0}| is maximum,
-  //    breaking ties by |P[pi]| (the smaller, the better)
-  //    and further ties by the index of pi
+  //    vertices, i.e, |{v in P[pi]: stabs[v] > 0}| is maximum, as long as this
+  //    number is greater than 1. breaking ties by |P[pi]| (the smaller, the
+  //    better) and further ties by the index of pi
   size_t best_pi = nP;
   size_t best_nPartial = 0;
   for (size_t pi = 0; pi < nP; ++pi) {
@@ -816,7 +864,7 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray& values) {
     for (auto v : Pi) {
       if (stabs.contains(v) && stabs[v] > EPSILON) nPartial++;
     }
-    if (nPartial == 0) continue;
+    if (nPartial <= 1) continue;
     if (nPartial > best_nPartial) {
       best_nPartial = nPartial;
       best_pi = pi;
