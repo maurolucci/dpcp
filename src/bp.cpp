@@ -98,6 +98,12 @@ Stats BP::solve(Node root) {
       std::vector<Node> sons;
       node.branch(sons);
 
+      if (params.is_verbose(2)) {
+        log << "Branch of node id=" << node.get_id()
+            << " at depth=" << node.get_depth() << " added " << sons.size()
+            << " sons" << std::endl;
+      }
+
       // Push sons (and solve initial LR)
       for (auto& n : sons) {
         n.set_id(nextNodeId++);
@@ -157,7 +163,7 @@ LP_STATE BP::push(Node node) {
 
   if (params.is_verbose(2)) {
     log << "Solving node id=" << node.get_id() << " depth=" << node.get_depth()
-        << " lb=" << node.get_obj_value() << std::endl;
+        << std::endl;
   }
 
   // Solve the linear relaxation of the node and prune if possible
