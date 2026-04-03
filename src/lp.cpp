@@ -61,18 +61,11 @@ LP_STATE LP::solve(double timelimit, double ub) {
         << ", ub=" << ub << ", |Pool|=" << pool.size() << std::endl;
   }
 
-  if (params.is_verbose(2)) {
-    log << "LP after preprocess: |V|=" << num_vertices(dpcp.get_graph())
-        << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()
-        << ", |Q|=" << dpcp.get_nQ() << std::endl;
-  }
-
   // Infeasibility check
   if (dpcp.is_infeasible_instance()) {
     stats.ninfeasPrepro++;
     state = LP_INFEASIBLE;
-    if (params.is_verbose(2))
-      log << "LP detected infeasibility after preprocessing." << std::endl;
+    if (params.is_verbose(2)) log << "LP detected infeasibility." << std::endl;
     return state;
   }
 
@@ -762,7 +755,7 @@ void LP::add_column(CplexEnv& cenv, Column& stab) {
   }
   cenv.Xvars.add(IloNumVar(column));
   stables.push_back(stab);
-  // assert(check_column(stab));
+  assert(check_column(stab));
   // print_column(stab);
 }
 
