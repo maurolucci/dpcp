@@ -897,7 +897,14 @@ Vertex LP::get_branching_variable_FMS(const IloNumArray& values) {
     }
   }
 
-  assert(best_pi < nP);
+  if (best_pi == nP) {
+    // Choose by index
+    for (size_t pi = 0; pi < dpcp.get_nP(); ++pi)
+      if (dpcp.get_P()[pi].size() > 1) {
+        best_v = dpcp.get_P()[pi].front();
+        break;
+      }
+  }
 
   // 2. Choose v in P[best_pi] such that stabs[v] is maximum
   Vertex best_v = null_v;
