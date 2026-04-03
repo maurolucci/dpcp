@@ -66,6 +66,8 @@ class Stats {
   int ncons;
   // Final state
   STATE state;
+  // Final termination reason (if empty, fallback from state)
+  std::string terminationReason;
   // Total time
   double time;
   // Number of processed nodes
@@ -132,6 +134,7 @@ class Stats {
         nvars(-1),
         ncons(-1),
         state(UNKNOWN),
+        terminationReason(""),
         time(0.0),
         nodes(0),
         nodesLeft(0),
@@ -186,6 +189,7 @@ class Stats {
         otherNodesTimeExact(0.0) {}
 
   virtual std::string get_state_as_str();
+  virtual std::string get_termination_reason();
   virtual void write_stats(std::ostream& file);
   virtual void print_stats(std::ostream& file);
   virtual ~Stats() = default;

@@ -27,6 +27,35 @@ std::string Stats::get_state_as_str() {
   }
 }
 
+std::string Stats::get_termination_reason() {
+  if (!terminationReason.empty()) return terminationReason;
+
+  switch (state) {
+    case OPTIMAL:
+      return "optimality proven";
+    case FEASIBLE:
+      return "time limit with feasible solution";
+    case INFEASIBLE:
+      return "infeasibility proven";
+    case TIME_EXCEEDED:
+      return "time limit reached in B&P";
+    case TIME_EXCEEDED_LP:
+      return "time limit reached in LP";
+    case TIME_EXCEEDED_PR:
+      return "time limit reached in pricing";
+    case MEM_EXCEEDED:
+      return "memory limit reached in B&P";
+    case MEM_EXCEEDED_LP:
+      return "memory limit reached in LP";
+    case MEM_EXCEEDED_PR:
+      return "memory limit reached in pricing";
+    case INIT_FAIL:
+      return "initialization failed";
+    default:
+      return "unknown";
+  }
+}
+
 std::string get_lp_state_as_str(LP_STATE lpState) {
   switch (lpState) {
     case LP_UNSOLVED:
@@ -56,11 +85,11 @@ void Stats::write_stats(std::ostream& file) {
   size_t onodes = nodes == 1 ? 1 : nodes - 1;
   file << instance << "," << solver << "," << run << "," << nvertices << ","
        << nedges << "," << nP << "," << nQ << "," << nvars << "," << ncons
-       << "," << get_state_as_str() << "," << time << "," << nodes << ","
-       << nodesLeft << "," << lb << "," << ub << "," << gap << ","
-       << ninfeasPrepro + ninfeasCheck + ninfeasAux << "," << ninfeasPrepro
-       << "," << ninfeasCheck << "," << ninfeasAux << "," << nint << "," << ngcp
-       << "," << gcpTime / (ngcp > 0 ? ngcp : 1) << ","
+       << "," << get_state_as_str() << "," << get_termination_reason() << ","
+       << time << "," << nodes << "," << nodesLeft << "," << lb << "," << ub
+       << "," << gap << "," << ninfeasPrepro + ninfeasCheck + ninfeasAux << ","
+       << ninfeasPrepro << "," << ninfeasCheck << "," << ninfeasAux << ","
+       << nint << "," << ngcp << "," << gcpTime / (ngcp > 0 ? ngcp : 1) << ","
        << nsolHeur + nsolLR + ntrivial << "," << nsolHeur << "," << nsolLR
        << "," << ntrivial << std::endl;
 
@@ -119,6 +148,7 @@ void Stats::print_stats(std::ostream& file) {
   file << "Variables: " << nvars << std::endl;
   file << "Constraints: " << ncons << std::endl;
   file << "State: " << get_state_as_str() << std::endl;
+  file << "Termination reason: " << get_termination_reason() << std::endl;
   file << "Time total: " << time << std::endl;
   file << "Nodes total: " << nodes << std::endl;
   file << "Nodes left: " << nodesLeft << std::endl;
@@ -227,6 +257,6 @@ void HeurStats::print_stats(std::ostream& file) {
 void HeurStats::write_stats(std::ostream& file) {
   file << instance << "," << solver << "," << run << "," << nvertices << ","
        << nedges << "," << nP << "," << nQ << "," << get_state_as_str() << ","
-       << value << "," << totalTime << "," << totalIters << "," << bestTime
-       << "," << bestIter << std::endl;
+       << get_termination_reason() << "," << value << "," << totalTime << ","
+       << totalIters << "," << bestTime << "," << bestIter << std::endl;
 }
