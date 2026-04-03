@@ -90,8 +90,8 @@ class Stats {
   int ngcp;
   // Time spent on solving GCP instances
   double gcpTime;
-  // Number of solutions found by heuristic and linear relaxation
-  int nsolHeur, nsolLR;
+  // Number of solutions found by each source
+  int nsolHeur, nsolLR, nsolGCP, nsolTrivial;
   // Root lower bound
   double rootlb;
   // Root upper bound
@@ -150,6 +150,8 @@ class Stats {
         gcpTime(0.0),
         nsolHeur(0),
         nsolLR(0),
+        nsolGCP(0),
+        nsolTrivial(0),
         rootlb(-1.0),
         rootub(-1),
         rootHeurTime(0.0),

@@ -36,6 +36,7 @@ class Node {
 
   bool feas_sol() const;
   size_t feas_value() const;
+  LP_INTEGER_SOURCE integer_source() const;
 
   void save(Col& sol);
   void save_heur(Col& sol);

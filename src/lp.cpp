@@ -37,6 +37,7 @@ LP::LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
       isRoot(isRoot),
       objVal(-1.0),
       state(LP_UNSOLVED),
+      integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
       posVars() {}
@@ -53,6 +54,7 @@ LP::LP(const LP& other)
       isRoot(false),
       objVal(-1.0),
       state(LP_UNSOLVED),
+      integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
       posVars() {}
@@ -69,6 +71,7 @@ LP::LP(LP&& other) noexcept
       isRoot(other.isRoot),
       objVal(other.objVal),
       state(other.state),
+      integerSource(other.integerSource),
       initializedWithDummy(other.initializedWithDummy),
       stables(std::move(other.stables)),
       posVars(std::move(other.posVars)),
@@ -87,6 +90,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
   posVars.clear();
   coloring.reset_coloring();
   state = LP_UNSOLVED;
+  integerSource = LP_INTEGER_SOURCE_NONE;
 
   // Infeasibility check
   if (dpcp.is_infeasible_instance()) {
@@ -102,6 +106,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
     stats.ntrivial++;
     objVal = 1.0;
     state = LP_INTEGER;
+    integerSource = LP_INTEGER_SOURCE_TRIVIAL;
     if (params.is_verbose(2))
       debugLog << "LP found trivial solution." << std::endl;
     return state;
@@ -270,7 +275,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
                               : get_branching_variable_LNTT(values);
       } else if (state == LP_INTEGER) {
         objVal = posVars.size();
-        stats.nint++;
+        integerSource = LP_INTEGER_SOURCE_LR;
       }
     }
 
@@ -296,7 +301,6 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
   }
 
   auto startTime = std::chrono::high_resolution_clock::now();
-  stats.ngcp++;
 
   COLORproblem colorproblem;
   COLORparms* parms = &(colorproblem.parms);
@@ -332,6 +336,7 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
   // Optimality check
   if (cd->lower_bound == cd->upper_bound) {
     state = LP_INTEGER;
+    integerSource = LP_INTEGER_SOURCE_GCP;
     objVal = ncolors;
     // Save solution
     // Stable sets need to be translated into vertices of the original graph

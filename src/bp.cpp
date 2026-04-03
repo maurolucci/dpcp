@@ -30,6 +30,10 @@ bool Node::feas_sol() const { return lp->has_heur_solution(); }
 
 size_t Node::feas_value() const { return lp->get_upper_bound(); }
 
+LP_INTEGER_SOURCE Node::integer_source() const {
+  return lp->get_integer_source();
+}
+
 void Node::save(Col& sol) { sol = lp->get_lp_solution(); }
 
 void Node::save_heur(Col& sol) { sol = lp->get_heur_solution(); }
@@ -63,15 +67,14 @@ Stats BP::solve(DPCPInst dpcp) {
   nextNodeId = 0;
 
   DPCPInst origDpcp(dpcp);
-    log << "Original DPCP instance: |V|=" << num_vertices(origDpcp.get_graph())
+  log << "Original DPCP instance: |V|=" << num_vertices(origDpcp.get_graph())
       << ", |E|=" << num_edges(origDpcp.get_graph())
       << ", |P|=" << origDpcp.get_nP() << ", |Q|=" << origDpcp.get_nQ()
       << std::endl;
   if (params.preprocessing) dpcp.preprocess(true);
-    log << "After preprocessing: |V|=" << num_vertices(dpcp.get_graph())
-      << ", |E|=" << num_edges(dpcp.get_graph())
-      << ", |P|=" << dpcp.get_nP() << ", |Q|=" << dpcp.get_nQ()
-      << std::endl;
+  log << "After preprocessing: |V|=" << num_vertices(dpcp.get_graph())
+      << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()
+      << ", |Q|=" << dpcp.get_nQ() << std::endl;
   Pool pool;
   LP rootLp(std::move(dpcp), std::move(pool), origDpcp, params, stats, log,
             debugLog, true);
@@ -203,10 +206,25 @@ LP_STATE BP::push(Node node) {
     case LP_INTEGER:
       obj_value = node.get_obj_value();
       if (obj_value < primal_bound) {
-        stats.nsolLR++;
         node.save(best_integer_solution);
-        log << "New best integer solution found by LR with value: " << obj_value
-            << std::endl;
+        switch (node.integer_source()) {
+          case LP_INTEGER_SOURCE_GCP:
+            stats.nsolGCP++;
+            log << "New best integer solution found by GCP with value: "
+                << obj_value << std::endl;
+            break;
+          case LP_INTEGER_SOURCE_TRIVIAL:
+            stats.nsolTrivial++;
+            log << "New best integer solution found by trivial reduction with "
+                   "value: "
+                << obj_value << std::endl;
+            break;
+          default:
+            stats.nsolLR++;
+            log << "New best integer solution found by LR with value: "
+                << obj_value << std::endl;
+            break;
+        }
         update_primal_bound(obj_value);
       }
       return state;  // Prune by optimality

@@ -21,6 +21,13 @@ extern "C" {
 using Column = StableEnv;
 using Pool = std::vector<Column>;
 
+enum LP_INTEGER_SOURCE {
+  LP_INTEGER_SOURCE_NONE,
+  LP_INTEGER_SOURCE_LR,
+  LP_INTEGER_SOURCE_GCP,
+  LP_INTEGER_SOURCE_TRIVIAL,
+};
+
 class LP {
  public:
   LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
@@ -41,6 +48,9 @@ class LP {
   [[nodiscard]] bool has_heur_solution() const {
     return coloring.get_n_colors() > 0;
   };
+  [[nodiscard]] LP_INTEGER_SOURCE get_integer_source() const {
+    return integerSource;
+  }
   Col get_heur_solution();
   Col get_lp_solution();
 
@@ -68,6 +78,7 @@ class LP {
   bool isRoot;                // Is the current node the root node?
   double objVal;              // Objective value of the current LP
   LP_STATE state;             // State of the current LP
+  LP_INTEGER_SOURCE integerSource;  // Source of LP_INTEGER solutions
   bool initializedWithDummy;  // Was the current LP initialized with a dummy
                               // column?
 
