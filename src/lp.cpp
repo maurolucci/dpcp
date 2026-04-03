@@ -194,12 +194,6 @@ LP_STATE LP::solve(double timelimit, double ub) {
     IloNumArray values = IloNumArray(cenv.Xenv, cenv.Xvars.getSize());
     cplex.getValues(values, cenv.Xvars);
 
-    if (params.is_verbose(2)) {
-      log << "LP solve end: state=" << state << ", objVal=" << objVal
-          << ", #posVars=" << posVars.size()
-          << ", time=" << get_elapsed_time(startTime) << std::endl;
-    }
-
     // Check if dummy column was used
     if (initializedWithDummy && values[0] > EPSILON) {
       // If the objective value is greater than W, then the instance is
@@ -242,6 +236,13 @@ LP_STATE LP::solve(double timelimit, double ub) {
         objVal = posVars.size();
         stats.nint++;
       }
+    }
+
+    if (params.is_verbose(2)) {
+      log << "LP solve end: state=" << state << "("
+          << get_lp_state_as_str(state) << "), objVal=" << objVal
+          << ", #posVars=" << posVars.size()
+          << ", time=" << get_elapsed_time(startTime) << std::endl;
     }
 
     values.end();

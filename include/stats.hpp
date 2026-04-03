@@ -42,6 +42,8 @@ enum STATE {
   UNKNOWN,
 };
 
+std::string get_lp_state_as_str(LP_STATE lpState);
+
 class Stats {
  public:
   // Instance name

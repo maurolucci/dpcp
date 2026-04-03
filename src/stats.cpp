@@ -27,6 +27,31 @@ std::string Stats::get_state_as_str() {
   }
 }
 
+std::string get_lp_state_as_str(LP_STATE lpState) {
+  switch (lpState) {
+    case LP_UNSOLVED:
+      return "UNSOLVED";
+    case LP_INFEASIBLE:
+      return "INFEASIBLE";
+    case LP_INTEGER:
+      return "INTEGER";
+    case LP_FRACTIONAL:
+      return "FRACTIONAL";
+    case LP_TIME_EXCEEDED:
+      return "TIME_EXCEEDED";
+    case LP_TIME_EXCEEDED_PR:
+      return "TIME_EXCEEDED_PR";
+    case LP_MEM_EXCEEDED:
+      return "MEM_EXCEEDED";
+    case LP_MEM_EXCEEDED_PR:
+      return "MEM_EXCEEDED_PR";
+    case LP_INIT_FAIL:
+      return "INIT_FAIL";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 void Stats::write_stats(std::ostream& file) {
   size_t onodes = nodes == 1 ? 1 : nodes - 1;
   file << instance << "," << solver << "," << run << "," << nvertices << ","
