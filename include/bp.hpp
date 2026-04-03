@@ -19,7 +19,7 @@ using TimePoint = ClockType::time_point;
 
 class Node {
  public:
-  explicit Node(LP&& lp);
+  explicit Node(LP&& lp, size_t depth = 0, size_t id = 0);
 
   Node(const Node&) = delete;
   Node& operator=(const Node&) = delete;
@@ -27,6 +27,9 @@ class Node {
   Node& operator=(Node&&) noexcept = default;
 
   double get_obj_value() const;
+  size_t get_depth() const { return depth; }
+  size_t get_id() const { return id; }
+  void set_id(size_t nodeId) { id = nodeId; }
   bool operator>(const Node& n) const;
 
   LP_STATE solve(double timelimit, double ub);
@@ -41,6 +44,8 @@ class Node {
 
  private:
   std::unique_ptr<LP> lp;
+  size_t depth;
+  size_t id;
 };
 
 class BP {
@@ -62,6 +67,7 @@ class BP {
   Col& best_integer_solution;  // Current best integer solution
   double primal_bound;         // Primal bound
   size_t nodes;                // Number of processed nodes so far
+  size_t nextNodeId;           // Next id to assign to a created tree node
   TimePoint start_t;           // B&P initial execution time
   TimePoint last_t;            // Used by log
   bool first_call;             // Used by log

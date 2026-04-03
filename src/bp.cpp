@@ -13,7 +13,8 @@ inline bool should_prune_by_bound(double lowerBound, double primalBound) {
 }
 }  // namespace
 
-Node::Node(LP&& lp) : lp(std::make_unique<LP>(std::move(lp))) {}
+Node::Node(LP&& lp, size_t depth, size_t id)
+    : lp(std::make_unique<LP>(std::move(lp))), depth(depth), id(id) {}
 
 double Node::get_obj_value() const { return lp->get_lower_bound(); }
 
@@ -39,7 +40,7 @@ void Node::branch(std::vector<Node>& sons) {
   sons.clear();
   sons.reserve(lps.size());
   for (auto& l : lps) {
-    sons.emplace_back(std::move(l));
+    sons.emplace_back(std::move(l), depth + 1);
   }
 }
 
@@ -48,6 +49,7 @@ BP::BP(Params& params, std::ostream& log, Col& sol, double ub)
       best_integer_solution(sol),
       primal_bound(ub),
       nodes(0),
+      nextNodeId(0),
       first_call(true),
       log(log),
       stats() {}
@@ -56,6 +58,8 @@ Stats BP::solve(Node root) {
   start_t = ClockType::now();
   last_t = start_t;
   first_call = true;
+  nextNodeId = 0;
+  root.set_id(nextNodeId++);
 
   auto state_after_push = [](LP_STATE lpState) -> std::optional<STATE> {
     switch (lpState) {
@@ -96,6 +100,7 @@ Stats BP::solve(Node root) {
 
       // Push sons (and solve initial LR)
       for (auto& n : sons) {
+        n.set_id(nextNodeId++);
         if (const auto state = state_after_push(push(std::move(n)));
             state.has_value()) {
           return return_stats(*state);
@@ -149,6 +154,11 @@ Stats BP::return_stats(STATE state) {
 LP_STATE BP::push(Node node) {
   nodes++;
   double obj_value;
+
+  if (params.is_verbose(2)) {
+    log << "Solving node id=" << node.get_id() << " depth=" << node.get_depth()
+        << " lb=" << node.get_obj_value() << std::endl;
+  }
 
   // Solve the linear relaxation of the node and prune if possible
   const double elapsed =
