@@ -970,7 +970,7 @@ Col LP::get_heur_solution() {
   return originalCol;
 }
 
-std::vector<LP> LP::branch() {
+void LP::branch(std::vector<LP>& sons) {
   const Vertex null_v = boost::graph_traits<Graph>::null_vertex();
   Vertex v = branchingVertex;
   assert(v != null_v);
@@ -1104,19 +1104,16 @@ std::vector<LP> LP::branch() {
   // *******
   // ** Create LPs
   // *******
-  LP lpLeft(std::move(dpcpLeft), std::move(poolLeft), origDpcp, params, stats,
-            log);
-  LP lpRight(std::move(dpcpRight), std::move(poolRight), origDpcp, params,
-             stats, log);
+  sons.clear();
+  sons.emplace_back(std::move(dpcpLeft), std::move(poolLeft), origDpcp, params,
+                    stats, log);
+  sons.emplace_back(std::move(dpcpRight), std::move(poolRight), origDpcp,
+                    params, stats, log);
 
   if (params.inheritColumns == 3 || params.inheritColumns == 4) {
-    lpLeft.lateColumns = lateLeft;
-    lpRight.lateColumns = lateRight;
+    sons[0].lateColumns = lateLeft;
+    sons[1].lateColumns = lateRight;
   }
 
-  std::vector<LP> sons;
-  sons.reserve(2);
-  sons.emplace_back(std::move(lpLeft));
-  sons.emplace_back(std::move(lpRight));
-  return sons;
+  return;
 }

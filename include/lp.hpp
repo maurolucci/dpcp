@@ -42,7 +42,7 @@ class LP {
   Col get_lp_solution();
 
   // Branch
-  std::vector<LP> branch();
+  void branch(std::vector<LP>& sons);
 
  private:
   DPCPInst dpcp;  // DPCP instance at the current node

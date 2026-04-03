@@ -37,7 +37,7 @@ class Node {
   void save(Col& sol);
   void save_heur(Col& sol);
 
-  std::vector<Node> branch();
+  void branch(std::vector<Node>& sons);
 
  private:
   std::unique_ptr<LP> lp;

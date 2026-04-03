@@ -33,13 +33,13 @@ void Node::save(Col& sol) { sol = lp->get_lp_solution(); }
 
 void Node::save_heur(Col& sol) { sol = lp->get_heur_solution(); }
 
-std::vector<Node> Node::branch() {
-  std::vector<LP> lps = lp->branch();
-  std::vector<Node> sons;
-
-  sons.reserve(lps.size());
-  for (auto& x : lps) sons.emplace_back(std::move(x));
-  return sons;
+void Node::branch(std::vector<Node>& sons) {
+  std::vector<LP> lps;
+  lp->branch(lps);
+  sons.clear();
+  for (auto& l : lps) {
+    sons.emplace_back(std::move(l));
+  }
 }
 
 BP::BP(Params& params, std::ostream& log, Col& sol, double ub)
@@ -90,7 +90,8 @@ Stats BP::solve(Node root) {
       if (ceil(node.get_obj_value() - EPSILON_BP) >= primal_bound) continue;
 
       // Branch
-      std::vector<Node> sons = node.branch();
+      std::vector<Node> sons;
+      node.branch(sons);
 
       // Push sons (and solve initial LR)
       for (auto& n : sons) {
