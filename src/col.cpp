@@ -17,9 +17,6 @@ void Col::set_color(VertexId v, size_t pi, size_t qj, Color k) {
   classes[k].insert(v);
   colorP[pi] = k;
   if (colorQ.contains(qj)) {
-    std::cout << "Coloring error #1: Q-part " << qj
-              << " is already colored with " << colorQ[qj] << " but vertex "
-              << v << " is being colored with color " << k << std::endl;
     assert(colorQ[qj] == k);
   } else
     colorQ[qj] = k;
@@ -87,8 +84,7 @@ Col Col::translate_coloring(const DPCPInst& currentDpcp,
 }
 
 void Col::color_isolated_vertices(
-    const DPCPInst& dpcp,
-    const std::list<IsolatedVertex>& isolatedVertices) {
+    const DPCPInst& dpcp, const std::list<IsolatedVertex>& isolatedVertices) {
   for (const auto& iso : isolatedVertices) {
     VertexId id = iso.id;
     Vertex v = vertex(id, dpcp.get_graph());
