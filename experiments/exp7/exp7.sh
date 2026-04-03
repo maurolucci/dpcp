@@ -4,6 +4,7 @@
 
 declare TIME_LIMIT="7200"
 declare TREE_SEARCH="1"
+declare VERBOSE="2"
 
 # DPCP heuristic parameters:
 declare HEUR_ROOT="3"
@@ -43,7 +44,7 @@ mkdir -p "$OUT"
 while IFS= read -r LINE
 do
     echo "Processing instance: $LINE"
-    time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --tree-search $TREE_SEARCH \
+    time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --tree-search $TREE_SEARCH --verbose $VERBOSE \
     --heur-root $HEUR_ROOT --heur-nodes $HEUR_NODES --heur-2step-variant $VARIANT \
     --heur-semigreedy-alpha $ALPHA_HEUR --heur-semigreedy-iter $REPETITIONS_HEUR \
     --feas-root $FEAS_ROOT --feas-nodes $FEAS_NODES --inherit-cols $INHERIT_COLS \
