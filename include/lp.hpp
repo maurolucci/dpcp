@@ -24,7 +24,8 @@ using Pool = std::vector<Column>;
 class LP {
  public:
   LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
-     Stats& stats, std::ostream& log, bool isRoot = false);
+  Stats& stats, std::ostream& log, std::ostream& debugLog,
+  bool isRoot = false);
   LP(const LP& other);
   ~LP();
 
@@ -61,6 +62,7 @@ class LP {
   Params& params;            // Reference to the parameters of the algorithm
   Stats& stats;  // Reference to the stats object to update during the algorithm
   std::ostream& log;  // Reference to the log stream
+  std::ostream& debugLog;  // Reference to the debug log stream
 
   bool isRoot;                // Is the current node the root node?
   double objVal;              // Objective value of the current LP

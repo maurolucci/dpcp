@@ -50,7 +50,8 @@ class Node {
 
 class BP {
  public:
-  BP(Params& params, std::ostream& log, Col& sol, double ub = DBL_MAX);
+  BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
+     double ub = DBL_MAX);
 
   Stats solve(DPCPInst dpcp);
 
@@ -72,6 +73,7 @@ class BP {
   TimePoint last_t;            // Used by log
   bool first_call;             // Used by log
   std::ostream& log;
+  std::ostream& debugLog;
   Stats stats;
 
   Stats return_stats(STATE state);

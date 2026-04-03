@@ -44,7 +44,8 @@ void Node::branch(std::vector<Node>& sons) {
   }
 }
 
-BP::BP(Params& params, std::ostream& log, Col& sol, double ub)
+BP::BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
+       double ub)
     : params(params),
       best_integer_solution(sol),
       primal_bound(ub),
@@ -52,6 +53,7 @@ BP::BP(Params& params, std::ostream& log, Col& sol, double ub)
       nextNodeId(0),
       first_call(true),
       log(log),
+      debugLog(debugLog),
       stats() {}
 
 Stats BP::solve(DPCPInst dpcp) {
@@ -64,7 +66,7 @@ Stats BP::solve(DPCPInst dpcp) {
   if (params.preprocessing) dpcp.preprocess(true);
   Pool pool;
   LP rootLp(std::move(dpcp), std::move(pool), origDpcp, params, stats, log,
-            true);
+            debugLog, true);
   Node root(std::move(rootLp), 0, nextNodeId++);
 
   auto state_after_push = [](LP_STATE lpState) -> std::optional<STATE> {
@@ -105,9 +107,9 @@ Stats BP::solve(DPCPInst dpcp) {
       node.branch(sons);
 
       if (params.is_verbose(2)) {
-        log << "Branch of node id=" << node.get_id()
-            << " at depth=" << node.get_depth() << " added " << sons.size()
-            << " sons" << std::endl;
+        debugLog << "Branch of node id=" << node.get_id()
+                 << " at depth=" << node.get_depth() << " added " << sons.size()
+                 << " sons" << std::endl;
       }
 
       // Push sons (and solve initial LR)
@@ -168,8 +170,8 @@ LP_STATE BP::push(Node node) {
   double obj_value;
 
   if (params.is_verbose(2)) {
-    log << "Solving node id=" << node.get_id() << " depth=" << node.get_depth()
-        << std::endl;
+    debugLog << "Solving node id=" << node.get_id()
+             << " depth=" << node.get_depth() << std::endl;
   }
 
   // Solve the linear relaxation of the node and prune if possible

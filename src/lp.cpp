@@ -26,13 +26,14 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
 }
 
 LP::LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
-       Stats& stats, std::ostream& log, bool isRoot)
+  Stats& stats, std::ostream& log, std::ostream& debugLog, bool isRoot)
     : dpcp(std::move(dpcp)),
       pool(std::move(pool)),
       origDpcp(origDpcp),
       params(params),
       stats(stats),
       log(log),
+      debugLog(debugLog),
       isRoot(isRoot),
       objVal(-1.0),
       state(LP_UNSOLVED),
@@ -48,6 +49,7 @@ LP::LP(const LP& other)
       params(other.params),
       stats(other.stats),
       log(other.log),
+      debugLog(other.debugLog),
       isRoot(false),
       objVal(-1.0),
       state(LP_UNSOLVED),
@@ -68,18 +70,20 @@ LP_STATE LP::solve(double timelimit, double ub) {
   state = LP_UNSOLVED;
 
   if (params.is_verbose(2)) {
-    log << "LP solve start: root=" << (isRoot ? "yes" : "no")
-        << ", |V|=" << num_vertices(dpcp.get_graph())
-        << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()
-        << ", |Q|=" << dpcp.get_nQ() << ", timelimit=" << timelimit
-        << ", ub=" << ub << ", |Pool|=" << pool.size() << std::endl;
+    debugLog << "LP solve start: root=" << (isRoot ? "yes" : "no")
+             << ", |V|=" << num_vertices(dpcp.get_graph())
+             << ", |E|=" << num_edges(dpcp.get_graph())
+             << ", |P|=" << dpcp.get_nP() << ", |Q|=" << dpcp.get_nQ()
+             << ", timelimit=" << timelimit << ", ub=" << ub
+             << ", |Pool|=" << pool.size() << std::endl;
   }
 
   // Infeasibility check
   if (dpcp.is_infeasible_instance()) {
     stats.ninfeasPrepro++;
     state = LP_INFEASIBLE;
-    if (params.is_verbose(2)) log << "LP detected infeasibility." << std::endl;
+    if (params.is_verbose(2))
+      debugLog << "LP detected infeasibility." << std::endl;
     return state;
   }
 
@@ -88,13 +92,15 @@ LP_STATE LP::solve(double timelimit, double ub) {
     stats.ntrivial++;
     objVal = 1.0;
     state = LP_INTEGER;
-    if (params.is_verbose(2)) log << "LP found trivial solution." << std::endl;
+    if (params.is_verbose(2))
+      debugLog << "LP found trivial solution." << std::endl;
     return state;
   }
 
   // GCP instance check
   if (dpcp.is_gcp_instance()) {
-    if (params.is_verbose(2)) log << "LP reduced to GCP instance." << std::endl;
+    if (params.is_verbose(2))
+      debugLog << "LP reduced to GCP instance." << std::endl;
     return gcp_solve(timelimit, ub);
   }
 
@@ -102,10 +108,11 @@ LP_STATE LP::solve(double timelimit, double ub) {
   heuristic_solve();
   if (params.is_verbose(2)) {
     if (has_heur_solution())
-      log << "LP heuristic solution: " << coloring.get_n_colors() << " colors, "
-          << get_elapsed_time(startTime) << " seconds." << std::endl;
+    debugLog << "LP heuristic solution: " << coloring.get_n_colors()
+         << " colors, " << get_elapsed_time(startTime)
+         << " seconds." << std::endl;
     else
-      log << "LP heuristic failed to find a solution." << std::endl;
+    debugLog << "LP heuristic failed to find a solution." << std::endl;
   }
 
   // Apply feasibility check at the current node
@@ -113,7 +120,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
     stats.ninfeasCheck++;
     state = LP_INFEASIBLE;
     if (params.is_verbose(2))
-      log << "LP feasibility check proved infeasibility." << std::endl;
+      debugLog << "LP feasibility check proved infeasibility." << std::endl;
     return state;
   }
 
@@ -132,8 +139,8 @@ LP_STATE LP::solve(double timelimit, double ub) {
   }
 
   if (params.is_verbose(2)) {
-    log << "LP initialized with " << stables.size() << " columns ("
-        << lateColumns.size() << " late)." << std::endl;
+    debugLog << "LP initialized with " << stables.size() << " columns ("
+             << lateColumns.size() << " late)." << std::endl;
   }
 
   // Initialize arrays for dual values
@@ -256,10 +263,10 @@ LP_STATE LP::solve(double timelimit, double ub) {
     }
 
     if (params.is_verbose(2)) {
-      log << "LP solve end: state=" << state << "("
-          << get_lp_state_as_str(state) << "), objVal=" << objVal
-          << ", #posVars=" << posVars.size()
-          << ", time=" << get_elapsed_time(startTime) << std::endl;
+      debugLog << "LP solve end: state=" << state << "("
+           << get_lp_state_as_str(state) << "), objVal=" << objVal
+           << ", #posVars=" << posVars.size()
+           << ", time=" << get_elapsed_time(startTime) << std::endl;
     }
 
     values.end();
@@ -607,24 +614,24 @@ void LP::log_pricing_summary() const {
                      pricingSummary.timePQmwss + pricingSummary.timePmwss +
                      pricingSummary.timeExact;
 
-  log << "pricing summary: iters=" << pricingSummary.iters
-      << ", total_calls=" << totalCalls << ", total_cols=" << totalCols
-      << ", total_time=" << totalTime << std::endl;
-  log << "  pool: calls=" << pricingSummary.callsPool
-      << ", cols=" << pricingSummary.colsPool
-      << ", time=" << pricingSummary.timePool << std::endl;
-  log << "  greedy: calls=" << pricingSummary.callsGreedy
-      << ", cols=" << pricingSummary.colsGreedy
-      << ", time=" << pricingSummary.timeGreedy << std::endl;
-  log << "  P,Q-MWSS: calls=" << pricingSummary.callsPQmwss
-      << ", cols=" << pricingSummary.colsPQmwss
-      << ", time=" << pricingSummary.timePQmwss << std::endl;
-  log << "  P-MWSS: calls=" << pricingSummary.callsPmwss
-      << ", cols=" << pricingSummary.colsPmwss
-      << ", time=" << pricingSummary.timePmwss << std::endl;
-  log << "  exact: calls=" << pricingSummary.callsExact
-      << ", cols=" << pricingSummary.colsExact
-      << ", time=" << pricingSummary.timeExact << std::endl;
+    debugLog << "pricing summary: iters=" << pricingSummary.iters
+         << ", total_calls=" << totalCalls << ", total_cols=" << totalCols
+         << ", total_time=" << totalTime << std::endl;
+    debugLog << "  pool: calls=" << pricingSummary.callsPool
+         << ", cols=" << pricingSummary.colsPool
+         << ", time=" << pricingSummary.timePool << std::endl;
+    debugLog << "  greedy: calls=" << pricingSummary.callsGreedy
+         << ", cols=" << pricingSummary.colsGreedy
+         << ", time=" << pricingSummary.timeGreedy << std::endl;
+    debugLog << "  P,Q-MWSS: calls=" << pricingSummary.callsPQmwss
+         << ", cols=" << pricingSummary.colsPQmwss
+         << ", time=" << pricingSummary.timePQmwss << std::endl;
+    debugLog << "  P-MWSS: calls=" << pricingSummary.callsPmwss
+         << ", cols=" << pricingSummary.colsPmwss
+         << ", time=" << pricingSummary.timePmwss << std::endl;
+    debugLog << "  exact: calls=" << pricingSummary.callsExact
+         << ", cols=" << pricingSummary.colsExact
+         << ", time=" << pricingSummary.timeExact << std::endl;
 }
 
 int LP::pricing_pool(CplexEnv& cenv, IloNumArray& dualsP, IloNumArray& dualsQ) {
@@ -990,9 +997,9 @@ void LP::branch(std::vector<LP>& sons) {
   assert(v != null_v);
 
   if (params.is_verbose(2)) {
-    log << "Branching on vertex v with id=" << dpcp.get_current_id(v)
-        << " (p(v)=" << dpcp.get_P_part(v) << ", q(v)=" << dpcp.get_Q_part(v)
-        << ")" << std::endl;
+    debugLog << "Branching on vertex v with id=" << dpcp.get_current_id(v)
+             << " (p(v)=" << dpcp.get_P_part(v)
+             << ", q(v)=" << dpcp.get_Q_part(v) << ")" << std::endl;
   }
 
   sons.clear();
@@ -1112,13 +1119,13 @@ void LP::branch(std::vector<LP>& sons) {
 
   if (params.is_verbose(2)) {
     if (params.inheritColumns == 3 || params.inheritColumns == 4)
-      log << "Created child pools: left(pool)=" << poolLeft.size()
-          << ", left(late)=" << lateLeft.size()
-          << ", right(pool)=" << poolRight.size()
-          << ", right(late)=" << lateRight.size() << std::endl;
+      debugLog << "Created child pools: left(pool)=" << poolLeft.size()
+               << ", left(late)=" << lateLeft.size()
+               << ", right(pool)=" << poolRight.size()
+               << ", right(late)=" << lateRight.size() << std::endl;
     else
-      log << "Created child pools: left=" << poolLeft.size()
-          << ", right=" << poolRight.size() << std::endl;
+      debugLog << "Created child pools: left=" << poolLeft.size()
+               << ", right=" << poolRight.size() << std::endl;
   }
 
   return;

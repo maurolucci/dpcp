@@ -11,7 +11,7 @@
 #include "heur.hpp"
 
 Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
-                Col& col) {
+                std::ostream& debugLog, Col& col) {
   Stats stats;
 
   // Try to find an initial coloring with the heuristic
@@ -138,7 +138,7 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
 
   // Set parameters
   cplex.setDefaults();
-  cplex.setOut(log);
+  cplex.setOut(debugLog);
   cplex.setParam(IloCplex::Param::TimeLimit, params.timeLimit);
   cplex.setParam(IloCplex::Param::Parallel, 1);  // Deterministic mode
   cplex.setParam(IloCplex::Param::Threads, 1);   // Single thread

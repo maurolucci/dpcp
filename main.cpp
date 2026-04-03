@@ -25,6 +25,7 @@ struct NullBuffer : std::streambuf {
 // Output directories, initially empty
 std::map<std::string, fs::path> outDirs = {
     {"log", fs::path()},   // Directory for log file
+  {"debug", fs::path()}, // Directory for debug log file
     {"stat", fs::path()},  // Directory for stats file
     {"sol", fs::path()},   // Directory for solution file
     {"col", fs::path()},   // Directory for column generation log file
@@ -34,25 +35,32 @@ std::map<std::string, fs::path> outDirs = {
 // Output class to handle std::ostream and file streams
 class Output {
  public:
-  std::ofstream logFileAux, colFileAux, iterFileAux;
+  std::ofstream logFileAux, debugFileAux, colFileAux, iterFileAux;
   std::ostream& logFile;
+  std::ostream& debugFile;
   std::ostream& colFile;
   std::ostream& iterFile;
 
   Output(std::ostream& logStream = std::cout,
+         std::ostream& debugStream = std::cout,
          std::ostream& colStream = std::cout,
          std::ostream& iterStream = std::cout)
       : logFileAux(),
+        debugFileAux(),
         colFileAux(),
         logFile(logStream),
+        debugFile(debugStream),
         colFile(colStream),
         iterFile(iterStream) {}
 
-  Output(std::string logPath, std::string colPath, std::string iterPath)
+  Output(std::string logPath, std::string debugPath, std::string colPath,
+         std::string iterPath)
       : logFileAux(logPath, std::ofstream::app),
+        debugFileAux(debugPath, std::ofstream::app),
         colFileAux(colPath, std::ofstream::app),
         iterFileAux(iterPath, std::ofstream::app),
         logFile(this->logFileAux),
+        debugFile(this->debugFileAux),
         colFile(this->colFileAux),
         iterFile(this->iterFileAux) {}
 };
@@ -281,11 +289,12 @@ int main(int argc, const char** argv) {
 
       // Prepare log and col output files
       Output out = (vm.count("out")) ? Output(outDirs["log"].string(),
+                                              outDirs["debug"].string(),
                                               outDirs["col"].string(),
                                               outDirs["iter"].string())
                                      : Output();
       std::ostream& lowLog = params.is_verbose(1) ? out.logFile : nullstream;
-      std::ostream& lpLog = params.is_verbose(2) ? out.colFile : lowLog;
+      std::ostream& debugLog = params.is_verbose(2) ? out.debugFile : lowLog;
 
       // Print params
       if (params.is_verbose()) {
@@ -330,14 +339,14 @@ int main(int argc, const char** argv) {
         if (params.is_verbose())
           lowLog << "Solving instance " << path << " with B&P" << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        BP bp(params, lowLog, col, vm["ub"].as<double>());
+        BP bp(params, lowLog, debugLog, col, vm["ub"].as<double>());
         stats = bp.solve(std::move(dpcp));
       } else if (solver == "compact") {
         if (params.is_verbose())
           lowLog << "Solving instance " << path << " with compact ILP"
                  << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        stats = solve_ilp(dpcp, params, lowLog, col);
+        stats = solve_ilp(dpcp, params, lowLog, debugLog, col);
       } else if (solver == "heur") {
         if (params.is_verbose())
           lowLog << "Solving instance " << path << " with DPCP heuristic"
