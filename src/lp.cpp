@@ -26,7 +26,7 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
 }
 
 LP::LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
-  Stats& stats, std::ostream& log, std::ostream& debugLog, bool isRoot)
+       Stats& stats, std::ostream& log, std::ostream& debugLog, bool isRoot)
     : dpcp(std::move(dpcp)),
       pool(std::move(pool)),
       origDpcp(origDpcp),
@@ -56,6 +56,25 @@ LP::LP(const LP& other)
       initializedWithDummy(false),
       stables(),
       posVars() {}
+
+LP::LP(LP&& other) noexcept
+    : dpcp(std::move(other.dpcp)),
+      pool(std::move(other.pool)),
+      lateColumns(std::move(other.lateColumns)),
+      origDpcp(other.origDpcp),
+      params(other.params),
+      stats(other.stats),
+      log(other.log),
+      debugLog(other.debugLog),
+      isRoot(other.isRoot),
+      objVal(other.objVal),
+      state(other.state),
+      initializedWithDummy(other.initializedWithDummy),
+      stables(std::move(other.stables)),
+      posVars(std::move(other.posVars)),
+      branchingVertex(other.branchingVertex),
+      coloring(std::move(other.coloring)),
+      pricingSummary(std::move(other.pricingSummary)) {}
 
 LP::~LP() {}
 
@@ -108,11 +127,11 @@ LP_STATE LP::solve(double timelimit, double ub) {
   heuristic_solve();
   if (params.is_verbose(2)) {
     if (has_heur_solution())
-    debugLog << "LP heuristic solution: " << coloring.get_n_colors()
-         << " colors, " << get_elapsed_time(startTime)
-         << " seconds." << std::endl;
+      debugLog << "LP heuristic solution: " << coloring.get_n_colors()
+               << " colors, " << get_elapsed_time(startTime) << " seconds."
+               << std::endl;
     else
-    debugLog << "LP heuristic failed to find a solution." << std::endl;
+      debugLog << "LP heuristic failed to find a solution." << std::endl;
   }
 
   // Apply feasibility check at the current node
@@ -264,9 +283,9 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
     if (params.is_verbose(2)) {
       debugLog << "LP solve end: state=" << state << "("
-           << get_lp_state_as_str(state) << "), objVal=" << objVal
-           << ", #posVars=" << posVars.size()
-           << ", time=" << get_elapsed_time(startTime) << std::endl;
+               << get_lp_state_as_str(state) << "), objVal=" << objVal
+               << ", #posVars=" << posVars.size()
+               << ", time=" << get_elapsed_time(startTime) << std::endl;
     }
 
     values.end();
@@ -614,24 +633,24 @@ void LP::log_pricing_summary() const {
                      pricingSummary.timePQmwss + pricingSummary.timePmwss +
                      pricingSummary.timeExact;
 
-    debugLog << "pricing summary: iters=" << pricingSummary.iters
-         << ", total_calls=" << totalCalls << ", total_cols=" << totalCols
-         << ", total_time=" << totalTime << std::endl;
-    debugLog << "  pool: calls=" << pricingSummary.callsPool
-         << ", cols=" << pricingSummary.colsPool
-         << ", time=" << pricingSummary.timePool << std::endl;
-    debugLog << "  greedy: calls=" << pricingSummary.callsGreedy
-         << ", cols=" << pricingSummary.colsGreedy
-         << ", time=" << pricingSummary.timeGreedy << std::endl;
-    debugLog << "  P,Q-MWSS: calls=" << pricingSummary.callsPQmwss
-         << ", cols=" << pricingSummary.colsPQmwss
-         << ", time=" << pricingSummary.timePQmwss << std::endl;
-    debugLog << "  P-MWSS: calls=" << pricingSummary.callsPmwss
-         << ", cols=" << pricingSummary.colsPmwss
-         << ", time=" << pricingSummary.timePmwss << std::endl;
-    debugLog << "  exact: calls=" << pricingSummary.callsExact
-         << ", cols=" << pricingSummary.colsExact
-         << ", time=" << pricingSummary.timeExact << std::endl;
+  debugLog << "pricing summary: iters=" << pricingSummary.iters
+           << ", total_calls=" << totalCalls << ", total_cols=" << totalCols
+           << ", total_time=" << totalTime << std::endl;
+  debugLog << "  pool: calls=" << pricingSummary.callsPool
+           << ", cols=" << pricingSummary.colsPool
+           << ", time=" << pricingSummary.timePool << std::endl;
+  debugLog << "  greedy: calls=" << pricingSummary.callsGreedy
+           << ", cols=" << pricingSummary.colsGreedy
+           << ", time=" << pricingSummary.timeGreedy << std::endl;
+  debugLog << "  P,Q-MWSS: calls=" << pricingSummary.callsPQmwss
+           << ", cols=" << pricingSummary.colsPQmwss
+           << ", time=" << pricingSummary.timePQmwss << std::endl;
+  debugLog << "  P-MWSS: calls=" << pricingSummary.callsPmwss
+           << ", cols=" << pricingSummary.colsPmwss
+           << ", time=" << pricingSummary.timePmwss << std::endl;
+  debugLog << "  exact: calls=" << pricingSummary.callsExact
+           << ", cols=" << pricingSummary.colsExact
+           << ", time=" << pricingSummary.timeExact << std::endl;
 }
 
 int LP::pricing_pool(CplexEnv& cenv, IloNumArray& dualsP, IloNumArray& dualsQ) {
