@@ -161,8 +161,6 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
   size_t maxVal = 0;
   std::map<Vertex, size_t> valMap;
   for (Vertex v : candidates) {
-    // Imprimir la direccion de memoria a donde referencia dpcp
-    std::cout << "Direccion de memoria de v: " << v << std::endl;
     if (removed.at(v)) continue;
     size_t val = evaluate_vertex(dpcp, removed, selected, adj,
                                  params.heuristic2stepVariant, v);
@@ -207,10 +205,8 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                 Heur2SVertexSelector vertexSelector) {
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
-  for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph()))) {
-    std::cout << "Addind vertex " << u << std::endl;
+  for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
     removed.emplace(u, false);
-  }
 
   // Fill the map with the size of each P[pi]
   std::map<size_t, size_t> nP;
@@ -244,9 +240,6 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
     size_t pi = *std::min_element(unprocessedP.begin(), unprocessedP.end(),
                                   compareFunc);
     unprocessedP.erase(pi);
-
-    for (Vertex v : dpcp.get_P()[pi])
-      std::cout << "P[" << pi << "] vertex: " << v << std::endl;
 
     // Choose a vertex, with some criterion
     Vertex v =
