@@ -208,11 +208,7 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
   for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph()))) {
-    std::cout << "Addind vertex " << dpcp.get_current_id(u) << " with address "
-              << u << " from P[" << pi << "] and Q[" << qj << "] with value "
-              << evaluate_vertex(dpcp, removed, selected, adj,
-                                 params.heuristic2stepVariant, v)
-              << std::endl;
+    std::cout << "Addind vertex " << u << std::endl;
     removed.emplace(u, false);
   }
 
