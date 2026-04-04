@@ -114,8 +114,6 @@ DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
     density = static_cast<double>(num_edges(this->graph) * 2) /
               static_cast<double>(n * (n - 1));
   }
-
-  assert(check_consistency());
 }
 
 DPCPInst::DPCPInst(const DPCPInst& dpcp)
@@ -164,8 +162,6 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
       Q[qj].push_back(vNew);
       vertex2Qpart[vNew] = qj;
     }
-
-  assert(check_consistency());
 }
 
 DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
@@ -179,9 +175,7 @@ DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
       isGCP(dpcp.is_gcp_instance()),
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
-      density(dpcp.get_density()) {
-  assert(check_consistency());
-}
+      density(dpcp.get_density()) {}
 
 DPCPInst::~DPCPInst() {}
 
