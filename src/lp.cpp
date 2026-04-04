@@ -25,7 +25,7 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
                           });
 }
 
-LP::LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
+LP::LP(DPCPInst&& dpcp, Pool&& pool, const DPCPInst& origDpcp, Params& params,
        Stats& stats, std::ostream& log, std::ostream& debugLog, bool isRoot)
     : dpcp(std::move(dpcp)),
       pool(std::move(pool)),

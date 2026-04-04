@@ -31,10 +31,10 @@ enum LP_INTEGER_SOURCE {
 
 class LP {
  public:
-  LP(DPCPInst dpcp, Pool pool, const DPCPInst& origDpcp, Params& params,
+  LP(DPCPInst&& dpcp, Pool&& pool, const DPCPInst& origDpcp, Params& params,
      Stats& stats, std::ostream& log, std::ostream& debugLog,
      bool isRoot = false);
-  LP(const LP& other);
+  LP(const LP& other);      // Copy constructor
   LP(LP&& other) noexcept;  // Move constructor
   ~LP();
 
@@ -76,9 +76,9 @@ class LP {
   std::ostream& log;       // Reference to the log stream
   std::ostream& debugLog;  // Reference to the debug log stream
 
-  bool isRoot;                // Is the current node the root node?
-  double objVal;              // Objective value of the current LP
-  LP_STATE state;             // State of the current LP
+  bool isRoot;                      // Is the current node the root node?
+  double objVal;                    // Objective value of the current LP
+  LP_STATE state;                   // State of the current LP
   LP_INTEGER_SOURCE integerSource;  // Source of LP_INTEGER solutions
   bool initializedWithDummy;  // Was the current LP initialized with a dummy
                               // column?
