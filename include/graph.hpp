@@ -42,6 +42,7 @@ class DPCPInst {
   // Constructors and destructor
   DPCPInst(const Graph& graph, const Partition& P, const Partition& Q);
   DPCPInst(const DPCPInst& dpcp);
+  DPCPInst(DPCPInst&& dpcp) noexcept;
   ~DPCPInst();
 
   // Debug utilities for tracking unintended copies during execution.

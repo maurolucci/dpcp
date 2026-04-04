@@ -208,6 +208,58 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
     }
 }
 
+DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
+    : instanceId(g_next_instance_id++),
+      graph(),
+      vertex2CurrentId(),
+      P(),
+      Q(),
+      vertex2Ppart(),
+      vertex2Qpart(),
+      isolated(std::move(dpcp.isolated)),
+      isGCP(dpcp.is_gcp_instance()),
+      isInfeasible(dpcp.is_infeasible_instance()),
+      hasTrivialSolution(dpcp.has_trivial_solution()),
+      density(dpcp.get_density()) {
+  g_move_ctor_calls++;
+  track_instance_birth();
+  dpcp_trace_log("move ctor src=" + std::to_string(dpcp.get_instance_id()) +
+                 " dst=" + std::to_string(instanceId));
+
+  const Graph& srcGraph = dpcp.get_graph();
+  const VertexMap<size_t>& srcVertex2CurrentId = dpcp.get_vertex2CurrentId();
+  const Partition& srcP = dpcp.get_P();
+  const Partition& srcQ = dpcp.get_Q();
+
+  // Rebuild all descriptor-based containers instead of moving them directly.
+  // With listS vertex descriptors, direct move can leave maps/partitions with
+  // descriptors not valid for the destination graph instance.
+  graph_copy(srcGraph, srcVertex2CurrentId, graph);
+
+  VertexMap<Vertex> vertexMap;
+  for (auto& [vOld, id] : srcVertex2CurrentId) {
+    Vertex vNew = vertex(id, graph);
+    vertexMap[vOld] = vNew;
+    vertex2CurrentId[vNew] = id;
+  }
+
+  P.resize(dpcp.get_nP(), std::vector<Vertex>());
+  for (size_t pi = 0; pi < dpcp.get_nP(); ++pi)
+    for (auto vOld : srcP[pi]) {
+      Vertex vNew = vertexMap[vOld];
+      P[pi].push_back(vNew);
+      vertex2Ppart[vNew] = pi;
+    }
+
+  Q.resize(dpcp.get_nQ(), std::vector<Vertex>());
+  for (size_t qj = 0; qj < dpcp.get_nQ(); ++qj)
+    for (auto vOld : srcQ[qj]) {
+      Vertex vNew = vertexMap[vOld];
+      Q[qj].push_back(vNew);
+      vertex2Qpart[vNew] = qj;
+    }
+}
+
 DPCPInst::~DPCPInst() {
   g_dtor_calls++;
   --g_live_instances;
