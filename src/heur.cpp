@@ -359,6 +359,7 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile) {
+  dpcp.check_consistency();
   TimePoint start = ClockType::now();
   HeurStats stats;
   stats.totalIters =
