@@ -163,7 +163,7 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
   std::map<Vertex, size_t> valMap;
 
   // Print the candidates and their values
-  dtd::cout << "Candidates: " << std::endl;
+  std::cout << "Candidates: " << std::endl;
   for (Vertex v : candidates) std::cout << v << std::endl;
 
   for (Vertex v : candidates) {
