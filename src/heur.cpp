@@ -156,16 +156,10 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
                                   const VertexVector& selected,
                                   std::map<size_t, std::set<size_t>>& adj,
                                   const Params& params) {
-  dpcp.check_consistency();
   // First, find the lowest and highest degree among the candidates
   size_t minVal = std::numeric_limits<size_t>::max();
   size_t maxVal = 0;
   std::map<Vertex, size_t> valMap;
-
-  // Print the candidates and their values
-  std::cout << "Candidates: " << std::endl;
-  for (Vertex v : candidates) std::cout << v << std::endl;
-
   for (Vertex v : candidates) {
     if (removed.at(v)) continue;
     size_t val = evaluate_vertex(dpcp, removed, selected, adj,
@@ -209,11 +203,6 @@ void update_info(const DPCPInst& dpcp, std::map<Vertex, bool>& removed,
 bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                 std::map<size_t, std::set<size_t>>& adj, const Params& params,
                 Heur2SVertexSelector vertexSelector) {
-  // Print the candidates and their values
-  std::cout << "Vertices: " << std::endl;
-  for (Vertex v : boost::make_iterator_range(vertices(dpcp.get_graph())))
-    std::cout << v << std::endl;
-
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
   for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
@@ -251,11 +240,6 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
     size_t pi = *std::min_element(unprocessedP.begin(), unprocessedP.end(),
                                   compareFunc);
     unprocessedP.erase(pi);
-
-    dpcp.print_Pi(pi);
-    std::cout << "Processing P[" << pi << "], size = " << nP.at(pi)
-              << std::endl;
-    for (Vertex v : dpcp.get_P()[pi]) std::cout << v << std::endl;
 
     // Choose a vertex, with some criterion
     Vertex v =
@@ -374,7 +358,6 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile) {
-  dpcp.check_consistency();
   TimePoint start = ClockType::now();
   HeurStats stats;
   stats.totalIters =

@@ -48,12 +48,6 @@ class DPCPInst {
   // Check the consistency of the instance
   bool check_consistency() const;
 
-  void print_Pi(const size_t pi) const {
-    std::cout << "P[" << pi << "]: ";
-    for (Vertex v : P[pi]) std::cout << v << " ";
-    std::cout << std::endl;
-  }
-
   // Getters
   [[nodiscard]] Graph& get_graph() { return graph; }
   [[nodiscard]] const Graph& get_graph() const { return graph; }

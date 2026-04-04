@@ -186,11 +186,13 @@ bool DPCPInst::check_consistency() const {
     for (Vertex v : P[pi]) {
       if (!has_vertex(v)) return false;
       if (vertex2Ppart.at(v) != pi) return false;
+      assert(graph[v].id == vertex2CurrentId.at(v));
     }
   for (size_t qj = 0; qj < get_nQ(); ++qj)
     for (Vertex v : Q[qj]) {
       if (!has_vertex(v)) return false;
       if (vertex2Qpart.at(v) != qj) return false;
+      assert(graph[v].id == vertex2CurrentId.at(v));
     }
   return true;
 }
