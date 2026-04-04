@@ -63,13 +63,15 @@ BP::BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
       debugLog(debugLog),
       stats() {}
 
-Stats BP::solve(DPCPInst& dpcp) {
+Stats BP::solve(DPCPInst& originalDpcp) {
   start_t = ClockType::now();
   last_t = start_t;
   first_call = true;
   nextNodeId = 0;
 
-  DPCPInst origDpcp(dpcp);
+  // Make a copy of the original DPCP instance to preprocess and modify during
+  // the algorithm, while keeping the original one unchanged for reference
+  DPCPInst dpcp(originalDpcp);
   log << "Original DPCP instance: |V|=" << num_vertices(origDpcp.get_graph())
       << ", |E|=" << num_edges(origDpcp.get_graph())
       << ", |P|=" << origDpcp.get_nP() << ", |Q|=" << origDpcp.get_nQ()
