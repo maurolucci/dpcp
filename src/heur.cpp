@@ -655,6 +655,7 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params) {
+  dpcp.check_consistency();
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;
