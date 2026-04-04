@@ -167,21 +167,6 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
   assert(check_consistency());
 }
 
-DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
-    : graph(std::move(dpcp.graph)),
-      vertex2CurrentId(std::move(dpcp.vertex2CurrentId)),
-      P(std::move(dpcp.P)),
-      Q(std::move(dpcp.Q)),
-      vertex2Ppart(std::move(dpcp.vertex2Ppart)),
-      vertex2Qpart(std::move(dpcp.vertex2Qpart)),
-      isolated(std::move(dpcp.isolated)),
-      isGCP(dpcp.is_gcp_instance()),
-      isInfeasible(dpcp.is_infeasible_instance()),
-      hasTrivialSolution(dpcp.has_trivial_solution()),
-      density(dpcp.get_density()) {
-  assert(check_consistency());
-}
-
 DPCPInst::~DPCPInst() {}
 
 bool DPCPInst::check_consistency() const {

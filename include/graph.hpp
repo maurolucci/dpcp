@@ -42,7 +42,13 @@ class DPCPInst {
   // Constructors and destructor
   DPCPInst(const Graph& graph, const Partition& P, const Partition& Q);
   DPCPInst(const DPCPInst& dpcp);
-  DPCPInst(DPCPInst&& dpcp) noexcept;
+
+  // Move constructor and move assignment operator are deleted to avoid
+  // accidental moves that can lead to dangling references in the graph and
+  // partitions.
+  DPCPInst(DPCPInst&& dpcp) = delete;
+  DPCPInst& operator=(DPCPInst&& dpcp) = delete;
+
   ~DPCPInst();
 
   // Check the consistency of the instance
