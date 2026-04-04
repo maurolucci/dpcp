@@ -186,7 +186,7 @@ bool DPCPInst::check_consistency() const {
     for (Vertex v : P[pi]) {
       if (!has_vertex(v)) return false;
       if (vertex2Ppart.at(v) != pi) return false;
-      assert(graph[v].id == vertex2CurrentId.at(v));
+      assert(graph[v].id == get_original_id(v));
     }
   for (size_t qj = 0; qj < get_nQ(); ++qj)
     for (Vertex v : Q[qj]) {
