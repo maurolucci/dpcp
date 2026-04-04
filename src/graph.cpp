@@ -162,7 +162,6 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
       Q[qj].push_back(vNew);
       vertex2Qpart[vNew] = qj;
     }
-  std::cout << "**** Alert: DPCP copy constructor called! ****" << std::endl;
 }
 
 DPCPInst::~DPCPInst() {}
