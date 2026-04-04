@@ -168,7 +168,7 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
 }
 
 DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
-    : graph(std::move(dpcp.graph)),
+    : graph(),
       vertex2CurrentId(std::move(dpcp.vertex2CurrentId)),
       P(std::move(dpcp.P)),
       Q(std::move(dpcp.Q)),
@@ -179,6 +179,7 @@ DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
       density(dpcp.get_density()) {
+  std::swap(graph, dpcp.graph);
   assert(check_consistency());
 }
 
