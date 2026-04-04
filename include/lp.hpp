@@ -68,6 +68,7 @@ class LP {
 
   // Getters for branching
   [[nodiscard]] Vertex get_branching_vertex() const { return branchingVertex; }
+  [[nodiscard]] DPCPInst& get_dpcp_inst() { return dpcp; }
   [[nodiscard]] const DPCPInst& get_dpcp_inst() const { return dpcp; }
   [[nodiscard]] const Pool& get_pool() const { return pool; }
   [[nodiscard]] const Pool& get_late_columns() const { return lateColumns; }
