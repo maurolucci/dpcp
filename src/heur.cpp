@@ -203,6 +203,7 @@ void update_info(const DPCPInst& dpcp, std::map<Vertex, bool>& removed,
 bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                 std::map<size_t, std::set<size_t>>& adj, const Params& params,
                 Heur2SVertexSelector vertexSelector) {
+  assert(dpcp.check_consistency());
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
   for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
