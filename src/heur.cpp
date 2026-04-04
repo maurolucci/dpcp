@@ -252,6 +252,10 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                                   compareFunc);
     unprocessedP.erase(pi);
 
+    std::cout << "Processing P[" << pi << "], size = " << nP.at(pi)
+              << std::endl;
+    for (Vertex v : dpcp.get_P()[pi]) std::cout << v << std::endl;
+
     // Choose a vertex, with some criterion
     Vertex v =
         vertexSelector(dpcp, dpcp.get_P()[pi], removed, selected, adj, params);
