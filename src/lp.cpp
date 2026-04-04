@@ -25,10 +25,11 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
                           });
 }
 
-LP::LP(DPCPInst&& dpcp, Pool&& pool, const DPCPInst& origDpcp, Params& params,
-       Stats& stats, std::ostream& log, std::ostream& debugLog, bool isRoot)
-    : dpcp(std::move(dpcp)),
-      pool(std::move(pool)),
+LP::LP(const DPCPInst& origDpcp, Params& params, Stats& stats,
+       std::ostream& log, std::ostream& debugLog, bool isRoot)
+    : dpcp(),
+      pool(),
+      lateColumns(),
       origDpcp(origDpcp),
       params(params),
       stats(stats),
@@ -40,7 +41,9 @@ LP::LP(DPCPInst&& dpcp, Pool&& pool, const DPCPInst& origDpcp, Params& params,
       integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
-      posVars() {}
+      posVars() {
+  graph_copy(origDpcp.get_graph(), graph);
+}
 
 LP::LP(const LP& other)
     : dpcp(other.dpcp),
@@ -58,26 +61,6 @@ LP::LP(const LP& other)
       initializedWithDummy(false),
       stables(),
       posVars() {}
-
-LP::LP(LP&& other) noexcept
-    : dpcp(std::move(other.dpcp)),
-      pool(std::move(other.pool)),
-      lateColumns(std::move(other.lateColumns)),
-      origDpcp(other.origDpcp),
-      params(other.params),
-      stats(other.stats),
-      log(other.log),
-      debugLog(other.debugLog),
-      isRoot(other.isRoot),
-      objVal(other.objVal),
-      state(other.state),
-      integerSource(other.integerSource),
-      initializedWithDummy(other.initializedWithDummy),
-      stables(std::move(other.stables)),
-      posVars(std::move(other.posVars)),
-      branchingVertex(other.branchingVertex),
-      coloring(std::move(other.coloring)),
-      pricingSummary(std::move(other.pricingSummary)) {}
 
 LP::~LP() {}
 

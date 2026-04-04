@@ -31,9 +31,8 @@ enum LP_INTEGER_SOURCE {
 
 class LP {
  public:
-  LP(DPCPInst&& dpcp, Pool&& pool, const DPCPInst& origDpcp, Params& params,
-     Stats& stats, std::ostream& log, std::ostream& debugLog,
-     bool isRoot = false);
+  LP(const DPCPInst& origDpcp, Params& params, Stats& stats, std::ostream& log,
+     std::ostream& debugLog, bool isRoot = false);
   LP(const LP& other);      // Copy constructor
   LP(LP&& other) noexcept;  // Move constructor
   ~LP();

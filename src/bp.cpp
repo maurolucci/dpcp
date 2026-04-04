@@ -69,20 +69,19 @@ Stats BP::solve(DPCPInst& origDpcp) {
   first_call = true;
   nextNodeId = 0;
 
-  // Make a copy of the original DPCP instance to preprocess and modify during
-  // the algorithm, while keeping the original one unchanged for reference
-  DPCPInst dpcp(origDpcp);
   log << "Original DPCP instance: |V|=" << num_vertices(origDpcp.get_graph())
       << ", |E|=" << num_edges(origDpcp.get_graph())
       << ", |P|=" << origDpcp.get_nP() << ", |Q|=" << origDpcp.get_nQ()
       << std::endl;
+
+  LP rootLp(origDpcp, params, stats, log, debugLog, true);
+  DPCPInst& dpcp = rootLp.get_dpcp_inst();
   if (params.preprocessing) dpcp.preprocess(true);
+
   log << "After preprocessing: |V|=" << num_vertices(dpcp.get_graph())
       << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()
       << ", |Q|=" << dpcp.get_nQ() << std::endl;
-  Pool pool;
-  LP rootLp(std::move(dpcp), std::move(pool), origDpcp, params, stats, log,
-            debugLog, true);
+
   Node root(std::move(rootLp), 0, nextNodeId++);
 
   auto state_after_push = [](LP_STATE lpState) -> std::optional<STATE> {
