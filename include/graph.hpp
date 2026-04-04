@@ -110,6 +110,9 @@ class DPCPInst {
   bool hasTrivialSolution;  // Does the instance have a trivial solution?
   double density;           // Density of the graph (before preprocessing)
 
+  // Check the consistency of the instance
+  bool check_consistency() const;
+
   // Internal preprocessing steps
   void preprocess_step1();
   void preprocess_step2();

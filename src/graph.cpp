@@ -175,9 +175,27 @@ DPCPInst::DPCPInst(DPCPInst&& dpcp) noexcept
       isGCP(dpcp.is_gcp_instance()),
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
-      density(dpcp.get_density()) {}
+      density(dpcp.get_density()) {
+  assert(this->check_consistency());
+}
 
 DPCPInst::~DPCPInst() {}
+
+bool DPCPInst::check_consistency() const {
+  // Check that all vertices in P and Q are in the graph and have consistent
+  // vertex2CurrentId, vertex2Ppart, and vertex2Qpart maps.
+  for (size_t pi = 0; pi < get_nP(); ++pi)
+    for (Vertex v : P[pi]) {
+      if (!has_vertex(v)) return false;
+      if (vertex2Ppart.at(v) != pi) return false;
+    }
+  for (size_t qj = 0; qj < get_nQ(); ++qj)
+    for (Vertex v : Q[qj]) {
+      if (!has_vertex(v)) return false;
+      if (vertex2Qpart.at(v) != qj) return false;
+    }
+  return true;
+}
 
 GCPGraph DPCPInst::get_gcp_graph() const {
   GCPGraph gcpGraph;
