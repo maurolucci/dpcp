@@ -207,8 +207,14 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                 Heur2SVertexSelector vertexSelector) {
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
-  for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
+  for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph()))) {
+    std::cout << "Addind vertex " << dpcp.get_current_id(u) << " with address "
+              << u << " from P[" << pi << "] and Q[" << qj << "] with value "
+              << evaluate_vertex(dpcp, removed, selected, adj,
+                                 params.heuristic2stepVariant, v)
+              << std::endl;
     removed.emplace(u, false);
+  }
 
   // Fill the map with the size of each P[pi]
   std::map<size_t, size_t> nP;
@@ -261,12 +267,6 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
       else if (qj > qj2)
         adj[qj2].insert(qj);
     }
-    std::cout << "Selected vertex " << dpcp.get_current_id(v)
-              << " with address " << v << " from P[" << pi << "] and Q[" << qj
-              << "] with value "
-              << evaluate_vertex(dpcp, removed, selected, adj,
-                                 params.heuristic2stepVariant, v)
-              << std::endl;
     selected.push_back(v);
 
     // Remove the vertices invalidated by choosing v, i.e.
