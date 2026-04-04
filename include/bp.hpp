@@ -55,7 +55,7 @@ class BP {
   BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
      double ub = DBL_MAX);
 
-  Stats solve(DPCPInst dpcp);
+  Stats solve(DPCPInst& dpcp);
 
   // Methods for getting variables' value
   size_t get_nodes();

@@ -14,10 +14,10 @@ inline bool should_prune_by_bound(double lowerBound, double primalBound) {
 }  // namespace
 
 Node::Node(std::unique_ptr<LP> lp, size_t depth, size_t id)
-  : lp(std::move(lp)), depth(depth), id(id) {}
+    : lp(std::move(lp)), depth(depth), id(id) {}
 
 Node::Node(LP&& lp, size_t depth, size_t id)
-  : Node(std::make_unique<LP>(std::move(lp)), depth, id) {}
+    : Node(std::make_unique<LP>(std::move(lp)), depth, id) {}
 
 double Node::get_obj_value() const { return lp->get_lower_bound(); }
 
@@ -63,7 +63,7 @@ BP::BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
       debugLog(debugLog),
       stats() {}
 
-Stats BP::solve(DPCPInst dpcp) {
+Stats BP::solve(DPCPInst& dpcp) {
   start_t = ClockType::now();
   last_t = start_t;
   first_call = true;
