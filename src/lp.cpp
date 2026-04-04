@@ -386,7 +386,7 @@ void LP::heuristic_solve() {
       heurStats = dpcp_2_step_greedy_heur(dpcp, coloring, params);
       break;
     case 3:
-      dpcp.check_consistency();
+      assert(dpcp.check_consistency());
       heurStats = dpcp_2_step_semigreedy_heur(dpcp, coloring, params);
       break;
     default:

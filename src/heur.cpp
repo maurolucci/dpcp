@@ -203,7 +203,6 @@ void update_info(const DPCPInst& dpcp, std::map<Vertex, bool>& removed,
 bool first_step(const DPCPInst& dpcp, VertexVector& selected,
                 std::map<size_t, std::set<size_t>>& adj, const Params& params,
                 Heur2SVertexSelector vertexSelector) {
-  assert(dpcp.check_consistency());
   // Map with the removed vertices
   std::map<Vertex, bool> removed;
   for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
@@ -359,7 +358,6 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile) {
-  assert(dpcp.check_consistency());
   TimePoint start = ClockType::now();
   HeurStats stats;
   stats.totalIters =
@@ -656,7 +654,6 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params) {
-  assert(dpcp.check_consistency());
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;
