@@ -189,6 +189,7 @@ bool DPCPInst::check_consistency() const {
     }
   for (size_t qj = 0; qj < get_nQ(); ++qj)
     for (Vertex v : Q[qj]) {
+      auto [it, end] = vertices(graph);
       auto ret = std::find_if(it, end, [v](Vertex u) { return u == v; });
       if (ret == end) return false;
     }
