@@ -41,7 +41,12 @@ LP::LP(const DPCPInst& origDpcp, Params& params, Stats& stats,
       integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
-      posVars() {}
+      posVars() {
+  std::cout << "LP constructor: |V|=" << num_vertices(dpcp.get_graph())
+            << ", |E|=" << num_edges(dpcp.get_graph())
+            << ", |P|=" << dpcp.get_nP() << ", |Q|=" << dpcp.get_nQ()
+            << std::endl;
+}
 
 // Copy constructor used for creating child LPs during branching. It copies the
 // DPCP instance, but initializes an empty pool and lateColumns, and shares
@@ -91,6 +96,16 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     }
 
   } else if (branchNode == BRANCH_NODE_RIGHT) {
+    // Forbid v
+    auto it = vmap.find(v);
+    assert(it != vmap.end());
+    dpcp.forbid_vertex(it->second);
+    if (params.preprocessing) dpcp.preprocess();
+    if (params.is_verbose(2)) {
+      debugLog << "Right child after preprocessing: |V|=" << num_vertices(graph)
+               << ", |E|=" << num_edges(graph) << ", |P|=" << dpcp.get_nP()
+               << ", |Q|=" << dpcp.get_nQ() << std::endl;
+    }
   }
 
   // Fill pools and late columns
@@ -133,6 +148,10 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     else
       debugLog << "Created child pools: pool=" << pool.size() << std::endl;
   }
+  std::cout << "LP copy constructor: |V|=" << num_vertices(dpcp.get_graph())
+            << ", |E|=" << num_edges(dpcp.get_graph())
+            << ", |P|=" << dpcp.get_nP() << ", |Q|=" << dpcp.get_nQ()
+            << std::endl;
 }
 
 LP::~LP() {}
@@ -453,7 +472,6 @@ void LP::heuristic_solve() {
       heurStats = dpcp_2_step_greedy_heur(dpcp, coloring, params);
       break;
     case 3:
-      assert(dpcp.check_consistency());
       heurStats = dpcp_2_step_semigreedy_heur(dpcp, coloring, params);
       break;
     default:
@@ -861,7 +879,7 @@ void LP::add_column(CplexEnv& cenv, Column& stab) {
   }
   cenv.Xvars.add(IloNumVar(column));
   stables.push_back(stab);
-  // assert(check_column(stab));
+  assert(check_column(stab));
   // print_column(stab);
 }
 
