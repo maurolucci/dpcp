@@ -1,7 +1,9 @@
 #include "lp.hpp"
 
+#include <algorithm>
 #include <cfloat>
 #include <limits>
+#include <list>
 #include <numeric>
 #include <queue>
 
@@ -770,27 +772,49 @@ int LP::pricing_greedy(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   auto startTime = std::chrono::high_resolution_clock::now();
   size_t nHeurCols = 0;
   const size_t k = params.pricingMaxColsPerIter;
+  if (k == 0) return 0;
 
-  // Min-heap of Column by cost: keeps the k best candidates seen so far.
-  // The root is always the worst of the current top-k, so eviction is O(log k).
-  auto cmp = [](const Column& a, const Column& b) { return a.cost > b.cost; };
-  std::priority_queue<Column, std::vector<Column>, decltype(cmp)> heap(cmp);
+  // Ordered list by non-decreasing cost. Front is the current worst column.
+  // Note: we use a list to avoid repeated columns (heap does not support this
+  // easily) and because we expect few columns (k is small).
+  std::list<Column> cols;
+
+  auto is_same_column = [](const Column& a, const Column& b) {
+    return a.ps == b.ps && a.qs == b.qs;
+  };
+
+  auto duplicated_in_cols = [&](const Column& cand) {
+    return std::any_of(cols.begin(), cols.end(), [&](const Column& c) {
+      return is_same_column(c, cand);
+    });
+  };
+
   for (size_t i = 0; i < params.pricingHeur1MaxNCols; ++i) {
     pricingSummary.callsGreedy++;
     auto res = penv.heur_solve(dualsP, dualsQ, params.pricingHeur1Alpha);
     if (res.second != PRICING_STABLE_FOUND) continue;
-    if (heap.size() < k)
-      heap.push(std::move(res.first));
-    else if (res.first.cost > heap.top().cost) {
-      heap.pop();
-      heap.push(std::move(res.first));
+
+    const bool qualifies =
+        (cols.size() < k) || (res.first.cost >= cols.front().cost);
+    if (!qualifies) continue;
+
+    if (duplicated_in_cols(res.first)) continue;
+
+    Column cand = std::move(res.first);
+
+    if (cols.size() == k) {
+      cols.pop_front();
     }
+
+    auto pos = std::find_if(cols.begin(), cols.end(), [&](const Column& c) {
+      return c.cost > cand.cost;
+    });
+    cols.insert(pos, std::move(cand));
   }
 
-  while (!heap.empty()) {
-    Column col = heap.top();
-    heap.pop();
-    add_column(cenv, col);
+  while (!cols.empty()) {
+    add_column(cenv, cols.back());
+    cols.pop_back();
     nHeurCols++;
   }
 
