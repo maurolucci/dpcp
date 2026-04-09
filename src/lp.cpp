@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <chrono>
+#include <cstdint>
 #include <limits>
 #include <list>
 #include <numeric>
@@ -28,7 +30,8 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
 }
 
 LP::LP(const DPCPInst& origDpcp, Params& params, Stats& stats,
-       std::ostream& log, std::ostream& debugLog, bool isRoot)
+  std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+  bool isRoot)
     : dpcp(origDpcp),  // This forces a copy
       pool(),
       lateColumns(),
@@ -37,13 +40,18 @@ LP::LP(const DPCPInst& origDpcp, Params& params, Stats& stats,
       stats(stats),
       log(log),
       debugLog(debugLog),
+      colLog(colLog),
       isRoot(isRoot),
       objVal(-1.0),
       state(LP_UNSOLVED),
       integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
-      posVars() {}
+      posVars(),
+      currentNodeId(0),
+      currentNodeDepth(0),
+      currentCgIter(0),
+      currentCgObj(-1.0) {}
 
 // Copy constructor used for creating child LPs during branching. It copies the
 // DPCP instance, but initializes an empty pool and lateColumns, and shares
@@ -57,13 +65,18 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
       stats(other.stats),
       log(other.log),
       debugLog(other.debugLog),
+      colLog(other.colLog),
       isRoot(false),
       objVal(-1.0),
       state(LP_UNSOLVED),
       integerSource(LP_INTEGER_SOURCE_NONE),
       initializedWithDummy(false),
       stables(),
-      posVars() {
+      posVars(),
+      currentNodeId(0),
+      currentNodeDepth(0),
+      currentCgIter(0),
+      currentCgObj(-1.0) {
   const Vertex null_v = boost::graph_traits<Graph>::null_vertex();
   const DPCPInst& otherDpcp = other.get_dpcp_inst();
   Vertex v = other.get_branching_vertex();
@@ -162,6 +175,7 @@ Column LP::translate_column(const Column& col,
 
 LP_STATE LP::solve(double timelimit, double ub) {
   auto startTime = std::chrono::high_resolution_clock::now();
+  log_node_header();
 
   // Cleaning
   initializedWithDummy = false;
@@ -170,6 +184,8 @@ LP_STATE LP::solve(double timelimit, double ub) {
   coloring.reset_coloring();
   state = LP_UNSOLVED;
   integerSource = LP_INTEGER_SOURCE_NONE;
+  currentCgIter = 0;
+  currentCgObj = -1.0;
 
   // Infeasibility check
   if (dpcp.is_infeasible_instance()) {
@@ -230,7 +246,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // Add late columns (e.g., positive parent columns in mode 3)
   for (auto& col : lateColumns) {
-    add_column(cenv, col);
+    add_column(cenv, col, "late-inherit");
   }
 
   if (params.is_verbose(2)) {
@@ -282,6 +298,8 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
     // Pricing
     pricingSummary.iters++;
+    currentCgIter = pricingSummary.iters;
+    currentCgObj = objVal;
     int ret = pricing(cenv, penv, dualsP, dualsQ);
 
     if (ret > 0)
@@ -560,7 +578,7 @@ void LP::add_initial_columns(CplexEnv& cenv) {
   if (has_heur_solution()) {
     for (size_t k = 0; k < coloring.get_n_colors(); ++k) {
       Column stab = coloring.get_stable(dpcp, k);
-      add_column(cenv, stab);
+      add_column(cenv, stab, "init-heur");
     }
   }
   // Otherwise, initialize with a dummy column
@@ -757,7 +775,7 @@ int LP::pricing_pool(CplexEnv& cenv, IloNumArray& dualsP, IloNumArray& dualsQ) {
   while (!heap.empty()) {
     size_t i = heap.top().second;
     heap.pop();
-    add_column(cenv, pool[i]);
+    add_column(cenv, pool[i], "pool");
     nPoolCols++;
   }
 
@@ -813,7 +831,7 @@ int LP::pricing_greedy(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   }
 
   while (!cols.empty()) {
-    add_column(cenv, cols.back());
+    add_column(cenv, cols.back(), "greedy");
     cols.pop_back();
     nHeurCols++;
   }
@@ -833,7 +851,7 @@ int LP::pricing_P_Q_mwss(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   auto res = penv.mwis_P_Q_solve(dualsP, dualsQ);
   for (auto& [stab, priState] : res) {
     if (priState == PRICING_STABLE_FOUND) {
-      add_column(cenv, stab);
+      add_column(cenv, stab, "pq-mwss");
       nMwis1Cols++;
     }
   }
@@ -851,7 +869,7 @@ int LP::pricing_P_mwss(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   auto startTime = std::chrono::high_resolution_clock::now();
   auto res = penv.mwis_P_solve(dualsP, dualsQ);
   if (res.second == PRICING_STABLE_FOUND) {
-    add_column(cenv, res.first);
+    add_column(cenv, res.first, "p-mwss");
     ret = 1;
   } else if (res.second == PRICING_STABLE_NOT_FOUND)
     ret = -1;
@@ -871,7 +889,7 @@ int LP::pricing_exact(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   auto res = penv.exact_solve(dualsP, dualsQ);
   // Handle exact outputs
   if (res.second == PRICING_STABLE_FOUND) {
-    add_column(cenv, res.first);
+    add_column(cenv, res.first, "exact");
     ret = 1;
   } else if (res.second == PRICING_STABLE_NOT_EXIST)
     ret = 0;
@@ -887,7 +905,7 @@ int LP::pricing_exact(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   return ret;
 }
 
-void LP::add_column(CplexEnv& cenv, Column& stab) {
+void LP::add_column(CplexEnv& cenv, Column& stab, const char* method) {
   IloNumColumn column = cenv.Xobj(1.0);
   for (auto pi : stab.ps) column += cenv.XrestrP[pi](1.0);
   for (auto qj : stab.qs) {
@@ -895,8 +913,35 @@ void LP::add_column(CplexEnv& cenv, Column& stab) {
   }
   cenv.Xvars.add(IloNumVar(column));
   stables.push_back(stab);
+  log_column(stab, method);
   // assert(check_column(stab));
   // print_column(stab);
+}
+
+void LP::log_node_header() const {
+  colLog << "node id=" << currentNodeId << " depth=" << currentNodeDepth
+         << std::endl;
+}
+
+void LP::log_column(const Column& stab, const char* method) const {
+  const auto now = std::chrono::system_clock::now();
+  const auto timestampMs =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          now.time_since_epoch())
+          .count();
+  const double reducedCost = 1.0 - stab.cost;
+
+  colLog << "col ts=" << static_cast<std::int64_t>(timestampMs)
+      << " method=" << method << " iter=" << currentCgIter
+      << " obj=" << currentCgObj << " rc=" << reducedCost
+      << " stable=[";
+  bool first = true;
+  for (auto v : stab.stable) {
+    if (!first) colLog << ' ';
+    first = false;
+    colLog << dpcp.get_current_id(v);
+  }
+  colLog << "]" << std::endl;
 }
 
 bool LP::check_column(Column& stab) {

@@ -38,7 +38,7 @@ enum BRANCH_NODE {
 class LP {
  public:
   LP(const DPCPInst& origDpcp, Params& params, Stats& stats, std::ostream& log,
-     std::ostream& debugLog, bool isRoot = false);
+  std::ostream& debugLog, std::ostream& colLog, bool isRoot = false);
   LP(const LP& other, BRANCH_NODE branchNode);  // Copy constructor
 
   // Move constructor and move assignment operator are deleted to avoid
@@ -78,6 +78,10 @@ class LP {
   [[nodiscard]] const std::vector<size_t>& get_pos_vars() const {
     return posVars;
   }
+  void set_node_context(size_t nodeId, size_t nodeDepth) {
+    currentNodeId = nodeId;
+    currentNodeDepth = nodeDepth;
+  }
 
  private:
   DPCPInst dpcp;  // DPCP instance at the current node
@@ -90,6 +94,7 @@ class LP {
   Stats& stats;  // Reference to the stats object to update during the algorithm
   std::ostream& log;       // Reference to the log stream
   std::ostream& debugLog;  // Reference to the debug log stream
+  std::ostream& colLog;    // Reference to the column-generation log stream
 
   bool isRoot;                      // Is the current node the root node?
   double objVal;                    // Objective value of the current LP
@@ -105,6 +110,10 @@ class LP {
   Vertex branchingVertex;  // Vertex selected for branching at the current node
 
   Col coloring;  // Feasible coloring for the current node
+  size_t currentNodeId;
+  size_t currentNodeDepth;
+  size_t currentCgIter;
+  double currentCgObj;
 
   struct PricingSummary {
     size_t callsPool = 0;
@@ -164,7 +173,10 @@ class LP {
   void log_pricing_summary() const;
 
   // Add a new column to the linear relaxation
-  void add_column(CplexEnv& cenv, Column& stab);
+  void add_column(CplexEnv& cenv, Column& stab, const char* method);
+
+  void log_node_header() const;
+  void log_column(const Column& stab, const char* method) const;
 
   // Check column validity
   bool check_column(Column& stab);

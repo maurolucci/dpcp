@@ -14,8 +14,11 @@ inline bool should_prune_by_bound(double lowerBound, double primalBound) {
 }  // namespace
 
 Node::Node(const DPCPInst& origDpcp, Params& params, Stats& stats,
-           std::ostream& log, std::ostream& debugLog, bool isRoot)
-    : lp(origDpcp, params, stats, log, debugLog, isRoot), depth(0), id(0) {}
+      std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+      bool isRoot)
+    : lp(origDpcp, params, stats, log, debugLog, colLog, isRoot),
+      depth(0),
+      id(0) {}
 
 Node::Node(Node& parent, BRANCH_NODE branchNode, size_t depth, size_t id)
     : lp(parent.lp, branchNode), depth(depth), id(id) {}
@@ -27,6 +30,7 @@ bool Node::operator>(const Node& n) const {
 }
 
 LP_STATE Node::solve(double timelimit, double ub) {
+  lp.set_node_context(id, depth);
   return lp.solve(timelimit, ub);
 }
 
@@ -50,8 +54,8 @@ void Node::branch(std::vector<std::unique_ptr<Node>>& sons) {
       std::make_unique<Node>(*this, BRANCH_NODE_RIGHT, depth + 1));
 }
 
-BP::BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
-       double ub)
+BP::BP(Params& params, std::ostream& log, std::ostream& debugLog,
+  std::ostream& colLog, Col& sol, double ub)
     : params(params),
       best_integer_solution(sol),
       primal_bound(ub),
@@ -60,6 +64,7 @@ BP::BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
       first_call(true),
       log(log),
       debugLog(debugLog),
+      colLog(colLog),
       stats() {}
 
 Stats BP::solve(DPCPInst& origDpcp) {
@@ -74,7 +79,8 @@ Stats BP::solve(DPCPInst& origDpcp) {
       << std::endl;
 
   auto root =
-      std::make_unique<Node>(origDpcp, params, stats, log, debugLog, true);
+      std::make_unique<Node>(origDpcp, params, stats, log, debugLog, colLog,
+                 true);
   DPCPInst& dpcp = root->get_lp().get_dpcp_inst();
   if (params.preprocessing) dpcp.preprocess(true);
 

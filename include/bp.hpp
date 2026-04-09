@@ -20,7 +20,8 @@ using TimePoint = ClockType::time_point;
 class Node {
  public:
   Node(const DPCPInst& origDpcp, Params& params, Stats& stats,
-       std::ostream& log, std::ostream& debugLog, bool isRoot = false);
+  std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+  bool isRoot = false);
   explicit Node(Node& parent, BRANCH_NODE branchNode, size_t depth = 0,
                 size_t id = 0);
 
@@ -55,8 +56,8 @@ class Node {
 
 class BP {
  public:
-  BP(Params& params, std::ostream& log, std::ostream& debugLog, Col& sol,
-     double ub = DBL_MAX);
+  BP(Params& params, std::ostream& log, std::ostream& debugLog,
+    std::ostream& colLog, Col& sol, double ub = DBL_MAX);
 
   Stats solve(DPCPInst& dpcp);
 
@@ -79,6 +80,7 @@ class BP {
   bool first_call;             // Used by log
   std::ostream& log;
   std::ostream& debugLog;
+  std::ostream& colLog;
   Stats stats;
 
   Stats return_stats(STATE state);

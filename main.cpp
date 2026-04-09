@@ -339,7 +339,8 @@ int main(int argc, const char** argv) {
         if (params.is_verbose())
           lowLog << "Solving instance " << path << " with B&P" << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        BP bp(params, lowLog, debugLog, col, vm["ub"].as<double>());
+        BP bp(params, lowLog, debugLog, out.colFile, col,
+              vm["ub"].as<double>());
         stats = bp.solve(dpcp);
       } else if (solver == "compact") {
         if (params.is_verbose())
