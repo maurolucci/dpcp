@@ -29,8 +29,8 @@ auto find_most_fractional(std::map<Vertex, double>& m) {
 }
 
 LP::LP(const DPCPInst& origDpcp, Params& params, Stats& stats,
-  std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
-  bool isRoot)
+       std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+       bool isRoot)
     : dpcp(origDpcp),  // This forces a copy
       pool(),
       lateColumns(),
@@ -932,10 +932,9 @@ void LP::log_column(const Column& stab, const char* method) const {
           .count();
   const double reducedCost = 1.0 - stab.cost;
 
-  colLog << "col time=" << elapsedSeconds
-      << " method=" << method << " iter=" << currentCgIter
-      << " obj=" << currentCgObj << " rc=" << reducedCost
-      << " stable=[";
+  colLog << "col time=" << elapsedSeconds << " method=" << method
+         << " iter=" << currentCgIter << " obj=" << currentCgObj
+         << " rc=" << reducedCost << " stable=[";
   bool first = true;
   for (auto v : stab.stable) {
     if (!first) colLog << ' ';

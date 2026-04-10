@@ -437,6 +437,8 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
   switch (cplex.getCplexStatus()) {
     case IloCplex::CplexStatus::OptimalTol:
     case IloCplex::CplexStatus::Optimal: {
+      std::cout << "Exact pricing: optimal solution found with objective value "
+                << cplex.getObjValue() << std::endl;
       // The optimal value is <= THRESHOLD = 1.1
       // Recover optimal solution
       IloNumArray valY(cxenv, num_vertices(dpcp.get_graph()));
@@ -467,6 +469,8 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
         state = PRICING_STABLE_NOT_EXIST;
     } break;
     case IloCplex::CplexStatus::AbortUser:
+      std::cout << "Exact pricing: threshold exceeded, with value "
+                << cplex.getObjValue() << std::endl;
       // Exit with abortion means that the current value is > THRESHOLD = 1.1
       state = PRICING_STABLE_FOUND;
       // Try to maximalize the stable set
