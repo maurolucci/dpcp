@@ -469,8 +469,6 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
         state = PRICING_STABLE_NOT_EXIST;
     } break;
     case IloCplex::CplexStatus::AbortUser:
-      std::cout << "Exact pricing: threshold exceeded, with value "
-                << cplex.getObjValue() << std::endl;
       // Exit with abortion means that the current value is > THRESHOLD = 1.1
       state = PRICING_STABLE_FOUND;
       // Try to maximalize the stable set
@@ -487,6 +485,8 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
         stab.ps.insert(pi);
         stab.cost += dualsP[pi];
       }
+      std::cout << "Exact pricing: threshold exceeded, with value " << stab.cost
+                << std::endl;
       break;
     case IloCplex::CplexStatus::AbortTimeLim:
       state = PRICING_TIME_EXCEEDED;
