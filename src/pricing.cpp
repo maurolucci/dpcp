@@ -443,9 +443,6 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
         state = PRICING_STABLE_NOT_EXIST;
       } else {
         state = PRICING_STABLE_FOUND;
-        std::cout
-            << "Exact pricing: optimal solution found with objective value "
-            << cplex.getObjValue() << std::endl;
         // Recover optimal solution
         stab.clear();
         IloNumArray valY(cxenv, num_vertices(dpcp.get_graph()));
@@ -488,8 +485,6 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
         stab.ps.insert(pi);
         stab.cost += dualsP[pi];
       }
-      std::cout << "Exact pricing: threshold exceeded, with value " << stab.cost
-                << std::endl;
       break;
     case IloCplex::CplexStatus::AbortTimeLim:
       state = PRICING_TIME_EXCEEDED;
