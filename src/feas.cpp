@@ -15,10 +15,13 @@ extern "C" {
 
 #define FEASIBILITY_EPSILON 0.00001  // 10e-5
 
-Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp, Col& col,
+Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp_, Col& col,
                                           std::ostream& log) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
+
+  // Make a copy of the DPCP instance, as we will modify it by removing edges
+  DPCPInst dpcp(dpcp_);
   Graph& graph = dpcp.get_graph();
 
   // Remove edges whose endpoints do not belongs to the same Pi and Qj
@@ -139,10 +142,13 @@ class EarlyStopCallback : public IloCplex::Callback::Function {
   ~EarlyStopCallback() {};
 };
 
-Stats dpcp_decide_feasibility_ilp(DPCPInst& dpcp, Col& col, int timeLimit,
+Stats dpcp_decide_feasibility_ilp(DPCPInst& dpcp_, Col& col, int timeLimit,
                                   std::ostream& log) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
+
+  // Make a copy of the DPCP instance, as we will modify it by removing edges
+  DPCPInst dpcp(dpcp_);
   Graph& graph = dpcp.get_graph();
 
   // Remove edges whose endpoints do not belongs to the same Pi and Qj
