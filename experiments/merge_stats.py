@@ -19,6 +19,46 @@ def parse_float(value: str) -> float:
 
 
 def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
+    # Newest format (with RL initialization counters):
+    # ... ntrivial,nint,nfrac,ngcp,ninitSol,ninitDummy,ninit
+    if len(l0) >= 34:
+        return {
+            "instance": l0[0],
+            "solver": get_solver(l0[1], subdir),
+            "run": parse_int(l0[2]),
+            "nvertices": parse_int(l0[3]),
+            "nedges": parse_int(l0[4]),
+            "nP": parse_int(l0[5]),
+            "nQ": parse_int(l0[6]),
+            "nvars": parse_int(l0[7]),
+            "ncons": parse_int(l0[8]),
+            "state": l0[9],
+            "terminationReason": l0[10],
+            "time": parse_float(l0[11]),
+            "nodes": parse_int(l0[12]),
+            "nodesLeft": parse_int(l0[13]),
+            "lb": parse_float(l0[14]),
+            "ub": parse_float(l0[15]),
+            "gap": parse_float(l0[16]),
+            "ninfeas": parse_float(l0[17]),
+            "ninfeasPrepro": parse_int(l0[18]),
+            "ninfeasCheck": parse_int(l0[19]),
+            "ninfeasAux": parse_int(l0[20]),
+            "gcpAvgTime": parse_float(l0[21]),
+            "nsol": parse_int(l0[22]),
+            "nsolHeur": parse_int(l0[23]),
+            "nsolLR": parse_int(l0[24]),
+            "nsolGCP": parse_int(l0[25]),
+            "nsolTrivial": parse_int(l0[26]),
+            "ntrivialNodes": parse_int(l0[27]),
+            "nintNodes": parse_int(l0[28]),
+            "nfracNodes": parse_int(l0[29]),
+            "ngcpNodes": parse_int(l0[30]),
+            "ninitSol": parse_int(l0[31]),
+            "ninitDummy": parse_int(l0[32]),
+            "ninit": parse_int(l0[33]),
+        }
+
     # New format (stats.cpp current):
     # instance,solver,run,nvertices,nedges,nP,nQ,nvars,ncons,state,
     # terminationReason,time,nodes,nodesLeft,lb,ub,gap,
@@ -58,6 +98,9 @@ def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
             "nintNodes": parse_int(l0[28]),
             "nfracNodes": parse_int(l0[29]),
             "ngcpNodes": parse_int(l0[30]),
+            "ninitSol": 0,
+            "ninitDummy": 0,
+            "ninit": 0,
         }
 
     # Intermediate format (without nint/nfrac/ngcp columns)
@@ -94,6 +137,9 @@ def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
             "nintNodes": 0,
             "nfracNodes": 0,
             "ngcpNodes": 0,
+            "ninitSol": 0,
+            "ninitDummy": 0,
+            "ninit": 0,
         }
 
     # Old format (legacy merge_stats.py expectations):
@@ -133,6 +179,9 @@ def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
             "nintNodes": parse_int(l0[20]),
             "nfracNodes": 0,
             "ngcpNodes": parse_int(l0[21]),
+            "ninitSol": 0,
+            "ninitDummy": 0,
+            "ninit": 0,
         }
 
     raise ValueError(f"Unexpected first-line stats format with {len(l0)} fields")
@@ -254,6 +303,9 @@ def main() -> int:
         "nintNodes",
         "nfracNodes",
         "ngcpNodes",
+        "ninitSol",
+        "ninitDummy",
+        "ninit",
         "rootlb",
         "rootub",
         "rootHeurTime",

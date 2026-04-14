@@ -92,7 +92,9 @@ void Stats::write_stats(std::ostream& file) {
        << gcpTime / (nsolGCP > 0 ? nsolGCP : 1) << ","
        << nsolHeur + nsolLR + nsolGCP + nsolTrivial << "," << nsolHeur << ","
       << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ntrivial
-      << "," << nint << "," << nfrac << "," << ngcp << std::endl;
+      << "," << nint << "," << nfrac << "," << ngcp << ","
+      << ninitSol << "," << ninitDummy << ","
+      << ninitSol + ninitDummy << std::endl;
 
   file << rootlb << "," << rootub << "," << rootHeurTime << "," << rootFeasTime
        << ","
@@ -168,6 +170,9 @@ void Stats::print_stats(std::ostream& file) {
        << " (total), " << nsolHeur << " (heuristic), " << nsolLR
        << " (linear relaxation), " << nsolGCP << " (gcp), " << nsolTrivial
        << " (trivial reduction)" << std::endl;
+    file << "RL initializations: " << ninitSol + ninitDummy << " (total), "
+      << ninitSol << " (initial solution), " << ninitDummy << " (dummy)"
+      << std::endl;
   file << "Root node stats:" << std::endl;
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;

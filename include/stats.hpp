@@ -90,6 +90,9 @@ class Stats {
   int ntrivial;
   // Number of GCP instances detected in the byp tree
   int ngcp;
+  // Number of RL initializations by source
+  int ninitSol;
+  int ninitDummy;
   // Time spent on solving GCP instances
   double gcpTime;
   // Number of solutions found by each source
@@ -150,6 +153,8 @@ class Stats {
         nfrac(0),
         ntrivial(0),
         ngcp(0),
+        ninitSol(0),
+        ninitDummy(0),
         gcpTime(0.0),
         nsolHeur(0),
         nsolLR(0),

@@ -578,6 +578,7 @@ void LP::add_constraints_and_objective(CplexEnv& cenv) {
 void LP::add_initial_columns(CplexEnv& cenv) {
   // Try to initialize with the heuristic solution
   if (has_heur_solution()) {
+    stats.ninitSol++;
     for (size_t k = 0; k < coloring.get_n_colors(); ++k) {
       Column stab = coloring.get_stable(dpcp, k);
       add_column(cenv, stab, "init-heur");
@@ -585,6 +586,7 @@ void LP::add_initial_columns(CplexEnv& cenv) {
   }
   // Otherwise, initialize with a dummy column
   else {
+    stats.ninitDummy++;
     // Add a new dummy variable z with z_i = 1 forall i in P and z_j = 0
     // forall j in Q and set a high cost for z
     IloNumColumn z = cenv.Xobj(params.initializationBigWeight);
