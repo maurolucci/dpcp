@@ -2,9 +2,9 @@
 
 declare -a N=("110" "120" "130")
 declare -a P=("0.25" "0.5" "0.75")
-declare -a NA=("0.1" "0.2")
-declare -a NB=("0.1" "0.2")
-declare num="5"
+declare -a NA=("0.3" "0.4")
+declare -a NB=("0.3" "0.4")
+declare num="3"
 
 SRC="gen_random_dpcp1.py"
 OUT="dpcp/er-2"
