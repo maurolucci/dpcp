@@ -185,7 +185,6 @@ Stats BP::return_stats(STATE state) {
 }
 
 LP_STATE BP::push(std::unique_ptr<Node> node) {
-  nodes++;
   double obj_value;
 
   if (params.is_verbose(2)) {
@@ -212,6 +211,7 @@ LP_STATE BP::push(std::unique_ptr<Node> node) {
 
   switch (state) {
     case LP_INTEGER:
+      nodes++;
       stats.nNodesInt++;
       obj_value = node->get_obj_value();
       if (obj_value < primal_bound) {
@@ -239,11 +239,16 @@ LP_STATE BP::push(std::unique_ptr<Node> node) {
       return state;  // Prune by optimality
 
     case LP_FRACTIONAL:
+      nodes++;
       stats.nNodesFrac++;
       obj_value = node->get_obj_value();
       if (should_prune_by_bound(obj_value, primal_bound))
         return state;  // Prune by bound
       break;           // Do not prune
+
+    case LP_INFEASIBLE:
+      nodes++;
+      return state;  // Prune by infeasibility
 
     default:
       return state;  // Prune by infeasibility or mem/time limit

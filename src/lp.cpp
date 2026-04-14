@@ -211,10 +211,11 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // GCP instance check
   if (dpcp.is_gcp_instance()) {
-    stats.nNodesGcp++;
     if (params.is_verbose(2))
       debugLog << "LP reduced to GCP instance." << std::endl;
-    return gcp_solve(timelimit, ub);
+    state = gcp_solve(timelimit, ub);
+    if (state == LP_INTEGER) stats.nNodesGcp++;
+    return state;
   }
 
   // Apply heuristic at the current node
