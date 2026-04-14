@@ -80,16 +80,13 @@ class Stats {
   int ub;
   // Final optimality gap (in percentage)
   double gap;
-  // Number of infeasible instances detected in the byp tree
-  int ninfeasPrepro, ninfeasCheck, ninfeasAux;
-  // Number of integer nodes detected in the byp tree
-  int nint;
-  // Number of fractional nodes detected in the byp tree
-  int nfrac;
-  // Number of trivial instances with n = 1 in the byp tree
-  int ntrivial;
-  // Number of GCP instances detected in the byp tree
-  int ngcp;
+  // Number of infeasible nodes detected in the B&P tree, by source
+  int nNodesInfeasPrepro, nNodesInfeasCheck, nNodesInfeasAux;
+  // Number of nodes by type detected in the B&P tree
+  int nNodesInt;
+  int nNodesFrac;
+  int nNodesTrivial;
+  int nNodesGcp;
   // Number of RL initializations by source
   int ninitSol;
   int ninitDummy;
@@ -146,13 +143,13 @@ class Stats {
         lb(-1.0),
         ub(-1),
         gap(-1.0),
-        ninfeasPrepro(0),
-        ninfeasCheck(0),
-        ninfeasAux(0),
-        nint(0),
-        nfrac(0),
-        ntrivial(0),
-        ngcp(0),
+        nNodesInfeasPrepro(0),
+        nNodesInfeasCheck(0),
+        nNodesInfeasAux(0),
+        nNodesInt(0),
+        nNodesFrac(0),
+        nNodesTrivial(0),
+        nNodesGcp(0),
         ninitSol(0),
         ninitDummy(0),
         gcpTime(0.0),

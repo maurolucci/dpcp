@@ -87,14 +87,14 @@ void Stats::write_stats(std::ostream& file) {
        << nedges << "," << nP << "," << nQ << "," << nvars << "," << ncons
        << "," << get_state_as_str() << "," << get_termination_reason() << ","
        << time << "," << nodes << "," << nodesLeft << "," << lb << "," << ub
-       << "," << gap << "," << ninfeasPrepro + ninfeasCheck + ninfeasAux << ","
-       << ninfeasPrepro << "," << ninfeasCheck << "," << ninfeasAux << ","
-       << gcpTime / (nsolGCP > 0 ? nsolGCP : 1) << ","
+       << "," << gap << "," << nNodesInt << "," << nNodesFrac << ","
+       << nNodesGcp << "," << nNodesTrivial << ","
+       << nNodesInfeasPrepro + nNodesInfeasCheck + nNodesInfeasAux << ","
+       << nNodesInfeasPrepro << "," << nNodesInfeasCheck << ","
+       << nNodesInfeasAux << "," << gcpTime / (nsolGCP > 0 ? nsolGCP : 1) << ","
        << nsolHeur + nsolLR + nsolGCP + nsolTrivial << "," << nsolHeur << ","
-      << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ntrivial
-      << "," << nint << "," << nfrac << "," << ngcp << ","
-      << ninitSol << "," << ninitDummy << ","
-      << ninitSol + ninitDummy << std::endl;
+       << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ninitSol
+       << "," << ninitDummy << "," << ninitSol + ninitDummy << std::endl;
 
   file << rootlb << "," << rootub << "," << rootHeurTime << "," << rootFeasTime
        << ","
@@ -158,21 +158,23 @@ void Stats::print_stats(std::ostream& file) {
   file << "Lower bound: " << lb << std::endl;
   file << "Upper bound: " << ub << std::endl;
   file << "Gap: " << gap << std::endl;
-  file << "Infeasible nodes: " << ninfeasPrepro + ninfeasCheck + ninfeasAux
-       << " (total), " << ninfeasPrepro << " (preprocessing), " << ninfeasCheck
-       << " (heuristic), " << ninfeasAux << " (auxiliary)" << std::endl;
-    file << "Node type counts: " << nint << " (LP integer), " << nfrac
-      << " (LP fractional), " << ntrivial << " (trivial), " << ngcp
-      << " (GCP)" << std::endl;
+  file << "Node counts: " << nNodesInt << " (LP integer), " << nNodesFrac
+       << " (LP fractional), " << nNodesGcp << " (GCP), " << nNodesTrivial
+       << " (trivial), "
+       << nNodesInfeasPrepro + nNodesInfeasCheck + nNodesInfeasAux
+       << " (infeasible total), " << nNodesInfeasPrepro
+       << " (infeasible preprocessing), " << nNodesInfeasCheck
+       << " (infeasible check), " << nNodesInfeasAux << " (infeasible aux)"
+       << std::endl;
+  file << "RL initializations: " << ninitSol + ninitDummy << " (total), "
+       << ninitSol << " (initial solution), " << ninitDummy << " (dummy)"
+       << std::endl;
   file << "GCP avg time: " << gcpTime / (nsolGCP > 0 ? nsolGCP : 1)
        << std::endl;
   file << "Solutions found: " << nsolHeur + nsolLR + nsolGCP + nsolTrivial
        << " (total), " << nsolHeur << " (heuristic), " << nsolLR
        << " (linear relaxation), " << nsolGCP << " (gcp), " << nsolTrivial
        << " (trivial reduction)" << std::endl;
-    file << "RL initializations: " << ninitSol + ninitDummy << " (total), "
-      << ninitSol << " (initial solution), " << ninitDummy << " (dummy)"
-      << std::endl;
   file << "Root node stats:" << std::endl;
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;

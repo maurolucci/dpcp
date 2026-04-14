@@ -191,7 +191,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // Infeasibility check
   if (dpcp.is_infeasible_instance()) {
-    stats.ninfeasPrepro++;
+    stats.nNodesInfeasPrepro++;
     state = LP_INFEASIBLE;
     if (params.is_verbose(2))
       debugLog << "LP detected infeasibility." << std::endl;
@@ -200,7 +200,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // Trivial solution check
   if (dpcp.has_trivial_solution()) {
-    stats.ntrivial++;
+    stats.nNodesTrivial++;
     objVal = 1.0;
     state = LP_INTEGER;
     integerSource = LP_INTEGER_SOURCE_TRIVIAL;
@@ -211,7 +211,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // GCP instance check
   if (dpcp.is_gcp_instance()) {
-    stats.ngcp++;
+    stats.nNodesGcp++;
     if (params.is_verbose(2))
       debugLog << "LP reduced to GCP instance." << std::endl;
     return gcp_solve(timelimit, ub);
@@ -230,7 +230,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
 
   // Apply feasibility check at the current node
   if (!feasibility_solve()) {
-    stats.ninfeasCheck++;
+    stats.nNodesInfeasCheck++;
     state = LP_INFEASIBLE;
     if (params.is_verbose(2))
       debugLog << "LP feasibility check proved infeasibility." << std::endl;
@@ -341,7 +341,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
       // infeasible
       if (objVal > std::min(dpcp.get_nP(), dpcp.get_nQ()) + EPSILON) {
         state = LP_INFEASIBLE;
-        stats.ninfeasAux++;
+        stats.nNodesInfeasAux++;
       }
       // Otherwise, the initialization failed
       else {
