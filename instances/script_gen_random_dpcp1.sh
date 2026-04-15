@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a N=("110" "120" "130")
+declare -a N=("90" "100" "110")
 declare -a P=("0.25" "0.5" "0.75")
 declare -a NA=("0.3" "0.4")
 declare -a NB=("0.3" "0.4")
