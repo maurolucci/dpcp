@@ -12,16 +12,14 @@
 #include "lp.hpp"
 #include "stats.hpp"
 
-#define EPSILON_BP 0.001  // For doing ceil(x - EPSILON_BP) during prunning
-
 using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = ClockType::time_point;
 
 class Node {
  public:
   Node(const DPCPInst& origDpcp, Params& params, Stats& stats,
-  std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
-  bool isRoot = false);
+       std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+       bool isRoot = false);
   explicit Node(Node& parent, BRANCH_NODE branchNode, size_t depth = 0,
                 size_t id = 0);
 
@@ -57,7 +55,7 @@ class Node {
 class BP {
  public:
   BP(Params& params, std::ostream& log, std::ostream& debugLog,
-    std::ostream& colLog, Col& sol, double ub = DBL_MAX);
+     std::ostream& colLog, Col& sol, double ub = DBL_MAX);
 
   Stats solve(DPCPInst& dpcp);
 

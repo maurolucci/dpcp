@@ -6,16 +6,23 @@
 
 namespace {
 constexpr double kGapDenominatorEpsilon = 1e-6;
+constexpr double ceilEpsilon = 1e-6;
 constexpr double kLogIntervalSeconds = 10.0;
 
+// Prune by bound if lower bound is greater than or equal to primal bound (with
+// a small epsilon to avoid numerical issues with ceil). The ceil is needed
+// since the objective is integer, but the LP relaxation can be fractional. We
+// use ceil(x - epsilon) instead of ceil(x) to avoid pruning nodes that are very
+// close to an integer value due to numerical issues (e.g., 3.00000001 should be
+// considered as 3).
 inline bool should_prune_by_bound(double lowerBound, double primalBound) {
-  return std::ceil(lowerBound - EPSILON_BP) >= primalBound;
+  return std::ceil(lowerBound - ceilEpsilon) >= primalBound;
 }
 }  // namespace
 
 Node::Node(const DPCPInst& origDpcp, Params& params, Stats& stats,
-      std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
-      bool isRoot)
+           std::ostream& log, std::ostream& debugLog, std::ostream& colLog,
+           bool isRoot)
     : lp(origDpcp, params, stats, log, debugLog, colLog, isRoot),
       depth(0),
       id(0) {}
@@ -55,7 +62,7 @@ void Node::branch(std::vector<std::unique_ptr<Node>>& sons) {
 }
 
 BP::BP(Params& params, std::ostream& log, std::ostream& debugLog,
-  std::ostream& colLog, Col& sol, double ub)
+       std::ostream& colLog, Col& sol, double ub)
     : params(params),
       best_integer_solution(sol),
       primal_bound(ub),
@@ -78,9 +85,8 @@ Stats BP::solve(DPCPInst& origDpcp) {
       << ", |P|=" << origDpcp.get_nP() << ", |Q|=" << origDpcp.get_nQ()
       << std::endl;
 
-  auto root =
-      std::make_unique<Node>(origDpcp, params, stats, log, debugLog, colLog,
-                 true);
+  auto root = std::make_unique<Node>(origDpcp, params, stats, log, debugLog,
+                                     colLog, true);
   DPCPInst& dpcp = root->get_lp().get_dpcp_inst();
   if (params.preprocessing) dpcp.preprocess(true);
 
@@ -119,7 +125,7 @@ Stats BP::solve(DPCPInst& origDpcp) {
       pop();
 
       // Re-try to prune by bound, since primal_bound could have been improved
-      if (ceil(node->get_obj_value() - EPSILON_BP) >= primal_bound) continue;
+      if (should_prune_by_bound(node->get_obj_value(), primal_bound)) continue;
 
       // Branch
       std::vector<std::unique_ptr<Node>> sons;
@@ -341,8 +347,9 @@ void BP::show_stats() {
   if (primal_bound == DBL_MAX)
     log << "inf\t Gap = ---";
   else
-    log << (int)(EPSILON_BP + primal_bound) << "\t Gap = "
-        << (primal_bound - dual_bound) / (EPSILON_BP + primal_bound) * 100
+    log << std::ceil(primal_bound - ceilEpsilon) << "\t Gap = "
+        << (primal_bound - dual_bound) /
+               (kGapDenominatorEpsilon + primal_bound) * 100
         << "%";
   log << "\t Nodes: processed = " << nodes << ", left = " << L.size()
       << "\t time = " << std::chrono::duration<double>(now_t - start_t).count()
