@@ -16,9 +16,25 @@ extern "C" {
 #define FEASIBILITY_EPSILON 0.00001  // 10e-5
 
 Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp, Col& col,
-                                          std::ostream& log) {
+                                          std::ostream& log, bool preprocess) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
+
+  // Preprocess if requested
+  if (preprocess) {
+    dpcp.preprocess();
+    // Check infeasibility after preprocessing
+    if (dpcp.is_infeasible_instance()) {
+      Stats stats;
+      stats.state = INFEASIBLE;
+      stats.time = std::chrono::duration<double>(
+                       std::chrono::high_resolution_clock::now() - start)
+                       .count();
+      stats.nNodesInfeasPrepro = 1;
+      return stats;
+    }
+  }
+
   Graph& graph = dpcp.get_graph();
 
   // Remove edges whose endpoints do not belongs to the same Pi and Qj
@@ -140,9 +156,25 @@ class EarlyStopCallback : public IloCplex::Callback::Function {
 };
 
 Stats dpcp_decide_feasibility_ilp(DPCPInst& dpcp, Col& col, int timeLimit,
-                                  std::ostream& log) {
+                                  std::ostream& log, bool preprocess) {
   // Initial time instant
   auto start = std::chrono::high_resolution_clock::now();
+
+  // Preprocess if requested
+  if (preprocess) {
+    dpcp.preprocess();
+    // Check infeasibility after preprocessing
+    if (dpcp.is_infeasible_instance()) {
+      Stats stats;
+      stats.state = INFEASIBLE;
+      stats.time = std::chrono::duration<double>(
+                       std::chrono::high_resolution_clock::now() - start)
+                       .count();
+      stats.nNodesInfeasPrepro = 1;
+      return stats;
+    }
+  }
+
   Graph& graph = dpcp.get_graph();
 
   // Remove edges whose endpoints do not belongs to the same Pi and Qj
