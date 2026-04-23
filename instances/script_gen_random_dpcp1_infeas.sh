@@ -1,9 +1,9 @@
 #!/bin/bash
 
-declare -a N=("50" "60" "70")
+declare -a N=("130" "150" "170")
 declare -a P=("0.25" "0.5" "0.75")
-declare -a NA=("0.1" "0.2")
-declare -a NB=("1" "2" "3" "4")
+declare -a NA=("0.2")
+declare -a NB=("1" "3" "8")
 declare num="3"
 
 SRC="gen_random_dpcp1.py"
@@ -20,6 +20,15 @@ do
 	do
 		for nb in "${NB[@]}"
 	    do
+		    if [[ $p == "0.25" && $nb != "1" ]]; then
+				continue
+			fi
+		    if [[ $p == "0.5" && $nb != "3" ]]; then
+				continue
+			fi
+		    if [[ $p == "0.75" && $nb != "8" ]]; then
+				continue
+			fi
 		    naa=$(echo "scale=0; ($na * $n + 0.5)/1" | bc)
 		    echo "n: $n, p: $p, nA: $naa, nB: $nb, i: $i"
 		    python3 $SRC $n $p $naa $nb $num $OUT
