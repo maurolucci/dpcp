@@ -1144,9 +1144,6 @@ Col LP::get_lp_solution() {
   // Translate coloring to the original graph
   originalCol = currentCol.translate_coloring(dpcp, origDpcp);
 
-  // Color isolated vertices
-  originalCol.color_isolated_vertices(origDpcp, dpcp.get_isolated_vertices());
-
   assert(originalCol.check_coloring(origDpcp));
   return originalCol;
 }
@@ -1157,9 +1154,6 @@ Col LP::get_heur_solution() {
 
   // Translate coloring to the original graph
   originalCol = coloring.translate_coloring(dpcp, origDpcp);
-
-  // Color isolated vertices
-  originalCol.color_isolated_vertices(origDpcp, dpcp.get_isolated_vertices());
 
   assert(originalCol.check_coloring(origDpcp));
   return originalCol;

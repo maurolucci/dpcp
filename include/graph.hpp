@@ -13,6 +13,12 @@ struct VertexInfo {
 struct IsolatedVertex {
   size_t id;  // Original vertex id
 };
+
+struct CollapsedVertex {
+  size_t keptId;     // Original id of vertex kept in the graph
+  size_t removedId;  // Original id of vertex removed by a collapse
+};
+
 using Graph = boost::adjacency_list<boost::listS, boost::listS,
                                     boost::undirectedS, VertexInfo>;
 using Vertex = Graph::vertex_descriptor;
@@ -71,6 +77,10 @@ class DPCPInst {
   [[nodiscard]] const std::list<IsolatedVertex>& get_isolated_vertices() const {
     return isolated;
   }
+  [[nodiscard]] const std::vector<CollapsedVertex>& get_collapsed_vertices()
+      const {
+    return collapsedVertices;
+  }
 
   // Other methods
   [[nodiscard]] size_t get_nP() const { return P.size(); }
@@ -98,6 +108,10 @@ class DPCPInst {
   // Remove one vertex and keep all internal maps/partitions consistent.
   void remove_vertex(Vertex v);
 
+  // Collapse two non-adjacent vertices u and v from singleton P-parts and the
+  // same Q-part. u is kept, v is removed.
+  void collapse_vertices(Vertex u, Vertex v);
+
   // Preprocessing
   void preprocess(bool clique = false);
 
@@ -112,7 +126,11 @@ class DPCPInst {
   Partition Q;  // Q: partition of V into Q-parts, Q[qj] = vertices in Q-part qj
   VertexMap<size_t> vertex2Ppart;      // Map from V to P-part index
   VertexMap<size_t> vertex2Qpart;      // Map from V to Q-part index
-  std::list<IsolatedVertex> isolated;  // List of isolated vertices
+  std::list<IsolatedVertex> isolated;  // List of isolated vertices  (for
+                                       // reconstructing solutions)
+  std::vector<CollapsedVertex>
+      collapsedVertices;  // List of collapsed vertices (for reconstructing
+                          // solutions)
 
   bool isGCP;               // Is a GCP instance?
   bool isInfeasible;        // Is the instance infeasible?
@@ -123,6 +141,7 @@ class DPCPInst {
   void preprocess_step1();
   void preprocess_step2();
   void preprocess_step3();
+  void preprocess_step3b();
   void preprocess_step4();
 };
 

@@ -74,6 +74,7 @@ DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
       vertex2Ppart(),
       vertex2Qpart(),
       isolated(),
+      collapsedVertices(),
       isGCP(false),
       isInfeasible(false),
       hasTrivialSolution(false),
@@ -124,6 +125,7 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
       vertex2Ppart(),
       vertex2Qpart(),
       isolated(dpcp.get_isolated_vertices()),
+      collapsedVertices(dpcp.get_collapsed_vertices()),
       isGCP(dpcp.is_gcp_instance()),
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
@@ -200,7 +202,7 @@ void DPCPInst::remove_vertex(Vertex v) {
   size_t pi = get_P_part(v);
   size_t qj = get_Q_part(v);
 
-  // First, we remove v from its P-part and Q-part. If any of the parts becomes
+  // First, we remove v from its P-part and Q-part. If the P-part becomes
   // empty, we need to remove it and update the corresponding maps as well.
 
   auto it = std::find(P[pi].begin(), P[pi].end(), v);
@@ -239,10 +241,37 @@ void DPCPInst::remove_vertex(Vertex v) {
     vertex2CurrentId[v] = vertex2CurrentId.size();
 }
 
+void DPCPInst::collapse_vertices(Vertex u, Vertex v) {
+  assert(u != v);
+  assert(!edge(u, v, graph).second);
+  assert(P[get_P_part(u)].size() == 1);
+  assert(P[get_P_part(v)].size() == 1);
+  assert(get_Q_part(u) == get_Q_part(v));
+
+  // Keep original ids before mutating/removing vertices.
+  const size_t uOriginalId = get_original_id(u);
+  const size_t vOriginalId = get_original_id(v);
+
+  // Make u adjacent to all neighbors of v.
+  VertexVector vNeighbors;
+  auto [itN, endN] = adjacent_vertices(v, graph);
+  for (; itN != endN; ++itN)
+    if (*itN != u && !edge(u, *itN, graph).second) add_edge(u, *itN, graph);
+
+  // Removing v empties its singleton P-part by design in this reduction.
+  // Calling remove_vertex reports infeasibility -> ignore it
+  const bool oldInfeasible = isInfeasible;
+  remove_vertex(v);
+  isInfeasible = oldInfeasible;
+
+  collapsedVertices.push_back(CollapsedVertex{uOriginalId, vOriginalId});
+}
+
 void DPCPInst::preprocess(bool clique) {
   if (clique) preprocess_step1();
   preprocess_step2();
   preprocess_step3();
+  preprocess_step3b();
   preprocess_step4();
 }
 
@@ -296,6 +325,27 @@ void DPCPInst::preprocess_step3() {
   // isolated vertices do not change the feasibility of the instance, so we
   // restore the original feasibility value.
   isInfeasible = oldFeasibility;
+}
+
+// Preprocess #3b: Collapse pairs of non-adjacent vertices u, v that share the
+// same Q-part and whose P-parts are both singletons.
+void DPCPInst::preprocess_step3b() {
+  for (size_t qj = 0; qj < get_nQ(); ++qj) {
+    // Iterate over all pairs in the same Q-part
+    for (auto it_u = Q[qj].begin(); it_u != Q[qj].end(); ++it_u) {
+      Vertex u = *it_u;
+      if (P[get_P_part(u)].size() != 1) continue;
+      for (auto it_v = std::next(it_u); it_v != Q[qj].end(); ++it_v) {
+        Vertex v = *it_v;
+        if (P[get_P_part(v)].size() != 1) continue;
+        if (!edge(u, v, graph).second) {
+          // Collapse v into u and restart: Q[qj] and iterators are invalidated.
+          collapse_vertices(u, v);
+          return preprocess_step3b();
+        }
+      }
+    }
+  }
 }
 
 // Preprocess #4: If there is only one P-part, then we have a trivial

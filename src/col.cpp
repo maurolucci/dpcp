@@ -80,6 +80,20 @@ Col Col::translate_coloring(const DPCPInst& currentDpcp,
     size_t originalId = currentDpcp.get_original_id(v);
     dstCol.set_color(originalDPCP, originalId, k);
   }
+
+  // Replay collapses in reverse order so chains are propagated correctly:
+  // if w<-u and u<-v, first assign color(u)=color(w), then color(v)=color(u).
+  const auto& collapsed = currentDpcp.get_collapsed_vertices();
+  for (auto it = collapsed.rbegin(); it != collapsed.rend(); ++it) {
+    assert(dstCol.is_colored(it->keptId));
+    assert(!dstCol.is_colored(it->removedId));
+    dstCol.set_color(originalDPCP, it->removedId, dstCol.get_color(it->keptId));
+  }
+
+  // Isolated vertices are removed during preprocessing of currentDpcp,
+  // but they still exist in originalDPCP and must be colored as well.
+  dstCol.color_isolated_vertices(originalDPCP, currentDpcp.get_isolated_vertices());
+
   return dstCol;
 }
 
