@@ -379,7 +379,6 @@ int main(int argc, const char** argv) {
         // Recover coloring for the original graph
         DPCPInst origDpcp(graph, P, Q);
         col = gcol.translate_coloring(dpcp, origDpcp);
-        col.color_isolated_vertices(origDpcp, dpcp.get_isolated_vertices());
         assert(col.check_coloring(origDpcp));
         handle_output(heurStats);
         continue;
