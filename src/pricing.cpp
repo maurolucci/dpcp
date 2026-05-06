@@ -108,44 +108,29 @@ void PricingEnv::exact_init() {
   obj.end();
 
   // Constraints
-  // (1) \sum_{j in Q: (i,j) in V} y_{i,j} <= 1, for all i in P
+  // (1) \sum_{v in P_i} y_v <= 1, for all i in P
   for (size_t idP = 0; idP < dpcp.get_nP(); ++idP) {
+    if (dpcp.get_P()[idP].size() <= 1) continue;
     IloExpr restr(cxenv);
     for (Vertex v : dpcp.get_P()[idP]) restr += y[dpcp.get_current_id(v)];
     cxcons.add(restr <= 1);
     restr.end();
   }
 
-  // (2) y_{i,j} + y_{i',j} <= w_j, for all ((i,j),(i',j)) in E such that i !=
-  // i'
-  for (auto e : boost::make_iterator_range(edges(dpcp.get_graph()))) {
-    auto u = source(e, dpcp.get_graph());
-    auto v = target(e, dpcp.get_graph());
-    if (dpcp.get_P_part(u) == dpcp.get_P_part(v)) continue;
-    if (dpcp.get_Q_part(u) != dpcp.get_Q_part(v)) continue;
-    IloExpr restr(cxenv);
-    restr += y[dpcp.get_current_id(u)] + y[dpcp.get_current_id(v)] -
-             w[dpcp.get_Q_part(u)];
-    cxcons.add(restr <= 0);
-    restr.end();
-  }
-
-  // (3) y_{i,j} + \sum_{j' != j: (i',j') in N(i,j)} y_{i',j'} <= 1, for all
-  // (i,j) in V, i != i'
+  // (2) s_v + \sum_{u in N(v) \cap P_k} s_u <= 1, for all v in V, k in [n]
+  // \ {i(v)}
   for (auto v : boost::make_iterator_range(vertices(dpcp.get_graph()))) {
     size_t pi = dpcp.get_P_part(v);
-    size_t qj = dpcp.get_Q_part(v);
-    for (size_t idP2 = 0; idP2 < dpcp.get_nP(); ++idP2) {
-      if (idP2 == pi) continue;
+    for (size_t k = 0; k < dpcp.get_nP(); ++k) {
+      if (k == pi) continue;
       std::list<Vertex> neighbors;
-      for (auto v2 : dpcp.get_P()[idP2])
-        if (dpcp.get_Q_part(v2) != qj && edge(v, v2, dpcp.get_graph()).second)
-          neighbors.push_back(v2);
+      for (auto u : dpcp.get_P()[k])
+        if (edge(v, u, dpcp.get_graph()).second) neighbors.push_back(u);
       if (!neighbors.empty()) {
         IloExpr restr(cxenv);
         restr += y[dpcp.get_current_id(v)];
-        for (auto v2 : neighbors) {
-          restr += y[dpcp.get_current_id(v2)];
+        for (auto u : neighbors) {
+          restr += y[dpcp.get_current_id(u)];
         }
         cxcons.add(restr <= 1);
         restr.end();
@@ -153,10 +138,11 @@ void PricingEnv::exact_init() {
     }
   }
 
-  // (4) y_{i,j} <= w_j, for all (i,j) in V
+  // (3) s_v <= w_{j(v)}, for all v in V
   for (auto v : boost::make_iterator_range(vertices(dpcp.get_graph()))) {
     IloExpr restr(cxenv);
-    restr += y[dpcp.get_current_id(v)] - w[dpcp.get_Q_part(v)];
+    restr += y[dpcp.get_current_id(v)];
+    restr -= w[dpcp.get_Q_part(v)];
     cxcons.add(restr <= 0);
     restr.end();
   }
