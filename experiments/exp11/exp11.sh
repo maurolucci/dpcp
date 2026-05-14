@@ -40,6 +40,9 @@ echo "Running experiment #11"
 # First, create output directories
 mkdir -p "$OUT"
 
+# Attempt to limit the memory RAM consumption in kB
+ulimit -m 5242880 
+
 # Second, run experiments
 while IFS= read -r LINE
 do
