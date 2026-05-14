@@ -30,7 +30,7 @@ declare PRICING_EXACT_TIME="300"
 # Branching parameters:
 declare BRANCHING_VARIABLE="1"
 
-declare INPUT="../../instances/cfcp/dimacs/open"
+declare INPUT="../../instances/cfcp/open"
 declare INSTANCES="$INPUT/instances.txt"
 declare BIN="../../dpcp"
 declare OUT="out/"
