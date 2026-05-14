@@ -3,14 +3,14 @@
 # Tomar primero el nombre del archivo de la línea de comandos
 import argparse
 
-parser = argparse.ArgumentParser(description="Procesa archivos PCP.")
-parser.add_argument("nombre_base", help="Ruta base del archivo sin extensión .pcp")
+parser = argparse.ArgumentParser(description="Procesa archivos CFC.")
+parser.add_argument("nombre_base", help="Ruta base del archivo sin extensión .cfc")
 args = parser.parse_args()
 
 nombre_base = args.nombre_base
 archivo = nombre_base + ".cfc"
 
-# Lectura de la instancia PCP
+# Lectura de la instancia CFC
 try:
     f = open(archivo)
     s = f.readline()
