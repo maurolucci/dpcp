@@ -17,8 +17,8 @@ do
     name="${file%.*}"
     python3 $SRC1 $name $OUT1
     python3 $SRC1 $name $OUT2 --cerrada
-    python3 $SRC2 $name $OUT1
-    python3 $SRC2 $name $OUT2
+    python3 $SRC2 $name
+    python3 $SRC2 $name
     echo "$basename.dpcp" >> "$OUT1/instances.txt"
     echo "$basename.dpcp" >> "$OUT2/instances.txt"
 done
