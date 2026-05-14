@@ -47,10 +47,7 @@ try:
             elif L[0] == 'e':
                 i = int(L[1]) - 1  # ajustar índice a partir de 0
                 j = int(L[2]) - 1
-                if i<j:
-                    G[i].append(j)
-                else:
-                    G[j].append(i)
+                G[i].append(j)
 except:
     print(f'Error al abrir el archivo {archivo}')
     exit(1)
