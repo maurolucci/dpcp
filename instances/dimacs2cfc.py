@@ -67,14 +67,22 @@ for i in V:
     EE[i] = G[i].copy()
     if vecindad_cerrada:
         EE[i].append(i)  # usar vecindades cerradas
-    EE[i].sort()  # ordenar las hiperaristas
-    
+    EE[i].sort()  # ordenar los vertices de las hiperaristas
+
+# Remover hiperaristas vacías o repetidas
+EE = [e for e in EE if len(e) > 0]  # eliminar hiperaristas vacías
+EE = list(set(tuple(e) for e in EE))  # eliminar hiperaristas repetidas
+
+# Ajustar el valor de m al número de hiperaristas
+m = len(EE)
+
 # Escritura de la instancia CFC en archivo
 archivo = ruta_salida / (nombre_base + ".cfc")
 f = open(archivo, "w")
-f.write(f'{n} {n}\n')
+f.write(f'{n} {m}\n')
 for e in EE:
     L = [str(i) for i in e]
     s = f'{len(e)} ' + ' '.join(L) + '\n'
     f.write(s)
+f.close()
 print(f'Archivo {archivo} escrito con éxito.')  
