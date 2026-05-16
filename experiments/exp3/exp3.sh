@@ -5,7 +5,7 @@
 declare -a HEURS=("greedy1s" "greedy2s" "semigreedy2s")
 declare -a VARIANTS=("2" "3")
 declare ALPHA="0.1"
-declare REPETITIONS="500"
+declare REPETITIONS="50000"
 
 declare INPUT="../../instances/dpcp/random"
 declare INSTANCES="$INPUT/instances.txt"

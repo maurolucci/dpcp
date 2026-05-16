@@ -191,29 +191,33 @@ def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
 
 
 def parse_second_line(l1: List[str]) -> Dict[str, Any]:
+    has_root_semigreedy_iters = len(l1) >= 23
+    base_index = 1 if has_root_semigreedy_iters else 0
+
     return {
         "rootlb": parse_float(l1[0]),
         "rootub": parse_float(l1[1]),
         "rootHeurTime": parse_float(l1[2]),
-        "rootFeasTime": parse_float(l1[3]),
-        "rootNCalls": parse_int(l1[4]),
-        "rootNCallsPool": parse_int(l1[5]),
-        "rootNCallsHeur": parse_int(l1[6]),
-        "rootNCallsMwis1": parse_int(l1[7]),
-        "rootNCallsMwis2": parse_int(l1[8]),
-        "rootNCallsExact": parse_int(l1[9]),
-        "rootNCols": parse_int(l1[10]),
-        "rootNColsPool": parse_int(l1[11]),
-        "rootNColsHeur": parse_int(l1[12]),
-        "rootNColsMwis1": parse_int(l1[13]),
-        "rootNColsMwis2": parse_int(l1[14]),
-        "rootNColsExact": parse_int(l1[15]),
-        "rootTime": parse_float(l1[16]),
-        "rootTimePool": parse_float(l1[17]),
-        "rootTimeHeur": parse_float(l1[18]),
-        "rootTimeMwis1": parse_float(l1[19]),
-        "rootTimeMwis2": parse_float(l1[20]),
-        "rootTimeExact": parse_float(l1[21]),
+        "rootSemigreedyIters": parse_int(l1[3]) if has_root_semigreedy_iters else 0,
+        "rootFeasTime": parse_float(l1[3 + base_index]),
+        "rootNCalls": parse_int(l1[4 + base_index]),
+        "rootNCallsPool": parse_int(l1[5 + base_index]),
+        "rootNCallsHeur": parse_int(l1[6 + base_index]),
+        "rootNCallsMwis1": parse_int(l1[7 + base_index]),
+        "rootNCallsMwis2": parse_int(l1[8 + base_index]),
+        "rootNCallsExact": parse_int(l1[9 + base_index]),
+        "rootNCols": parse_int(l1[10 + base_index]),
+        "rootNColsPool": parse_int(l1[11 + base_index]),
+        "rootNColsHeur": parse_int(l1[12 + base_index]),
+        "rootNColsMwis1": parse_int(l1[13 + base_index]),
+        "rootNColsMwis2": parse_int(l1[14 + base_index]),
+        "rootNColsExact": parse_int(l1[15 + base_index]),
+        "rootTime": parse_float(l1[16 + base_index]),
+        "rootTimePool": parse_float(l1[17 + base_index]),
+        "rootTimeHeur": parse_float(l1[18 + base_index]),
+        "rootTimeMwis1": parse_float(l1[19 + base_index]),
+        "rootTimeMwis2": parse_float(l1[20 + base_index]),
+        "rootTimeExact": parse_float(l1[21 + base_index]),
     }
 
 
@@ -312,6 +316,7 @@ def main() -> int:
         "rootlb",
         "rootub",
         "rootHeurTime",
+        "rootSemigreedyIters",
         "rootFeasTime",
         "rootNCalls",
         "rootNCallsPool",

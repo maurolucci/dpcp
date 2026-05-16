@@ -100,6 +100,8 @@ class Stats {
   int rootub;
   // Time required for finding the initial solution at the root node
   double rootHeurTime;
+  // Number of semigreedy iterations executed at the root node
+  int rootSemigreedyIters;
   // Time required for feasibility check at the root node
   double rootFeasTime;
   // For each pricing method, number of columns added, number of calls, and
@@ -160,6 +162,7 @@ class Stats {
         rootlb(-1.0),
         rootub(-1),
         rootHeurTime(0.0),
+        rootSemigreedyIters(0),
         rootFeasTime(0.0),
         rootNColsPool(0),
         rootNColsHeur(0),

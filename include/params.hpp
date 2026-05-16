@@ -32,11 +32,14 @@ struct Params {
   //    3: EDGE
   // heuristicSemigreedyAlpha: alpha parameter for semi-greedy heuristic
   // heuristicSemigreedyIter: number of iterations for semi-greedy heuristic
+  // heuristicSemigreedyTimeLimit: time limit (seconds) for semi-greedy
+  // heuristic runs
   int heuristicRootNode;
   int heuristicOtherNodes;
   size_t heuristic2stepVariant;
   double heuristicSemigreedyAlpha;
   size_t heuristicSemigreedyIter;
+  size_t heuristicSemigreedyTimeLimit;
 
   // Feasibility check options
   // feasibilityRootNode: type of feasibility check for the root node
@@ -105,7 +108,8 @@ struct Params {
         heuristicOtherNodes(2),
         heuristic2stepVariant(3),
         heuristicSemigreedyAlpha(0.2),
-        heuristicSemigreedyIter(100),
+        heuristicSemigreedyIter(50000),
+        heuristicSemigreedyTimeLimit(60),
         feasibilityRootNode(2),
         feasibilityRootNodeTimeLimit(300),
         feasibilityOtherNodes(2),
@@ -251,7 +255,8 @@ struct Params {
           << get_heur_variant(heuristic2stepVariant);
     if (heuristicRootNode == 3 || heuristicRootNode == 4)
       out << ", alpha: " << heuristicSemigreedyAlpha
-          << ", iterations: " << heuristicSemigreedyIter;
+          << ", iterations: " << heuristicSemigreedyIter
+          << ", time limit: " << heuristicSemigreedyTimeLimit << "s";
     out << std::endl;
     out << "Heuristic other nodes: " << heuristicOtherNodes
         << get_heur_name(heuristicOtherNodes);
@@ -261,7 +266,8 @@ struct Params {
           << get_heur_variant(heuristic2stepVariant);
     if (heuristicOtherNodes == 3 || heuristicRootNode == 4)
       out << ", alpha: " << heuristicSemigreedyAlpha
-          << ", iterations: " << heuristicSemigreedyIter;
+          << ", iterations: " << heuristicSemigreedyIter
+          << ", time limit: " << heuristicSemigreedyTimeLimit << "s";
     out << std::endl;
     out << "Feasibility root node: " << feasibilityRootNode
         << get_feas_name(feasibilityRootNode);

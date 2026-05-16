@@ -4,7 +4,7 @@
 
 declare -a HEURS=("semigreedy2s")
 declare -a VARIANTS=("2" "3")
-declare -a REPETITIONS=("10" "50" "100" "500" "1000")
+declare -a REPETITIONS=("1000" "5000" "10000" "50000" "100000")
 
 declare INPUT="../../instances/dpcp/random"
 declare INSTANCES="$INPUT/instances.txt"

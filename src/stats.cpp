@@ -96,7 +96,8 @@ void Stats::write_stats(std::ostream& file) {
        << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ninitSol
        << "," << ninitDummy << "," << ninitSol + ninitDummy << std::endl;
 
-  file << rootlb << "," << rootub << "," << rootHeurTime << "," << rootFeasTime
+    file << rootlb << "," << rootub << "," << rootHeurTime << ","
+      << rootSemigreedyIters << "," << rootFeasTime
        << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
               rootNCallsExact
@@ -179,6 +180,8 @@ void Stats::print_stats(std::ostream& file) {
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;
   file << "\tDPCP heuristic time: " << rootHeurTime << std::endl;
+    file << "\tDPCP semigreedy iterations: " << rootSemigreedyIters
+      << std::endl;
   file << "\tDPCP feasibility check time: " << rootFeasTime << std::endl;
   file << "\tPricing:" << std::endl;
   file << "\t\tCalls: "

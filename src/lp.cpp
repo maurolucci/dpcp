@@ -219,7 +219,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
   }
 
   // Apply heuristic at the current node
-  heuristic_solve();
+  heuristic_solve(timelimit - get_elapsed_time(startTime));
   if (params.is_verbose(2)) {
     if (has_heur_solution())
       debugLog << "LP heuristic solution: " << coloring.get_n_colors()
@@ -474,7 +474,7 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
 
 // Heuristic solution of the DPCP instances at the current node
 // The heuristic used is selected depending on the parameters
-void LP::heuristic_solve() {
+void LP::heuristic_solve(double timelimit) {
   HeurStats heurStats;
   int heur = isRoot ? params.heuristicRootNode : params.heuristicOtherNodes;
   switch (heur) {
@@ -498,6 +498,8 @@ void LP::heuristic_solve() {
   // Update heuristic stats
   if (isRoot) {
     stats.rootHeurTime = heurStats.totalTime;
+    stats.rootSemigreedyIters =
+        (heur == 3) ? static_cast<int>(heurStats.totalIters) : 0;
     if (heurStats.state == FEASIBLE) stats.rootub = heurStats.value;
   } else {
     stats.otherNodesHeurTime += heurStats.totalTime;

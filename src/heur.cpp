@@ -379,8 +379,8 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       double timelimit) {
   TimePoint start = ClockType::now();
   HeurStats stats;
-  stats.totalIters =
-      params.heuristicSemigreedyIter * num_vertices(dpcp.get_graph());
+  const size_t maxIters = params.heuristicSemigreedyIter;
+  stats.totalIters = 0;
 
   // Precompute neighbor sets for fast adjacency lookup
   NeighborSet neighborSet;
@@ -388,9 +388,9 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
     for (Vertex u : boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph())))
       neighborSet[v].insert(u);
 
-  for (size_t i = 0; i < stats.totalIters; ++i) {
-    if (std::chrono::duration<double>(ClockType::now() - start).count() >= timelimit) {
-      stats.totalIters = i;
+  for (size_t i = 0; i < maxIters; ++i) {
+    if (std::chrono::duration<double>(ClockType::now() - start).count() >=
+        timelimit) {
       break;
     }
     // First step
@@ -418,6 +418,8 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
       }
       iterFile << "," << col.get_n_colors();
     }
+
+    stats.totalIters = i + 1;
   }
 
   if (col.get_n_colors() == 0) {

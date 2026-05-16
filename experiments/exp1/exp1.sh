@@ -55,7 +55,7 @@ do
                 for a in "${ALPHA[@]}"
                 do
                     echo "Solving with heuristic: $h, variant: $v, alpha: $a"
-                    time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/a$a/" --heur-root 3 --heur-2step-variant $v --heur-semigreedy-alpha $a --heur-semigreedy-iter 100 --preproc-off
+                    time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/a$a/" --heur-root 3 --heur-2step-variant $v --heur-semigreedy-alpha $a --heur-semigreedy-iter 50000 --preproc-off
                 done
             done
         fi

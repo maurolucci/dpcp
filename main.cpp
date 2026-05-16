@@ -105,8 +105,11 @@ int main(int argc, const char** argv) {
                      po::value<double>()->default_value(0.1),
                      "alpha parameter for the semi-greedy heuristic");
   desc.add_options()("heur-semigreedy-iter",
-                     po::value<size_t>()->default_value(500),
+                     po::value<size_t>()->default_value(50000),
                      "number of iterations for the semi-greedy heuristic");
+  desc.add_options()("heur-semigreedy-time",
+                     po::value<size_t>()->default_value(60),
+                     "time limit in seconds for the semi-greedy heuristic");
   desc.add_options()("feas-root", po::value<int>()->default_value(0),
                      "type of feasibility check for the root node (0: no "
                      "check, 1: enumerative, 2: ILP)");
@@ -188,6 +191,8 @@ int main(int argc, const char** argv) {
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
   params.heuristicSemigreedyAlpha = vm["heur-semigreedy-alpha"].as<double>();
   params.heuristicSemigreedyIter = vm["heur-semigreedy-iter"].as<size_t>();
+  params.heuristicSemigreedyTimeLimit =
+      vm["heur-semigreedy-time"].as<size_t>();
   params.feasibilityRootNode = vm["feas-root"].as<int>();
   params.feasibilityRootNodeTimeLimit = vm["feas-root-time"].as<int>();
   params.feasibilityOtherNodes = vm["feas-nodes"].as<int>();
@@ -368,8 +373,9 @@ int main(int argc, const char** argv) {
           case 3:
           case 4:
             out.iterFile << path.stem().string() << "," << solver;
-            heurStats =
-                dpcp_2_step_semigreedy_heur(dpcp, gcol, params, out.iterFile);
+            heurStats = dpcp_2_step_semigreedy_heur(
+              dpcp, gcol, params, out.iterFile,
+              static_cast<double>(params.heuristicSemigreedyTimeLimit));
             break;
           default:
             std::cerr << "Unknown heuristic root node: "
