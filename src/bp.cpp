@@ -290,8 +290,7 @@ void BP::update_primal_bound(double obj_value) {
 
   if (params.use_dfs_tree_search()) {
     for (auto it = L.begin(); it != L.end();) {
-      const double node_obj_value = (*it)->get_obj_value();
-      if (node_obj_value >= primal_bound)
+      if (should_prune_by_bound((*it)->get_obj_value(), primal_bound))
         it = L.erase(it);
       else
         ++it;
@@ -300,8 +299,7 @@ void BP::update_primal_bound(double obj_value) {
   }
 
   for (auto it = L.begin(); it != L.end();) {
-    const double node_obj_value = (*it)->get_obj_value();
-    if (node_obj_value >= primal_bound)
+    if (should_prune_by_bound((*it)->get_obj_value(), primal_bound))
       it = L.erase(it);
     else
       break;  // Since the list is sorted, we can stop as soon as we find a node
