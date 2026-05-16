@@ -7,7 +7,7 @@ declare TREE_SEARCH="1"
 declare VERBOSE="2"
 
 # DPCP heuristic parameters:
-declare HEUR_ROOT="3"
+declare HEUR_ROOT="2"
 declare HEUR_NODES="2"
 declare VARIANT="4"
 declare ALPHA_HEUR="0.1"
