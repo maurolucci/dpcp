@@ -30,8 +30,7 @@ using NeighborSet = std::unordered_map<Vertex, std::unordered_set<Vertex>>;
 
 // Criteria 0: DEG-REAL
 // Degree of v in G, ignoring neighbors in P_{i(v)} and Q_{j(v)}
-size_t get_real_degree(const DPCPInst& dpcp,
-                       const RemovedMap& removed,
+size_t get_real_degree(const DPCPInst& dpcp, const RemovedMap& removed,
                        const VertexVector& selected,
                        const std::map<size_t, std::set<size_t>>& adj,
                        const Vertex& v) {
@@ -64,8 +63,7 @@ size_t get_Q_degree(const DPCPInst& dpcp, const RemovedMap& removed,
 // Criteria 2: DEG-COLLAPSED
 // Degree of v in the collapsed graph according to Q,
 // ignoring neighbors in P_{i(v)} and Q_{j(v)}
-size_t get_collapsed_degree(const DPCPInst& dpcp,
-                            const RemovedMap& removed,
+size_t get_collapsed_degree(const DPCPInst& dpcp, const RemovedMap& removed,
                             const VertexVector& selected,
                             const std::map<size_t, std::set<size_t>>& adj,
                             const Vertex& v) {
@@ -82,12 +80,10 @@ size_t get_collapsed_degree(const DPCPInst& dpcp,
 
 // Criteria 3: EDG
 // No. of edges added to \tilde{G}[W]
-size_t get_n_new_edge(const DPCPInst& dpcp,
-                      const RemovedMap& removed,
+size_t get_n_new_edge(const DPCPInst& dpcp, const RemovedMap& removed,
                       const VertexVector& selected,
                       const std::map<size_t, std::set<size_t>>& adj,
-                      const NeighborSet& neighborSet,
-                      const Vertex& v) {
+                      const NeighborSet& neighborSet, const Vertex& v) {
   std::set<size_t> adjBs;
   size_t bv = dpcp.get_Q_part(v);
   const auto& vNeighbors = neighborSet.at(v);
@@ -103,12 +99,11 @@ size_t get_n_new_edge(const DPCPInst& dpcp,
   return adjBs.size();
 }
 
-size_t evaluate_vertex(const DPCPInst& dpcp,
-                       const RemovedMap& removed,
+size_t evaluate_vertex(const DPCPInst& dpcp, const RemovedMap& removed,
                        const VertexVector& selected,
                        const std::map<size_t, std::set<size_t>>& adj,
-                       const NeighborSet& neighborSet,
-                       size_t variant, const Vertex& v) {
+                       const NeighborSet& neighborSet, size_t variant,
+                       const Vertex& v) {
   if (variant == 0)
     return get_real_degree(dpcp, removed, selected, adj, v);
   else if (variant == 1)
@@ -145,7 +140,8 @@ Vertex greedy_vertex_selector(const DPCPInst& dpcp,
       minTie = evaluate_vertex(dpcp, removed, selected, adj, neighborSet, 1, v);
       minVertex = v;
     } else if (val == minVal) {
-      size_t tie = evaluate_vertex(dpcp, removed, selected, adj, neighborSet, 1, v);
+      size_t tie =
+          evaluate_vertex(dpcp, removed, selected, adj, neighborSet, 1, v);
       if (tie < minTie) {
         minTie = tie;
         minVertex = v;
@@ -194,15 +190,13 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
 }
 
 using Heur2SVertexSelector = Vertex (*)(const DPCPInst&, const VertexVector&,
-                                        const RemovedMap&,
-                                        const VertexVector&,
+                                        const RemovedMap&, const VertexVector&,
                                         std::map<size_t, std::set<size_t>>&,
-                                        const NeighborSet&,
-                                        const Params&);
+                                        const NeighborSet&, const Params&);
 
 // Update the information after removing a vertex v
-void update_info(const DPCPInst& dpcp, RemovedMap& removed,
-                 Vertex v, std::map<size_t, size_t>& nP) {
+void update_info(const DPCPInst& dpcp, RemovedMap& removed, Vertex v,
+                 std::map<size_t, size_t>& nP) {
   removed.at(v) = true;
   size_t pi = dpcp.get_P_part(v);
   nP.at(pi)--;
@@ -254,8 +248,8 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
     unprocessedP.erase(pi);
 
     // Choose a vertex, with some criterion
-    Vertex v =
-        vertexSelector(dpcp, dpcp.get_P()[pi], removed, selected, adj, neighborSet, params);
+    Vertex v = vertexSelector(dpcp, dpcp.get_P()[pi], removed, selected, adj,
+                              neighborSet, params);
     // info.at(v).print_info();
     if (v == NULL) return false;  // No vertex can be selected from P[pi]
 
@@ -343,15 +337,16 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
   // Precompute neighbor sets for fast adjacency lookup
   NeighborSet neighborSet;
   for (Vertex v : boost::make_iterator_range(vertices(dpcp.get_graph())))
-    for (Vertex u : boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph())))
+    for (Vertex u :
+         boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph())))
       neighborSet[v].insert(u);
 
   // First step
   VertexVector selected;                   // Vector of selected vertices
   std::map<size_t, std::set<size_t>> adj;  // Adjacent list of the subgraph
                                            // induced by the selected vertices
-  bool success =
-      first_step(dpcp, selected, adj, params, neighborSet, greedy_vertex_selector);
+  bool success = first_step(dpcp, selected, adj, params, neighborSet,
+                            greedy_vertex_selector);
   if (!success) {
     stats.state = UNKNOWN;
   } else {
@@ -385,7 +380,8 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
   // Precompute neighbor sets for fast adjacency lookup
   NeighborSet neighborSet;
   for (Vertex v : boost::make_iterator_range(vertices(dpcp.get_graph())))
-    for (Vertex u : boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph())))
+    for (Vertex u :
+         boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph())))
       neighborSet[v].insert(u);
 
   for (size_t i = 0; i < maxIters; ++i) {
@@ -397,13 +393,9 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
     VertexVector selected;                   // Vector of selected vertices
     std::map<size_t, std::set<size_t>> adj;  // Adjacent list of the subgraph
                                              // induced by the selected vertices
-    bool success =
-        first_step(dpcp, selected, adj, params, neighborSet, semigreedy_vertex_selector);
+    bool success = first_step(dpcp, selected, adj, params, neighborSet,
+                              semigreedy_vertex_selector);
     if (!success) {
-      iterFile << ","
-               << (col.get_n_colors() == 0
-                       ? -1
-                       : static_cast<int>(col.get_n_colors()));
       continue;
     } else {
       // Second step
@@ -416,7 +408,6 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
             std::chrono::duration<double>(ClockType::now() - start).count();
         stats.bestIter = i;
       }
-      iterFile << "," << col.get_n_colors();
     }
 
     stats.totalIters = i + 1;
@@ -684,8 +675,7 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
-                                      const Params& params,
-                                      double timelimit) {
+                                      const Params& params, double timelimit) {
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;
