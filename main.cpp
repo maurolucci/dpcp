@@ -146,7 +146,7 @@ int main(int argc, const char** argv) {
                      po::value<double>()->default_value(0.2),
                      "alpha parameter for the greedy pricing heuristic");
   desc.add_options()("pricing-exact-time",
-                     po::value<size_t>()->default_value(300),
+                     po::value<size_t>()->default_value(7200),
                      "time limit for exact pricing (in seconds)");
   desc.add_options()("branching-variable", po::value<int>()->default_value(1),
                      "branching variable rule (1: FMS, 2: LNTT)");
@@ -191,8 +191,7 @@ int main(int argc, const char** argv) {
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
   params.heuristicSemigreedyAlpha = vm["heur-semigreedy-alpha"].as<double>();
   params.heuristicSemigreedyIter = vm["heur-semigreedy-iter"].as<size_t>();
-  params.heuristicSemigreedyTimeLimit =
-      vm["heur-semigreedy-time"].as<size_t>();
+  params.heuristicSemigreedyTimeLimit = vm["heur-semigreedy-time"].as<size_t>();
   params.feasibilityRootNode = vm["feas-root"].as<int>();
   params.feasibilityRootNodeTimeLimit = vm["feas-root-time"].as<int>();
   params.feasibilityOtherNodes = vm["feas-nodes"].as<int>();
@@ -374,8 +373,8 @@ int main(int argc, const char** argv) {
           case 4:
             out.iterFile << path.stem().string() << "," << solver;
             heurStats = dpcp_2_step_semigreedy_heur(
-              dpcp, gcol, params, out.iterFile,
-              static_cast<double>(params.heuristicSemigreedyTimeLimit));
+                dpcp, gcol, params, out.iterFile,
+                static_cast<double>(params.heuristicSemigreedyTimeLimit));
             break;
           default:
             std::cerr << "Unknown heuristic root node: "
