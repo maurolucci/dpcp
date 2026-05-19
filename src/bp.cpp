@@ -93,6 +93,10 @@ Stats BP::solve(DPCPInst& origDpcp) {
   log << "After preprocessing: |V|=" << num_vertices(dpcp.get_graph())
       << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()
       << ", |Q|=" << dpcp.get_nQ() << std::endl;
+  stats.rootNVertices = static_cast<int>(num_vertices(dpcp.get_graph()));
+  stats.rootNEdges = static_cast<int>(num_edges(dpcp.get_graph()));
+  stats.rootNP = static_cast<int>(dpcp.get_nP());
+  stats.rootNQ = static_cast<int>(dpcp.get_nQ());
 
   auto state_after_push = [](LP_STATE lpState) -> std::optional<STATE> {
     switch (lpState) {

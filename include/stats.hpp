@@ -94,6 +94,11 @@ class Stats {
   double gcpTime;
   // Number of solutions found by each source
   int nsolHeur, nsolLR, nsolGCP, nsolTrivial;
+  // Root node instance size after preprocessing
+  int rootNVertices;
+  int rootNEdges;
+  int rootNP;
+  int rootNQ;
   // Root lower bound
   double rootlb;
   // Root upper bound
@@ -159,6 +164,10 @@ class Stats {
         nsolLR(0),
         nsolGCP(0),
         nsolTrivial(0),
+        rootNVertices(-1),
+        rootNEdges(-1),
+        rootNP(-1),
+        rootNQ(-1),
         rootlb(-1.0),
         rootub(-1),
         rootHeurTime(0.0),

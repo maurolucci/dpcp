@@ -96,7 +96,8 @@ void Stats::write_stats(std::ostream& file) {
        << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ninitSol
        << "," << ninitDummy << "," << ninitSol + ninitDummy << std::endl;
 
-    file << rootlb << "," << rootub << "," << rootHeurTime << ","
+    file << rootNVertices << "," << rootNEdges << "," << rootNP << "," << rootNQ
+       << "," << rootlb << "," << rootub << "," << rootHeurTime << ","
       << rootSemigreedyIters << "," << rootFeasTime
        << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
@@ -177,6 +178,10 @@ void Stats::print_stats(std::ostream& file) {
        << " (linear relaxation), " << nsolGCP << " (gcp), " << nsolTrivial
        << " (trivial reduction)" << std::endl;
   file << "Root node stats:" << std::endl;
+  file << "\tVertices after preprocessing: " << rootNVertices << std::endl;
+  file << "\tEdges after preprocessing: " << rootNEdges << std::endl;
+  file << "\tnP after preprocessing: " << rootNP << std::endl;
+  file << "\tnQ after preprocessing: " << rootNQ << std::endl;
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;
   file << "\tDPCP heuristic time: " << rootHeurTime << std::endl;
