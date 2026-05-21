@@ -326,6 +326,9 @@ void dpcp_dsatur_heur(const DPCPInst& dpcp, VertexVector& selected,
       size_t qj = subIndexToQj[colorclasses[k].members[j]];
       for (Vertex v : repr[qj]) col.set_color(dpcp, dpcp.get_current_id(v), k);
     }
+
+  // COLORdsatur allocates colorclasses; release it on every call.
+  COLORfree_sets(&colorclasses, &ncolors);
 }
 
 // General two-step greedy heuristic for DPCP

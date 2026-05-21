@@ -163,6 +163,45 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
 
 LP::~LP() {}
 
+void LP::compact_for_branching() {
+  // These are only needed while solving the current node.
+  pool.clear();
+  pool.shrink_to_fit();
+  lateColumns.clear();
+  lateColumns.shrink_to_fit();
+  coloring.reset_coloring();
+
+  // If no inheritance is used, child nodes do not need any generated column.
+  if (params.inheritColumns == 0) {
+    stables.clear();
+    stables.shrink_to_fit();
+    posVars.clear();
+    posVars.shrink_to_fit();
+    return;
+  }
+
+  // In mode 2, only positive columns are inherited by children.
+  // Compact stables to keep only those and remap posVars accordingly.
+  if (params.inheritColumns == 2) {
+    std::vector<Column> compactStables;
+    compactStables.reserve(posVars.size());
+    for (size_t i : posVars) {
+      if (i < stables.size()) compactStables.push_back(std::move(stables[i]));
+    }
+    stables = std::move(compactStables);
+    posVars.clear();
+    posVars.reserve(stables.size());
+    for (size_t i = 0; i < stables.size(); ++i) posVars.push_back(i);
+    return;
+  }
+
+  // In modes 1 and 4, posVars are not needed for inheritance.
+  if (params.inheritColumns == 1 || params.inheritColumns == 4) {
+    posVars.clear();
+    posVars.shrink_to_fit();
+  }
+}
+
 Column LP::translate_column(const Column& col,
                             const std::map<Vertex, Vertex>& vertexMap) {
   Column translatedCol;

@@ -64,6 +64,8 @@ class LP {
     return integerSource;
   }
   Col get_heur_solution();
+  // Release transient solve data and keep only what is needed to branch.
+  void compact_for_branching();
   Col get_lp_solution();
 
   // Getters for branching

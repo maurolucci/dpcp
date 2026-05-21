@@ -265,11 +265,13 @@ LP_STATE BP::push(std::unique_ptr<Node> node) {
   }
 
   if (params.use_dfs_tree_search()) {
+    node->get_lp().compact_for_branching();
     L.push_back(std::move(node));
     return LP_FRACTIONAL;
   }
 
   if (L.empty()) {
+    node->get_lp().compact_for_branching();
     L.push_back(std::move(node));
     return state;
   }
@@ -277,10 +279,12 @@ LP_STATE BP::push(std::unique_ptr<Node> node) {
   const double node_obj_value = node->get_obj_value();
   for (auto it = L.begin(); it != L.end(); ++it)
     if (node_obj_value > (*it)->get_obj_value()) {
+      node->get_lp().compact_for_branching();
       L.insert(it, std::move(node));
       return state;
     }
 
+  node->get_lp().compact_for_branching();
   L.push_back(std::move(node));
   return state;
 }
