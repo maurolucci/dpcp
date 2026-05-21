@@ -62,7 +62,7 @@ struct Params {
   // Initialization options
   // inheritColumns: type of column inheritance from parent
   //     0: no inheritance
-  //     1: inherit all columns
+  //     1: all columns to pool
   //     2: inherit only positive columns
   //     3: positive columns to LP, others to pool
   //     4: all columns to LP
