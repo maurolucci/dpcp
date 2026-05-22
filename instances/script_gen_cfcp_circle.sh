@@ -1,8 +1,8 @@
 #!/bin/bash
 
-declare -a N=("70" "35" "18")
-declare -a R=("5" "10" "20")
-declare num="5"
+declare -a N=("35" "18" "12" "9")
+declare -a R=("10" "20" "32" "50")
+declare num="6"
 
 SRC="gen_circle_cfc.py"
 CONV="cfc2dpcp.py"
