@@ -25,7 +25,7 @@ declare PRICING_METHOD="6"
 declare ALPHA_PRI="0.2"
 declare GREEDY_MAX_COLS="100"
 declare MAX_COLS_PER_ITER="10"
-declare PRICING_EXACT_TIME="300"
+declare PRICING_EXACT_TIME="7200"
 
 # Branching parameters:
 declare BRANCHING_VARIABLE="1"
