@@ -124,9 +124,9 @@ int main(int argc, const char** argv) {
       "time limit for feasibility check (in seconds). Only for ILP");
   desc.add_options()(
       "inherit-cols", po::value<int>()->default_value(3),
-      "type of column inheritance from parent (0: no inheritance, 1: inherit "
-      "all columns, 2: inherit only positive columns, 3: positive columns to "
-      "LP, others to pool, 4: all columns to LP)");
+      "type of column inheritance from parent (0: no inheritance, 1: all "
+      "columns to pool, 2: inherit only positive columns, 3: positive columns "
+      "to LP, others to pool, 4: all columns to LP)");
   desc.add_options()("dummy-weight", po::value<double>()->default_value(1000.0),
                      "weight of dummy column during initialization");
   desc.add_options()("preproc-off", "do not preprocess the input graph");
