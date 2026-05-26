@@ -39,7 +39,7 @@ enum BRANCH_NODE {
 class LP {
  public:
   LP(const DPCPInst& origDpcp, Params& params, Stats& stats, std::ostream& log,
-  std::ostream& debugLog, std::ostream& colLog, bool isRoot = false);
+     std::ostream& debugLog, std::ostream& colLog, bool isRoot = false);
   LP(const LP& other, BRANCH_NODE branchNode);  // Copy constructor
 
   // Move constructor and move assignment operator are deleted to avoid
