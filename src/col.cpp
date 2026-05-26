@@ -48,8 +48,8 @@ bool Col::check_coloring(const DPCPInst& dpcp) const {
     size_t idV = dpcp.get_current_id(v);
     if (coloring.contains(idU) && coloring.contains(idV) &&
         coloring.at(idU) == coloring.at(idV)) {
-      std::cout << "Coloring error #3: " << u << " (" << dpcp.get_P_part(u)
-                << "," << dpcp.get_Q_part(u) << ") and " << v << " ("
+      std::cout << "Coloring error #3: " << idU << " (" << dpcp.get_P_part(u)
+                << "," << dpcp.get_Q_part(u) << ") and " << idV << " ("
                 << dpcp.get_P_part(v) << "," << dpcp.get_Q_part(v)
                 << ") are adjecent and both have color " << coloring.at(idU)
                 << std::endl;
@@ -92,7 +92,8 @@ Col Col::translate_coloring(const DPCPInst& currentDpcp,
 
   // Isolated vertices are removed during preprocessing of currentDpcp,
   // but they still exist in originalDPCP and must be colored as well.
-  dstCol.color_isolated_vertices(originalDPCP, currentDpcp.get_isolated_vertices());
+  dstCol.color_isolated_vertices(originalDPCP,
+                                 currentDpcp.get_isolated_vertices());
 
   return dstCol;
 }
