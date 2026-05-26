@@ -333,7 +333,8 @@ int main(int argc, const char** argv) {
         out.logFile << std::endl;
 
         // Write coloring
-        if (stats.state == OPTIMAL || stats.state == FEASIBLE) {
+        if (vm.count("out") &&
+            (stats.state == OPTIMAL || stats.state == FEASIBLE)) {
           std::ofstream solFile(outDirs["sol"].string(),
                                 std::ofstream::out | std::ofstream::trunc);
           col.write_coloring(solFile);
