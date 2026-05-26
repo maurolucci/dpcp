@@ -124,7 +124,8 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     if (params.inheritColumns == 3) {
       // Mode 3: positive columns go directly to LP, non-positive go to pool
       for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        Column col = translate_column(other.get_stables()[i], vmap);
+        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+        if (!isValidColumn) continue;
         if (std::find(other.get_pos_vars().begin(), other.get_pos_vars().end(),
                       i) != other.get_pos_vars().end())
           lateColumns.push_back(col);
@@ -134,19 +135,22 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     } else if (params.inheritColumns == 4) {
       // Mode 4: all columns go directly to LP, pool remains empty
       for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        Column col = translate_column(other.get_stables()[i], vmap);
+        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+        if (!isValidColumn) continue;
         lateColumns.push_back(col);
       }
     } else if (params.inheritColumns == 1) {
       // Mode 1: all columns go to pool
       for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        Column col = translate_column(other.get_stables()[i], vmap);
+        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+        if (!isValidColumn) continue;
         pool.push_back(col);
       }
     } else {
       // Mode 2: positive columns go to pool, non-positive are discarded
       for (size_t i : other.get_pos_vars()) {
-        Column col = translate_column(other.get_stables()[i], vmap);
+        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+        if (!isValidColumn) continue;
         pool.push_back(col);
       }
     }
@@ -202,15 +206,26 @@ void LP::compact_for_branching() {
   }
 }
 
-Column LP::translate_column(const Column& col,
-                            const std::map<Vertex, Vertex>& vertexMap) {
+std::pair<Column, bool> LP::translate_column(
+    const Column& col, const std::map<Vertex, Vertex>& vertexMap) {
   Column translatedCol;
+  bool allMapped = true;
+
   for (auto u : col.stable) {
-    auto v = vertexMap.at(u);
+    auto it = vertexMap.find(u);
+    if (it == vertexMap.end()) {
+      allMapped = false;
+      continue;
+    }
+    auto v = it->second;
     if (dpcp.has_vertex(v))
       translatedCol.add_vertex(v, dpcp.get_P_part(v), dpcp.get_Q_part(v));
   }
-  return translatedCol;
+
+  const bool isValidColumn =
+      allMapped && !translatedCol.stable.empty() &&
+      translatedCol.check(dpcp.get_graph());
+  return {std::move(translatedCol), isValidColumn};
 }
 
 LP_STATE LP::solve(double timelimit, double ub) {

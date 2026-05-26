@@ -16,6 +16,7 @@ extern "C" {
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <utility>
 
 #define EPSILON 0.00001  // 10e-5
 
@@ -140,9 +141,10 @@ class LP {
   PricingSummary pricingSummary;
 
   // Translate a column from the parent node to the current node using the
-  // provided vertex map
-  Column translate_column(const Column& col,
-                          const std::map<Vertex, Vertex>& vertexMap);
+  // provided vertex map. The boolean is true iff the translated column is a
+  // valid column of the current node (non-empty and stable in current graph).
+  std::pair<Column, bool> translate_column(
+      const Column& col, const std::map<Vertex, Vertex>& vertexMap);
 
   // Exact solve of a GCP instance
   LP_STATE gcp_solve(double timelimit, double ub);
