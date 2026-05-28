@@ -127,6 +127,9 @@ int main(int argc, const char** argv) {
       "type of column inheritance from parent (0: no inheritance, 1: all "
       "columns to pool, 2: inherit only positive columns, 3: positive columns "
       "to LP, others to pool, 4: all columns to LP)");
+    desc.add_options()(
+      "inherit-pool-max-cols", po::value<size_t>()->default_value(1000),
+      "maximum number of inherited columns stored in the pool");
   desc.add_options()("dummy-weight", po::value<double>()->default_value(1000.0),
                      "weight of dummy column during initialization");
   desc.add_options()("preproc-off", "do not preprocess the input graph");
@@ -201,6 +204,7 @@ int main(int argc, const char** argv) {
     std::cerr << "inherit-cols must be an integer in [0, 4]" << std::endl;
     return 2;
   }
+  params.inheritPoolMaxCols = vm["inherit-pool-max-cols"].as<size_t>();
   params.initializationBigWeight = vm["dummy-weight"].as<double>();
   params.preprocessing = !vm.count("preproc-off");
   params.pricingMethod = vm["pricing-method"].as<int>();

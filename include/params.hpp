@@ -66,8 +66,11 @@ struct Params {
   //     2: inherit only positive columns
   //     3: positive columns to LP, others to pool
   //     4: all columns to LP
+  // inheritPoolMaxCols: maximum number of inherited columns stored in pool
+  //   (applies to modes 1, 2 and 3)
   // initializationBigWeight: weight of dummy column during initialization
   int inheritColumns;
+  size_t inheritPoolMaxCols;
   double initializationBigWeight;
 
   // Preprocessing options
@@ -115,6 +118,7 @@ struct Params {
         feasibilityOtherNodes(2),
         feasibilityOtherNodesTimeLimit(60),
         inheritColumns(0),
+        inheritPoolMaxCols(1000),
         initializationBigWeight(1000.0),
         preprocessing(true),
         pricingMethod(4),
@@ -281,6 +285,7 @@ struct Params {
     out << std::endl;
     out << "Inherit columns: " << inheritColumns
         << get_inherit_name(inheritColumns) << std::endl;
+    out << "Inherit pool max columns: " << inheritPoolMaxCols << std::endl;
     out << "Initialization big weight: " << initializationBigWeight
         << std::endl;
     out << "Preprocessing: " << (preprocessing ? "enabled" : "disabled")

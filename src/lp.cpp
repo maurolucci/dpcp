@@ -121,35 +121,44 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
 
   // Fill pools and late columns
   if (params.inheritColumns > 0) {
+    const size_t poolMax = params.inheritPoolMaxCols;
+    const std::vector<Column>& parentStables = other.get_stables();
+    std::vector<bool> isPositive(parentStables.size(), false);
+    for (size_t idx : other.get_pos_vars()) {
+      if (idx < isPositive.size()) isPositive[idx] = true;
+    }
+
     if (params.inheritColumns == 3) {
       // Mode 3: positive columns go directly to LP, non-positive go to pool
-      for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+      for (size_t i = 0; i < parentStables.size(); ++i) {
+        auto [col, isValidColumn] = translate_column(parentStables[i], vmap);
         if (!isValidColumn) continue;
-        if (std::find(other.get_pos_vars().begin(), other.get_pos_vars().end(),
-                      i) != other.get_pos_vars().end())
+        if (isPositive[i])
           lateColumns.push_back(col);
-        else
+        else if (pool.size() < poolMax)
           pool.push_back(col);
       }
     } else if (params.inheritColumns == 4) {
       // Mode 4: all columns go directly to LP, pool remains empty
-      for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+      for (size_t i = 0; i < parentStables.size(); ++i) {
+        auto [col, isValidColumn] = translate_column(parentStables[i], vmap);
         if (!isValidColumn) continue;
         lateColumns.push_back(col);
       }
     } else if (params.inheritColumns == 1) {
       // Mode 1: all columns go to pool
-      for (size_t i = 0; i < other.get_stables().size(); ++i) {
-        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+      for (size_t i = 0; i < parentStables.size() && pool.size() < poolMax;
+           ++i) {
+        auto [col, isValidColumn] = translate_column(parentStables[i], vmap);
         if (!isValidColumn) continue;
         pool.push_back(col);
       }
     } else {
       // Mode 2: positive columns go to pool, non-positive are discarded
-      for (size_t i : other.get_pos_vars()) {
-        auto [col, isValidColumn] = translate_column(other.get_stables()[i], vmap);
+      for (size_t i = 0; i < parentStables.size() && pool.size() < poolMax;
+           ++i) {
+        if (!isPositive[i]) continue;
+        auto [col, isValidColumn] = translate_column(parentStables[i], vmap);
         if (!isValidColumn) continue;
         pool.push_back(col);
       }
