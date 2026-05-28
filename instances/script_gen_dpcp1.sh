@@ -7,10 +7,10 @@ declare -a NB=("0.2" "0.3")
 declare num="3"
 
 SRC="gen_random_dpcp1.py"
-OUT="dpcp/er-2"
+OUT="dpcp/er-1"
 
 mkdir -p dpcp
-mkdir -p dpcp/er-2
+mkdir -p dpcp/er-1
 
 for p in "${P[@]}"
 do
