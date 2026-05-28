@@ -5,9 +5,10 @@
 declare -a HEURS=("greedy1s" "greedy2s" "semigreedy2s")
 declare -a VARIANTS=("2" "3")
 declare ALPHA="0.1"
-declare REPETITIONS="50000"
+declare REPETITIONS="500000"
+declare TIME="3600"
 
-declare INPUT="../../instances/dpcp/random"
+declare INPUT="../../instances/dpcp/er-1"
 declare INSTANCES="$INPUT/instances.txt"
 declare BIN="../../dpcp"
 declare OUT="out/"
@@ -50,7 +51,7 @@ do
             for v in "${VARIANTS[@]}"
             do
             	echo "Solving with heuristic: $h, variant: $v, repetition: $REPETITIONS"
-            	time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-root 3 --heur-2step-variant $v --heur-semigreedy-iter $REPETITIONS --heur-semigreedy-alpha $ALPHA --preproc-off
+            	time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-root 3 --heur-2step-variant $v --heur-semigreedy-iter $REPETITIONS --heur-semigreedy-alpha $ALPHA --heur-semigreedy-time $TIME --preproc-off
             done
         fi
     done
