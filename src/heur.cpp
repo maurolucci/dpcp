@@ -392,15 +392,14 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
         timelimit) {
       break;
     }
+
     // First step
     VertexVector selected;                   // Vector of selected vertices
     std::map<size_t, std::set<size_t>> adj;  // Adjacent list of the subgraph
                                              // induced by the selected vertices
     bool success = first_step(dpcp, selected, adj, params, neighborSet,
                               semigreedy_vertex_selector);
-    if (!success) {
-      continue;
-    } else {
+    if (success) {
       // Second step
       Col newCol;
       dpcp_dsatur_heur(dpcp, selected, adj, newCol);
@@ -413,6 +412,10 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
       }
     }
 
+    // Per iteration: write best known value (or 0 if none) and elapsed time.
+    iterFile << col.get_n_colors() << ","
+             << std::chrono::duration<double>(ClockType::now() - start).count()
+             << "\n";
     stats.totalIters = i + 1;
   }
 
