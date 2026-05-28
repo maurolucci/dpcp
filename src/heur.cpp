@@ -412,8 +412,9 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
       }
     }
 
-    // Per iteration: write best known value (or 0 if none) and elapsed time.
-    iterFile << col.get_n_colors() << ","
+    // Per iteration: write iteration number, best known value (or 0 if none),
+    // and elapsed time.
+    iterFile << i << "," << col.get_n_colors() << ","
              << std::chrono::duration<double>(ClockType::now() - start).count()
              << "\n";
     stats.totalIters = i + 1;
