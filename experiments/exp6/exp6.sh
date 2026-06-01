@@ -12,7 +12,7 @@ declare REPETITIONS_HEUR="50000"
 declare ALPHA_PRI="0.2"
 declare GREEDY_MAX_COLS="1000"
 
-declare INPUT="../../instances/dpcp/random"
+declare INPUT="../../instances/dpcp/er-1"
 declare INSTANCES="$INPUT/instances.txt"
 declare BIN="../../dpcp"
 declare OUT="out/"
