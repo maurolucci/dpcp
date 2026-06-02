@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 from pathlib import Path
 
 
@@ -51,58 +52,6 @@ def parse_iter_file(file_path: Path) -> tuple[dict[int, float], dict[int, float]
     return value_by_iter, time_by_iter
 
 
-def get_stat_file_path(variant_dir: Path, instance_name: str) -> Path:
-    stat_dirs = [
-        variant_dir / "stat",
-        variant_dir,
-        variant_dir.parent / "stat",
-    ]
-
-    name_variants = [instance_name]
-    # Iter filenames may include execution suffixes (e.g. "-heur-0", "-byp-2").
-    # Try progressively trimming trailing "-<token>" chunks to recover base instance.
-    base_name = instance_name
-    while "-" in base_name:
-        base_name = base_name.rsplit("-", 1)[0]
-        name_variants.append(base_name)
-
-    candidates: list[Path] = []
-    for stat_dir in stat_dirs:
-        for name in name_variants:
-            candidate = stat_dir / f"{name}.stat"
-            candidates.append(candidate)
-            if candidate.is_file():
-                return candidate
-
-    # Fallback: prefix match in stat directories (handles extra trailing tags).
-    for stat_dir in stat_dirs:
-        if not stat_dir.is_dir():
-            continue
-        for name in name_variants:
-            matches = sorted(stat_dir.glob(f"{name}*.stat"))
-            if matches:
-                return matches[0]
-
-    raise FileNotFoundError(
-        f"Stat file not found for instance {instance_name}. Tried: "
-        + ", ".join(str(p) for p in candidates)
-    )
-
-
-def get_min_partition_cardinality(stat_path: Path) -> int:
-    with stat_path.open("r", newline="") as f:
-        first_line = f.readline().strip().split(",")
-
-    if len(first_line) < 7:
-        raise ValueError(
-            f"Unexpected .stat first-line format in {stat_path}: expected at least 7 CSV fields"
-        )
-
-    n_p = int(first_line[5])
-    n_q = int(first_line[6])
-    return min(n_p, n_q)
-
-
 def replace_zero_objective_with_partition_min(
     value_by_iter: dict[int, float],
     min_partition_cardinality: int,
@@ -112,6 +61,18 @@ def replace_zero_objective_with_partition_min(
         iter_idx: (replacement_value if value == 0 else value)
         for iter_idx, value in value_by_iter.items()
     }
+
+
+def infer_min_partition_cardinality_from_instance_name(instance_name: str) -> int:
+    match_n_a = re.search(r"(?:^|_)nA(\d+)(?:_|$)", instance_name)
+    match_n_b = re.search(r"(?:^|_)nB(\d+)(?:_|$)", instance_name)
+    if match_n_a and match_n_b:
+        return min(int(match_n_a.group(1)), int(match_n_b.group(1)))
+
+    raise ValueError(
+        "Could not infer partition cardinalities from instance name "
+        f"{instance_name}. Expected tokens like nA<k>_nB<m>."
+    )
 
 
 def discover_iter_files(variant_dir: Path) -> list[Path]:
@@ -177,8 +138,10 @@ def consolidate_variant(base_dir: Path, output_dir: Path, variant: str) -> None:
 
         original_value_matrix[instance_name] = dict(value_by_iter)
 
-        stat_path = get_stat_file_path(variant_dir, instance_name)
-        min_partition_cardinality = get_min_partition_cardinality(stat_path)
+        min_partition_cardinality = infer_min_partition_cardinality_from_instance_name(
+            instance_name
+        )
+
         value_by_iter = replace_zero_objective_with_partition_min(
             value_by_iter,
             min_partition_cardinality,
