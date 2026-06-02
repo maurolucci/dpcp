@@ -98,9 +98,9 @@ int main(int argc, const char** argv) {
   desc.add_options()("heur-nodes", po::value<int>()->default_value(2),
                      "type of heuristic for other nodes (0: no heuristic, 1: "
                      "greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
-  desc.add_options()(
-      "heur-2step-variant", po::value<size_t>()->default_value(4),
-      "variant of the 2-step heuristic (2: DEG, 3: EDG, 4: AUTO)");
+  desc.add_options()("heur-2step-variant",
+                     po::value<size_t>()->default_value(2),
+                     "variant of the 2-step heuristic (1: DEG, 2: DEG2)");
   desc.add_options()("heur-semigreedy-alpha",
                      po::value<double>()->default_value(0.1),
                      "alpha parameter for the semi-greedy heuristic");
@@ -127,9 +127,9 @@ int main(int argc, const char** argv) {
       "type of column inheritance from parent (0: no inheritance, 1: all "
       "columns to pool, 2: inherit only positive columns, 3: positive columns "
       "to LP, others to pool, 4: all columns to LP)");
-    desc.add_options()(
-      "inherit-pool-max-cols", po::value<size_t>()->default_value(1000),
-      "maximum number of inherited columns stored in the pool");
+  desc.add_options()("inherit-pool-max-cols",
+                     po::value<size_t>()->default_value(1000),
+                     "maximum number of inherited columns stored in the pool");
   desc.add_options()("dummy-weight", po::value<double>()->default_value(1000.0),
                      "weight of dummy column during initialization");
   desc.add_options()("preproc-off", "do not preprocess the input graph");
@@ -192,6 +192,10 @@ int main(int argc, const char** argv) {
   params.heuristicRootNode = vm["heur-root"].as<int>();
   params.heuristicOtherNodes = vm["heur-nodes"].as<int>();
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
+  if (params.heuristic2stepVariant < 1 || params.heuristic2stepVariant > 2) {
+    std::cerr << "heur-2step-variant must be 1 (DEG) or 2 (DEG2)" << std::endl;
+    return 2;
+  }
   params.heuristicSemigreedyAlpha = vm["heur-semigreedy-alpha"].as<double>();
   params.heuristicSemigreedyIter = vm["heur-semigreedy-iter"].as<size_t>();
   params.heuristicSemigreedyTimeLimit = vm["heur-semigreedy-time"].as<size_t>();

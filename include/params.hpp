@@ -28,8 +28,8 @@ struct Params {
   //    2: greedy 2-step heuristic (default)
   //    3: semi-greedy 2-step heuristic
   // heuristic2stepVariant: variant of the 2-step heuristic
-  //    2: DEG
-  //    3: EDGE
+  //    1: DEG
+  //    2: DEG2
   // heuristicSemigreedyAlpha: alpha parameter for semi-greedy heuristic
   // heuristicSemigreedyIter: number of iterations for semi-greedy heuristic
   // heuristicSemigreedyTimeLimit: time limit (seconds) for semi-greedy
@@ -109,7 +109,7 @@ struct Params {
         verbose(0),
         heuristicRootNode(3),
         heuristicOtherNodes(2),
-        heuristic2stepVariant(3),
+        heuristic2stepVariant(2),
         heuristicSemigreedyAlpha(0.2),
         heuristicSemigreedyIter(50000),
         heuristicSemigreedyTimeLimit(60),
@@ -176,16 +176,10 @@ struct Params {
 
   std::string get_heur_variant(int variant) {
     switch (variant) {
-      case 0:
-        return " (deg-real)";
       case 1:
-        return " (deg-Q)";
+        return " (deg)";
       case 2:
-        return " (deg-collapsed)";
-      case 3:
-        return " (edge)";
-      case 4:
-        return " (auto)";
+        return " (deg2)";
       default:
         return " (unknown)";
     }
