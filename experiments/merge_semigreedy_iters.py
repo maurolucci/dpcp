@@ -109,9 +109,9 @@ def build_solution_flag_matrix(
     solution_flag_matrix: dict[str, dict[int, int]] = {}
 
     for instance, values_by_iter in value_matrix.items():
-        # Use sign(value) and invert it so 0 means found solution, 1 otherwise.
+        # Use sign(value): 1 means found solution, 0 means not found.
         solution_flag_matrix[instance] = {
-            iter_idx: 1 - int(value != 0) for iter_idx, value in values_by_iter.items()
+            iter_idx: int(value != 0) for iter_idx, value in values_by_iter.items()
         }
 
     return solution_flag_matrix
