@@ -52,14 +52,36 @@ def parse_iter_file(file_path: Path) -> tuple[dict[int, float], dict[int, float]
 
 
 def get_stat_file_path(variant_dir: Path, instance_name: str) -> Path:
-    candidates = [
-        variant_dir / "stat" / f"{instance_name}.stat",
-        variant_dir / f"{instance_name}.stat",
-        variant_dir.parent / "stat" / f"{instance_name}.stat",
+    stat_dirs = [
+        variant_dir / "stat",
+        variant_dir,
+        variant_dir.parent / "stat",
     ]
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
+
+    name_variants = [instance_name]
+    # Iter filenames may include execution suffixes (e.g. "-heur-0", "-byp-2").
+    # Try progressively trimming trailing "-<token>" chunks to recover base instance.
+    base_name = instance_name
+    while "-" in base_name:
+        base_name = base_name.rsplit("-", 1)[0]
+        name_variants.append(base_name)
+
+    candidates: list[Path] = []
+    for stat_dir in stat_dirs:
+        for name in name_variants:
+            candidate = stat_dir / f"{name}.stat"
+            candidates.append(candidate)
+            if candidate.is_file():
+                return candidate
+
+    # Fallback: prefix match in stat directories (handles extra trailing tags).
+    for stat_dir in stat_dirs:
+        if not stat_dir.is_dir():
+            continue
+        for name in name_variants:
+            matches = sorted(stat_dir.glob(f"{name}*.stat"))
+            if matches:
+                return matches[0]
 
     raise FileNotFoundError(
         f"Stat file not found for instance {instance_name}. Tried: "
