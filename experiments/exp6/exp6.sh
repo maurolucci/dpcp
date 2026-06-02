@@ -4,7 +4,7 @@
 
 # DPCP heuristic parameters:
 declare HEUR_ROOT="3"
-declare VARIANT="4"
+declare VARIANT="2"
 declare ALPHA_HEUR="0.1"
 declare REPETITIONS_HEUR="50000"
 

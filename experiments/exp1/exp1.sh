@@ -3,7 +3,7 @@
 # exp1: Evaluate parameter ALPHA in the semigreedy heuristic
 
 declare -a HEURS=("semigreedy2s")
-declare -a VARIANTS=("2" "3")
+declare -a VARIANTS=("1" "2")
 declare -a ALPHA=("0.1" "0.15" "0.2" "0.25" "0.3" "0.35" "0.4")
 
 declare INPUT="../../instances/dpcp/random"

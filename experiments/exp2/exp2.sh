@@ -3,7 +3,7 @@
 # exp2: Evaluate number of repetitions in the semigreedy heuristic
 
 declare -a HEURS=("semigreedy2s")
-declare -a VARIANTS=("2" "3")
+declare -a VARIANTS=("1" "2")
 declare -a REPETITIONS=("1000" "5000" "10000" "50000" "100000")
 
 declare INPUT="../../instances/dpcp/random"
