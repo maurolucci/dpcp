@@ -28,18 +28,17 @@ using RemovedMap = std::unordered_map<Vertex, bool>;
 // Two-step greedy heuristic criteria
 
 // DEG-REAL (DEG)
-// Degree of v in G, ignoring neighbors in P_{i(v)} and Q_{j(v)}
+// Degree of v in G, ignoring neighbors in P_{i(v)}
 size_t get_real_degree(const DPCPInst& dpcp, const RemovedMap& removed,
                        const VertexVector& selected,
                        const std::map<size_t, std::set<size_t>>& adj,
                        const Vertex& v) {
   size_t degree = 0;
+  const size_t pv = dpcp.get_P_part(v);
   for (Vertex u :
        boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
     if (removed.at(u)) continue;
-    if (dpcp.get_P_part(u) != dpcp.get_P_part(v) &&
-        dpcp.get_Q_part(u) != dpcp.get_Q_part(v))
-      degree++;
+    if (dpcp.get_P_part(u) != pv) degree++;
   }
   return degree;
 }
@@ -51,10 +50,11 @@ size_t get_Q_degree(const DPCPInst& dpcp, const RemovedMap& removed,
                     const std::map<size_t, std::set<size_t>>& adj,
                     const Vertex& v) {
   size_t neighbors = 0;
+  const size_t qv = dpcp.get_Q_part(v);
   for (Vertex u :
        boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
     if (removed.at(u)) continue;
-    if (dpcp.get_Q_part(u) == dpcp.get_Q_part(v)) neighbors++;
+    if (dpcp.get_Q_part(u) == qv) neighbors++;
   }
   return neighbors;
 }
