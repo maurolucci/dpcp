@@ -395,9 +395,13 @@ int main(int argc, const char** argv) {
             return 2;
         }
         // Recover coloring for the original graph
-        DPCPInst origDpcp(graph, P, Q);
-        col = gcol.translate_coloring(dpcp, origDpcp);
-        assert(col.check_coloring(origDpcp));
+        if (heurStats.state == FEASIBLE || heurStats.state == OPTIMAL) {
+          DPCPInst origDpcp(graph, P, Q);
+          col = gcol.translate_coloring(dpcp, origDpcp);
+          assert(col.check_coloring(origDpcp));
+        } else {
+          col.reset_coloring();
+        }
         handle_output(heurStats);
         continue;
       } else if (solver == "feas-enum") {
