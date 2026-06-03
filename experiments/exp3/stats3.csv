@@ -1,149 +1,181 @@
 instance,solver,run,nvertices,nedges,n,m,state,value,totalTime,totalIters,bestTime,bestIter
-r_n150_p0.75_nA45_nB45_i2,heur_greedy2s_v2,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,15,0.00243859,1,0.00243856
-r_n150_p0.5_nA30_nB45_i1,heur_greedy2s_v2,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,6,0.0013931,1,0.00139306
-r_n150_p0.5_nA45_nB45_i0,heur_greedy2s_v2,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,10,0.00190829,1,0.00190825
-r_n150_p0.75_nA30_nB45_i2,heur_greedy2s_v2,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,12,0.00197473,1,0.0019747
-r_n150_p0.75_nA45_nB30_i1,heur_greedy2s_v2,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,18,0.0019767,1,0.00197667
-r_n150_p0.25_nA45_nB45_i2,heur_greedy2s_v2,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,6,0.00116267,1,0.00116259
-r_n150_p0.5_nA45_nB45_i1,heur_greedy2s_v2,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,10,0.00198099,1,0.00198095
-r_n150_p0.25_nA45_nB45_i1,heur_greedy2s_v2,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,0.00119478,1,0.00119474
-r_n150_p0.5_nA30_nB30_i1,heur_greedy2s_v2,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,7,0.00135151,1,0.00135148
-r_n150_p0.25_nA45_nB45_i0,heur_greedy2s_v2,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,0.00111322,1,0.00111318
-r_n150_p0.25_nA45_nB30_i1,heur_greedy2s_v2,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,7,0.00107237,1,0.00107233
-r_n150_p0.5_nA45_nB30_i0,heur_greedy2s_v2,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,11,0.00174308,1,0.00174304
-r_n150_p0.25_nA30_nB30_i0,heur_greedy2s_v2,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,5,0.000947773,1,0.000947733
-r_n150_p0.25_nA30_nB45_i2,heur_greedy2s_v2,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,4,0.000886709,1,0.000886672
-r_n150_p0.5_nA45_nB30_i1,heur_greedy2s_v2,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,11,0.00170086,1,0.00170082
-r_n150_p0.75_nA30_nB30_i2,heur_greedy2s_v2,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,11,0.00177325,1,0.00177322
-r_n150_p0.25_nA30_nB45_i0,heur_greedy2s_v2,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,5,0.000845659,1,0.000845624
-r_n150_p0.25_nA45_nB30_i0,heur_greedy2s_v2,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,6,0.00109771,1,0.00109768
-r_n150_p0.75_nA30_nB30_i1,heur_greedy2s_v2,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,11,0.00163978,1,0.00163975
-r_n150_p0.25_nA45_nB30_i2,heur_greedy2s_v2,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,6,0.00109606,1,0.00109602
-r_n150_p0.75_nA30_nB45_i1,heur_greedy2s_v2,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,10,0.00180548,1,0.00180545
-r_n150_p0.25_nA30_nB45_i1,heur_greedy2s_v2,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.000889623,1,0.000889588
-r_n150_p0.75_nA30_nB45_i0,heur_greedy2s_v2,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.0018395,1,0.00183946
-r_n150_p0.5_nA30_nB45_i2,heur_greedy2s_v2,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,6,0.00151577,1,0.00151573
-r_n150_p0.75_nA30_nB30_i0,heur_greedy2s_v2,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,11,0.00166401,1,0.00166398
-r_n150_p0.25_nA30_nB30_i1,heur_greedy2s_v2,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,5,0.000855888,1,0.000855848
-r_n150_p0.5_nA30_nB30_i2,heur_greedy2s_v2,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.00135033,1,0.0013503
-r_n150_p0.5_nA45_nB45_i2,heur_greedy2s_v2,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,10,0.00190496,1,0.00190493
-r_n150_p0.5_nA30_nB30_i0,heur_greedy2s_v2,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.00135476,1,0.00135469
-r_n150_p0.25_nA30_nB30_i2,heur_greedy2s_v2,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,4,0.000846041,1,0.000846003
-r_n150_p0.5_nA30_nB45_i0,heur_greedy2s_v2,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,8,0.00147045,1,0.00147036
-r_n150_p0.75_nA45_nB45_i2,heur_greedy2s_v1,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,16,0.00206834,1,0.0020683
-r_n150_p0.5_nA30_nB45_i1,heur_greedy2s_v1,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,6,0.000977487,1,0.000977453
-r_n150_p0.5_nA45_nB45_i0,heur_greedy2s_v1,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,9,0.00152019,1,0.00152012
-r_n150_p0.75_nA30_nB45_i2,heur_greedy2s_v1,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,11,0.00139722,1,0.00139718
-r_n150_p0.75_nA45_nB30_i1,heur_greedy2s_v1,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,18,0.00173139,1,0.00173131
-r_n150_p0.25_nA45_nB45_i2,heur_greedy2s_v1,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,6,0.00091127,1,0.000911192
-r_n150_p0.5_nA45_nB45_i1,heur_greedy2s_v1,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,11,0.00145389,1,0.00145385
-r_n150_p0.25_nA45_nB45_i1,heur_greedy2s_v1,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,6,0.000837513,1,0.000837478
-r_n150_p0.5_nA30_nB30_i1,heur_greedy2s_v1,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,8,0.00102486,1,0.00102482
-r_n150_p0.25_nA45_nB45_i0,heur_greedy2s_v1,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,6,0.00086201,1,0.000861976
-r_n150_p0.75_nA45_nB45_i1,heur_greedy2s_v1,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,16,0.00193734,1,0.00193727
-r_n150_p0.75_nA45_nB45_i0,heur_greedy2s_v1,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,16,0.00200191,1,0.00200184
-r_n150_p0.25_nA45_nB30_i1,heur_greedy2s_v1,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,7,0.000830948,1,0.000830911
-r_n150_p0.5_nA45_nB30_i0,heur_greedy2s_v1,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,11,0.00144153,1,0.00144146
-r_n150_p0.25_nA30_nB30_i0,heur_greedy2s_v1,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,5,0.000599416,1,0.000599375
-r_n150_p0.25_nA30_nB45_i2,heur_greedy2s_v1,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,4,0.000600636,1,0.000600598
-r_n150_p0.5_nA45_nB30_i1,heur_greedy2s_v1,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,11,0.0013264,1,0.00132632
-r_n150_p0.75_nA30_nB30_i2,heur_greedy2s_v1,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,11,0.00131948,1,0.00131945
-r_n150_p0.25_nA30_nB45_i0,heur_greedy2s_v1,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,5,0.000622773,1,0.000622735
-r_n150_p0.25_nA45_nB30_i0,heur_greedy2s_v1,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,6,0.000850592,1,0.000850557
-r_n150_p0.75_nA30_nB30_i1,heur_greedy2s_v1,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,11,0.00130649,1,0.00130645
-r_n150_p0.25_nA45_nB30_i2,heur_greedy2s_v1,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,6,0.000838419,1,0.000838384
-r_n150_p0.75_nA30_nB45_i1,heur_greedy2s_v1,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,12,0.00138404,1,0.00138396
-r_n150_p0.25_nA30_nB45_i1,heur_greedy2s_v1,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.000570404,1,0.00057037
-r_n150_p0.75_nA30_nB45_i0,heur_greedy2s_v1,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.00136174,1,0.0013617
-r_n150_p0.5_nA30_nB45_i2,heur_greedy2s_v1,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,6,0.00102422,1,0.00102418
-r_n150_p0.75_nA30_nB30_i0,heur_greedy2s_v1,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,11,0.00136305,1,0.00136302
-r_n150_p0.25_nA30_nB30_i1,heur_greedy2s_v1,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,4,0.000562383,1,0.000562348
-r_n150_p0.5_nA30_nB30_i2,heur_greedy2s_v1,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.00100438,1,0.00100434
-r_n150_p0.5_nA45_nB45_i2,heur_greedy2s_v1,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,10,0.00155159,1,0.00155155
-r_n150_p0.5_nA30_nB30_i0,heur_greedy2s_v1,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.000994633,1,0.000994598
-r_n150_p0.25_nA30_nB30_i2,heur_greedy2s_v1,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,4,0.000601552,1,0.000601512
-r_n150_p0.5_nA30_nB45_i0,heur_greedy2s_v1,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,7,0.00101093,1,0.00101085
-r_n150_p0.75_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,13,171.292,100000,0.928621
-r_n150_p0.5_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,5,94.6724,100000,0.122558
-r_n150_p0.5_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,8,138.62,100000,0.189482
-r_n150_p0.75_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,8,127.922,100000,0.0375463
-r_n150_p0.75_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,15,132.02,100000,0.13524
-r_n150_p0.25_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,5,85.259,100000,0.00619038
-r_n150_p0.5_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,8,139.349,100000,0.533867
-r_n150_p0.25_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,86.5906,100000,0.00183886
-r_n150_p0.5_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,6,88.4592,100000,0.0133692
-r_n150_p0.25_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,83.9982,100000,0.00619164
-r_n150_p0.75_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,13,164.707,100000,1.86417
-r_n150_p0.75_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,13,174.55,100000,0.216472
-r_n150_p0.25_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,5,75.7493,100000,22.3693
-r_n150_p0.5_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,9,119.303,100000,4.02261
-r_n150_p0.25_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,3,59.2608,100000,9.99091
-r_n150_p0.75_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,8394,45,30,FEASIBLE,time limit with feasible solution,16,51.1567,100000,1.89207
-r_n150_p0.25_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,59.2732,100000,0.00799904
-r_n150_p0.5_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,9,115.808,100000,0.0425643
-r_n150_p0.75_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,8,108.411,100000,2.52997
-r_n150_p0.25_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,59.7877,100000,45.6639
-r_n150_p0.25_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,5,76.5991,100000,0.0140733
-r_n150_p0.75_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,9,100.413,100000,0.140658
-r_n150_p0.25_nA45_nB30_i2,heur_semigreedy2s_v2,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,5,76.7624,100000,0.282743
-r_n150_p0.75_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,8,117.263,100000,3.2339
-r_n150_p0.25_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,3,59.2826,100000,0.00802266
-r_n150_p0.75_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,8,119.118,100000,4.09201
-r_n150_p0.5_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,101.977,100000,0.0635835
-r_n150_p0.75_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,8,102.399,100000,24.9439
-r_n150_p0.25_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,3,55.5874,100000,0.282664
-r_n150_p0.5_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,5,89.3374,100000,3.32981
-r_n150_p0.5_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,8,140.616,100000,0.5004
-r_n150_p0.5_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,6,90.3317,100000,0.0799656
-r_n150_p0.25_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,55.4803,100000,0.00524461
-r_n150_p0.5_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,5,95.3312,100000,61.2197
-r_n150_p0.75_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,13,133.178,100000,0.00967639
-r_n150_p0.5_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,5,56.9944,100000,0.0471551
-r_n150_p0.5_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,8,102.867,100000,0.0515399
-r_n150_p0.75_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,8,78.7582,100000,1.86648
-r_n150_p0.75_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,17,110.258,100000,0.00232298
-r_n150_p0.25_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,5,57.371,100000,0.00369708
-r_n150_p0.5_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,8,99.6496,100000,0.445189
-r_n150_p0.25_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,56.7701,100000,0.00057797
-r_n150_p0.5_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,6,59.0677,100000,0.534554
-r_n150_p0.25_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,57.3681,100000,0.00363392
-r_n150_p0.75_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,13,126.609,100000,8.58323
-r_n150_p0.75_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,13,128.183,100000,79.912
-r_n150_p0.25_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,5,53.0686,100000,1.68067
-r_n150_p0.5_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,9,92.3663,100000,0.0325039
-r_n150_p0.25_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,3,34.2048,100000,14.6241
-r_n150_p0.75_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,8394,45,30,FEASIBLE,time limit with feasible solution,16,46.3163,100000,3.32762
-r_n150_p0.25_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,34.8738,100000,0.00263138
-r_n150_p0.5_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,9,86.6833,100000,0.204173
-r_n150_p0.75_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,9,72.3052,100000,0.012627
-r_n150_p0.25_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,34.4289,100000,0.69263
-r_n150_p0.25_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,5,55.3154,100000,0.00818508
-r_n150_p0.75_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,9,70.0239,100000,0.0234129
-r_n150_p0.25_nA45_nB30_i2,heur_semigreedy2s_v1,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,5,53.382,100000,6.55392
-r_n150_p0.75_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,8,74.2427,100000,3.414
-r_n150_p0.25_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,3,35.1162,100000,0.0871134
-r_n150_p0.75_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,8,74.9292,100000,0.423756
-r_n150_p0.5_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,59.1031,100000,0.0348572
-r_n150_p0.75_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,9,72.2363,100000,0.0510302
-r_n150_p0.25_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,3,33.6074,100000,2.32743
-r_n150_p0.5_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,6,56.7581,100000,0.00173954
-r_n150_p0.5_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,8,103.513,100000,9.00019
-r_n150_p0.5_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,6,59.256,100000,0.157629
-r_n150_p0.25_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,34.2989,100000,0.00820028
-r_n150_p0.5_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,5,60.4149,100000,6.46258
-r_n150_p0.5_nA30_nB45_i1,heur_greedy1s,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,7,0.00438692,1,0.00438692
-r_n150_p0.75_nA30_nB45_i2,heur_greedy1s,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,10,0.00625466,1,0.00625466
-r_n150_p0.25_nA45_nB45_i1,heur_greedy1s,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,0.00279402,1,0.00279402
-r_n150_p0.5_nA30_nB30_i1,heur_greedy1s,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,7,0.00421344,1,0.00421344
-r_n150_p0.25_nA30_nB30_i0,heur_greedy1s,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,4,0.00258049,1,0.00258049
-r_n150_p0.25_nA30_nB45_i2,heur_greedy1s,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,0.00244317,1,0.00244317
-r_n150_p0.75_nA30_nB30_i2,heur_greedy1s,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,10,0.00578349,1,0.00578349
-r_n150_p0.25_nA30_nB45_i0,heur_greedy1s,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,0.00237606,1,0.00237606
-r_n150_p0.75_nA30_nB45_i1,heur_greedy1s,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,10,0.00614847,1,0.00614847
-r_n150_p0.25_nA30_nB45_i1,heur_greedy1s,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.00251109,1,0.00251109
-r_n150_p0.75_nA30_nB45_i0,heur_greedy1s,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.00615329,1,0.00615329
-r_n150_p0.5_nA30_nB45_i2,heur_greedy1s,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,0.00443032,1,0.00443032
-r_n150_p0.5_nA30_nB30_i2,heur_greedy1s,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.00416606,1,0.00416606
-r_n150_p0.5_nA30_nB30_i0,heur_greedy1s,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.00414598,1,0.00414598
-r_n150_p0.25_nA30_nB30_i2,heur_greedy1s,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,0.00234359,1,0.00234359
-r_n150_p0.5_nA30_nB45_i0,heur_greedy1s,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,6,0.00438263,1,0.00438263
+r_n150_p0.75_nA45_nB45_i2,heur_greedy2s_v2,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,15,0.00237915,1,0.00237904
+r_n150_p0.5_nA30_nB45_i1,heur_greedy2s_v2,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,6,0.00140436,1,0.00140433
+r_n150_p0.5_nA45_nB45_i0,heur_greedy2s_v2,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,10,0.00189802,1,0.00189798
+r_n150_p0.75_nA30_nB45_i2,heur_greedy2s_v2,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,12,0.00191425,1,0.00191417
+r_n150_p0.75_nA45_nB30_i2,heur_greedy2s_v2,0,150,8354,45,30,UNKNOWN,unknown,-1,0.00013721,1,-1
+r_n150_p0.75_nA45_nB30_i1,heur_greedy2s_v2,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,18,0.00195425,1,0.00195421
+r_n150_p0.25_nA45_nB45_i2,heur_greedy2s_v2,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,6,0.00111909,1,0.00111905
+r_n150_p0.5_nA45_nB45_i1,heur_greedy2s_v2,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,10,0.00196145,1,0.00196141
+r_n150_p0.25_nA45_nB45_i1,heur_greedy2s_v2,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,0.00114209,1,0.00114205
+r_n150_p0.5_nA30_nB30_i1,heur_greedy2s_v2,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,7,0.00131285,1,0.00131282
+r_n150_p0.25_nA45_nB45_i0,heur_greedy2s_v2,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,0.00108403,1,0.00108399
+r_n150_p0.75_nA45_nB45_i1,heur_greedy2s_v2,0,150,8352,45,45,UNKNOWN,unknown,-1,0.000877458,1,-1
+r_n150_p0.75_nA45_nB45_i0,heur_greedy2s_v2,0,150,8394,45,45,UNKNOWN,unknown,-1,0.000654482,1,-1
+r_n150_p0.25_nA45_nB30_i1,heur_greedy2s_v2,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,7,0.00105044,1,0.0010504
+r_n150_p0.5_nA45_nB30_i0,heur_greedy2s_v2,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,11,0.00167907,1,0.00167904
+r_n150_p0.25_nA30_nB30_i0,heur_greedy2s_v2,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,5,0.000844828,1,0.000844787
+r_n150_p0.75_nA45_nB30_i0,heur_greedy2s_v2,0,150,8394,45,30,UNKNOWN,unknown,-1,0.000992676,1,-1
+r_n150_p0.25_nA30_nB45_i2,heur_greedy2s_v2,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,4,0.000875978,1,0.000875943
+r_n150_p0.5_nA45_nB30_i1,heur_greedy2s_v2,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,11,0.00163082,1,0.00163079
+r_n150_p0.75_nA30_nB30_i2,heur_greedy2s_v2,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,11,0.00172045,1,0.00172037
+r_n150_p0.25_nA30_nB45_i0,heur_greedy2s_v2,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,5,0.000867168,1,0.000867129
+r_n150_p0.25_nA45_nB30_i0,heur_greedy2s_v2,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,6,0.00107061,1,0.00107057
+r_n150_p0.75_nA30_nB30_i1,heur_greedy2s_v2,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,11,0.00161754,1,0.00161746
+r_n150_p0.25_nA45_nB30_i2,heur_greedy2s_v2,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,6,0.00107269,1,0.00107265
+r_n150_p0.75_nA30_nB45_i1,heur_greedy2s_v2,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,10,0.00174146,1,0.00174138
+r_n150_p0.25_nA30_nB45_i1,heur_greedy2s_v2,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.000869735,1,0.000869698
+r_n150_p0.75_nA30_nB45_i0,heur_greedy2s_v2,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.00182042,1,0.00182038
+r_n150_p0.5_nA30_nB45_i2,heur_greedy2s_v2,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,6,0.00144392,1,0.0014439
+r_n150_p0.5_nA45_nB30_i2,heur_greedy2s_v2,0,150,5567,45,30,UNKNOWN,unknown,-1,7.2685e-05,1,-1
+r_n150_p0.75_nA30_nB30_i0,heur_greedy2s_v2,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,11,0.00160188,1,0.0016018
+r_n150_p0.25_nA30_nB30_i1,heur_greedy2s_v2,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,5,0.000833807,1,0.00083377
+r_n150_p0.5_nA30_nB30_i2,heur_greedy2s_v2,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.00131965,1,0.00131957
+r_n150_p0.5_nA45_nB45_i2,heur_greedy2s_v2,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,10,0.0018731,1,0.00187306
+r_n150_p0.5_nA30_nB30_i0,heur_greedy2s_v2,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.0012867,1,0.00128666
+r_n150_p0.25_nA30_nB30_i2,heur_greedy2s_v2,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,4,0.000830546,1,0.000830512
+r_n150_p0.5_nA30_nB45_i0,heur_greedy2s_v2,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,8,0.00138219,1,0.00138216
+r_n150_p0.75_nA45_nB45_i2,heur_greedy2s_v1,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,16,0.00199649,1,0.00199645
+r_n150_p0.5_nA30_nB45_i1,heur_greedy2s_v1,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,6,0.000946516,1,0.00094648
+r_n150_p0.5_nA45_nB45_i0,heur_greedy2s_v1,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,9,0.00147663,1,0.0014766
+r_n150_p0.75_nA30_nB45_i2,heur_greedy2s_v1,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,11,0.00136223,1,0.0013622
+r_n150_p0.75_nA45_nB30_i2,heur_greedy2s_v1,0,150,8354,45,30,UNKNOWN,unknown,-1,8.5752e-05,1,-1
+r_n150_p0.75_nA45_nB30_i1,heur_greedy2s_v1,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,18,0.00170518,1,0.00170514
+r_n150_p0.25_nA45_nB45_i2,heur_greedy2s_v1,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,6,0.00083782,1,0.000837782
+r_n150_p0.5_nA45_nB45_i1,heur_greedy2s_v1,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,11,0.0014722,1,0.00147217
+r_n150_p0.25_nA45_nB45_i1,heur_greedy2s_v1,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,6,0.000824686,1,0.000824651
+r_n150_p0.5_nA30_nB30_i1,heur_greedy2s_v1,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,8,0.00100418,1,0.00100414
+r_n150_p0.25_nA45_nB45_i0,heur_greedy2s_v1,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,6,0.000831551,1,0.000831516
+r_n150_p0.75_nA45_nB45_i1,heur_greedy2s_v1,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,16,0.00191687,1,0.00191683
+r_n150_p0.75_nA45_nB45_i0,heur_greedy2s_v1,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,16,0.00194067,1,0.00194063
+r_n150_p0.25_nA45_nB30_i1,heur_greedy2s_v1,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,7,0.000788164,1,0.000788124
+r_n150_p0.5_nA45_nB30_i0,heur_greedy2s_v1,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,11,0.00142521,1,0.00142518
+r_n150_p0.25_nA30_nB30_i0,heur_greedy2s_v1,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,5,0.000601861,1,0.000601826
+r_n150_p0.75_nA45_nB30_i0,heur_greedy2s_v1,0,150,8394,45,30,UNKNOWN,unknown,-1,0.000421148,1,-1
+r_n150_p0.25_nA30_nB45_i2,heur_greedy2s_v1,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,4,0.000594794,1,0.000594735
+r_n150_p0.5_nA45_nB30_i1,heur_greedy2s_v1,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,11,0.00129593,1,0.0012959
+r_n150_p0.75_nA30_nB30_i2,heur_greedy2s_v1,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,11,0.00125889,1,0.00125881
+r_n150_p0.25_nA30_nB45_i0,heur_greedy2s_v1,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,5,0.000567885,1,0.000567851
+r_n150_p0.25_nA45_nB30_i0,heur_greedy2s_v1,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,6,0.000818726,1,0.00081869
+r_n150_p0.75_nA30_nB30_i1,heur_greedy2s_v1,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,11,0.00122952,1,0.00122948
+r_n150_p0.25_nA45_nB30_i2,heur_greedy2s_v1,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,6,0.000800707,1,0.000800665
+r_n150_p0.75_nA30_nB45_i1,heur_greedy2s_v1,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,12,0.00130635,1,0.00130627
+r_n150_p0.25_nA30_nB45_i1,heur_greedy2s_v1,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.000562884,1,0.000562849
+r_n150_p0.75_nA30_nB45_i0,heur_greedy2s_v1,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.00134772,1,0.00134769
+r_n150_p0.5_nA30_nB45_i2,heur_greedy2s_v1,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,6,0.00101207,1,0.00101203
+r_n150_p0.5_nA45_nB30_i2,heur_greedy2s_v1,0,150,5567,45,30,UNKNOWN,unknown,-1,5.54e-05,1,-1
+r_n150_p0.75_nA30_nB30_i0,heur_greedy2s_v1,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,11,0.00136802,1,0.00136799
+r_n150_p0.25_nA30_nB30_i1,heur_greedy2s_v1,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,4,0.000584959,1,0.000584924
+r_n150_p0.5_nA30_nB30_i2,heur_greedy2s_v1,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.000983929,1,0.000983892
+r_n150_p0.5_nA45_nB45_i2,heur_greedy2s_v1,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,10,0.00145858,1,0.00145854
+r_n150_p0.5_nA30_nB30_i0,heur_greedy2s_v1,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.000989622,1,0.000989587
+r_n150_p0.25_nA30_nB30_i2,heur_greedy2s_v1,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,4,0.000551134,1,0.000551096
+r_n150_p0.5_nA30_nB45_i0,heur_greedy2s_v1,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,7,0.0010069,1,0.00100687
+r_n150_p0.75_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,13,165.035,100000,0.899058
+r_n150_p0.5_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,5,91.613,100000,0.118886
+r_n150_p0.5_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,8,136.076,100000,0.185922
+r_n150_p0.75_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,8,125.45,100000,0.0365145
+r_n150_p0.75_nA45_nB30_i2,heur_semigreedy2s_v2,0,150,8354,45,30,UNKNOWN,unknown,-1,5.94682,100000,-1
+r_n150_p0.75_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,15,129.394,100000,0.132686
+r_n150_p0.25_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,5,84.1281,100000,0.00610438
+r_n150_p0.5_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,8,136.255,100000,0.52207
+r_n150_p0.25_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,84.2766,100000,0.00179429
+r_n150_p0.5_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,6,86.132,100000,0.0129986
+r_n150_p0.25_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,82.2453,100000,0.0060158
+r_n150_p0.75_nA45_nB45_i1,heur_semigreedy2s_v2,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,13,160.873,100000,1.82208
+r_n150_p0.75_nA45_nB45_i0,heur_semigreedy2s_v2,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,13,169.532,100000,0.210161
+r_n150_p0.25_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,5,74.1646,100000,21.9011
+r_n150_p0.5_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,9,116.901,100000,3.94513
+r_n150_p0.25_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,3,55.5292,100000,9.37959
+r_n150_p0.75_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,8394,45,30,FEASIBLE,time limit with feasible solution,16,49.692,100000,1.86742
+r_n150_p0.25_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,57.6862,100000,0.00774838
+r_n150_p0.5_nA45_nB30_i1,heur_semigreedy2s_v2,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,9,113.314,100000,0.0414681
+r_n150_p0.75_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,8,104.859,100000,2.46269
+r_n150_p0.25_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,58.2916,100000,44.526
+r_n150_p0.25_nA45_nB30_i0,heur_semigreedy2s_v2,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,5,75.8804,100000,0.0139618
+r_n150_p0.75_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,9,97.3287,100000,0.137566
+r_n150_p0.25_nA45_nB30_i2,heur_semigreedy2s_v2,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,5,75.4965,100000,0.278253
+r_n150_p0.75_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,8,113.012,100000,3.08129
+r_n150_p0.25_nA30_nB45_i1,heur_semigreedy2s_v2,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,3,58.5007,100000,0.00789641
+r_n150_p0.75_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,8,116.185,100000,3.96159
+r_n150_p0.5_nA30_nB45_i2,heur_semigreedy2s_v2,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,98.4804,100000,0.0610012
+r_n150_p0.5_nA45_nB30_i2,heur_semigreedy2s_v2,0,150,5567,45,30,UNKNOWN,unknown,-1,4.60613,100000,-1
+r_n150_p0.75_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,8,98.9763,100000,24.1241
+r_n150_p0.25_nA30_nB30_i1,heur_semigreedy2s_v2,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,3,53.0204,100000,0.269546
+r_n150_p0.5_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,5,86.7824,100000,3.23206
+r_n150_p0.5_nA45_nB45_i2,heur_semigreedy2s_v2,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,8,137.776,100000,0.491242
+r_n150_p0.5_nA30_nB30_i0,heur_semigreedy2s_v2,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,6,88.1231,100000,0.0781228
+r_n150_p0.25_nA30_nB30_i2,heur_semigreedy2s_v2,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,53.7929,100000,0.00504577
+r_n150_p0.5_nA30_nB45_i0,heur_semigreedy2s_v2,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,5,92.5312,100000,59.4579
+r_n150_p0.75_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,8347,45,45,FEASIBLE,time limit with feasible solution,13,134.578,100000,0.00975527
+r_n150_p0.5_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,5,56.9911,100000,0.0472381
+r_n150_p0.5_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,5548,45,45,FEASIBLE,time limit with feasible solution,8,100.971,100000,0.0504791
+r_n150_p0.75_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,8,78.2718,100000,1.85367
+r_n150_p0.75_nA45_nB30_i2,heur_semigreedy2s_v1,0,150,8354,45,30,UNKNOWN,unknown,-1,3.97744,100000,-1
+r_n150_p0.75_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,8353,45,30,FEASIBLE,time limit with feasible solution,17,108.026,100000,0.00228874
+r_n150_p0.25_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,2800,45,45,FEASIBLE,time limit with feasible solution,5,56.5726,100000,0.00357883
+r_n150_p0.5_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,5542,45,45,FEASIBLE,time limit with feasible solution,8,99.5622,100000,0.445477
+r_n150_p0.25_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,56.6255,100000,0.00063496
+r_n150_p0.5_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,6,58.9091,100000,0.533719
+r_n150_p0.25_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,2747,45,45,FEASIBLE,time limit with feasible solution,5,57.8708,100000,0.00366671
+r_n150_p0.75_nA45_nB45_i1,heur_semigreedy2s_v1,0,150,8352,45,45,FEASIBLE,time limit with feasible solution,13,124.26,100000,8.42066
+r_n150_p0.75_nA45_nB45_i0,heur_semigreedy2s_v1,0,150,8394,45,45,FEASIBLE,time limit with feasible solution,13,126.282,100000,78.7112
+r_n150_p0.25_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,2822,45,30,FEASIBLE,time limit with feasible solution,5,53.1933,100000,1.68563
+r_n150_p0.5_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,5548,45,30,FEASIBLE,time limit with feasible solution,9,90.6819,100000,0.0311964
+r_n150_p0.25_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,3,34.3898,100000,14.7301
+r_n150_p0.75_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,8394,45,30,FEASIBLE,time limit with feasible solution,16,46.1395,100000,3.30964
+r_n150_p0.25_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,34.5755,100000,0.00254111
+r_n150_p0.5_nA45_nB30_i1,heur_semigreedy2s_v1,0,150,5541,45,30,FEASIBLE,time limit with feasible solution,9,87.6493,100000,0.206459
+r_n150_p0.75_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,9,71.0831,100000,0.0123158
+r_n150_p0.25_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,34.0485,100000,0.685655
+r_n150_p0.25_nA45_nB30_i0,heur_semigreedy2s_v1,0,150,2747,45,30,FEASIBLE,time limit with feasible solution,5,55.1295,100000,0.0079979
+r_n150_p0.75_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,8408,30,30,FEASIBLE,time limit with feasible solution,9,69.2867,100000,0.02273
+r_n150_p0.25_nA45_nB30_i2,heur_semigreedy2s_v1,0,150,2794,45,30,FEASIBLE,time limit with feasible solution,5,52.8197,100000,6.48313
+r_n150_p0.75_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,8,73.85,100000,3.39732
+r_n150_p0.25_nA30_nB45_i1,heur_semigreedy2s_v1,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,3,35.4994,100000,0.088537
+r_n150_p0.75_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,8,74.6195,100000,0.421139
+r_n150_p0.5_nA30_nB45_i2,heur_semigreedy2s_v1,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,58.8342,100000,0.0347481
+r_n150_p0.5_nA45_nB30_i2,heur_semigreedy2s_v1,0,150,5567,45,30,UNKNOWN,unknown,-1,3.05808,100000,-1
+r_n150_p0.75_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,8394,30,30,FEASIBLE,time limit with feasible solution,9,71.4417,100000,0.0504001
+r_n150_p0.25_nA30_nB30_i1,heur_semigreedy2s_v1,0,150,2834,30,30,FEASIBLE,time limit with feasible solution,3,33.2464,100000,2.30241
+r_n150_p0.5_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,6,56.7445,100000,0.00172624
+r_n150_p0.5_nA45_nB45_i2,heur_semigreedy2s_v1,0,150,5526,45,45,FEASIBLE,time limit with feasible solution,8,102.492,100000,8.9091
+r_n150_p0.5_nA30_nB30_i0,heur_semigreedy2s_v1,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,6,58.7671,100000,0.156743
+r_n150_p0.25_nA30_nB30_i2,heur_semigreedy2s_v1,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,34.0441,100000,0.00827494
+r_n150_p0.5_nA30_nB45_i0,heur_semigreedy2s_v1,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,5,60.2596,100000,6.44311
+r_n150_p0.75_nA45_nB45_i2,heur_greedy1s,0,150,8347,45,45,UNKNOWN,unknown,-1,0.00328597,1,-1
+r_n150_p0.5_nA30_nB45_i1,heur_greedy1s,0,150,5541,30,45,FEASIBLE,time limit with feasible solution,7,0.00436291,1,0.00436291
+r_n150_p0.5_nA45_nB45_i0,heur_greedy1s,0,150,5548,45,45,UNKNOWN,unknown,-1,0.00241826,1,-1
+r_n150_p0.75_nA30_nB45_i2,heur_greedy1s,0,150,8343,30,45,FEASIBLE,time limit with feasible solution,10,0.00617805,1,0.00617805
+r_n150_p0.75_nA45_nB30_i2,heur_greedy1s,0,150,8354,45,30,UNKNOWN,unknown,-1,0.00296815,1,-1
+r_n150_p0.75_nA45_nB30_i1,heur_greedy1s,0,150,8353,45,30,UNKNOWN,unknown,-1,0.00444085,1,-1
+r_n150_p0.25_nA45_nB45_i2,heur_greedy1s,0,150,2800,45,45,UNKNOWN,unknown,-1,0.00182789,1,-1
+r_n150_p0.5_nA45_nB45_i1,heur_greedy1s,0,150,5542,45,45,UNKNOWN,unknown,-1,0.00321909,1,-1
+r_n150_p0.25_nA45_nB45_i1,heur_greedy1s,0,150,2820,45,45,FEASIBLE,time limit with feasible solution,5,0.00275812,1,0.00275812
+r_n150_p0.5_nA30_nB30_i1,heur_greedy1s,0,150,5562,30,30,FEASIBLE,time limit with feasible solution,7,0.00416084,1,0.00416084
+r_n150_p0.25_nA45_nB45_i0,heur_greedy1s,0,150,2747,45,45,UNKNOWN,unknown,-1,0.00213415,1,-1
+r_n150_p0.75_nA45_nB45_i1,heur_greedy1s,0,150,8352,45,45,UNKNOWN,unknown,-1,0.00444128,1,-1
+r_n150_p0.75_nA45_nB45_i0,heur_greedy1s,0,150,8394,45,45,UNKNOWN,unknown,-1,0.00420424,1,-1
+r_n150_p0.25_nA45_nB30_i1,heur_greedy1s,0,150,2822,45,30,UNKNOWN,unknown,-1,0.00213962,1,-1
+r_n150_p0.5_nA45_nB30_i0,heur_greedy1s,0,150,5548,45,30,UNKNOWN,unknown,-1,0.00332207,1,-1
+r_n150_p0.25_nA30_nB30_i0,heur_greedy1s,0,150,2747,30,30,FEASIBLE,time limit with feasible solution,4,0.00259057,1,0.00259057
+r_n150_p0.75_nA45_nB30_i0,heur_greedy1s,0,150,8394,45,30,UNKNOWN,unknown,-1,0.00408546,1,-1
+r_n150_p0.25_nA30_nB45_i2,heur_greedy1s,0,150,2796,30,45,FEASIBLE,time limit with feasible solution,3,0.00243328,1,0.00243328
+r_n150_p0.5_nA45_nB30_i1,heur_greedy1s,0,150,5541,45,30,UNKNOWN,unknown,-1,0.0026512,1,-1
+r_n150_p0.75_nA30_nB30_i2,heur_greedy1s,0,150,8343,30,30,FEASIBLE,time limit with feasible solution,10,0.00570383,1,0.00570383
+r_n150_p0.25_nA30_nB45_i0,heur_greedy1s,0,150,2747,30,45,FEASIBLE,time limit with feasible solution,3,0.00237132,1,0.00237132
+r_n150_p0.25_nA45_nB30_i0,heur_greedy1s,0,150,2747,45,30,UNKNOWN,unknown,-1,0.00202531,1,-1
+r_n150_p0.75_nA30_nB30_i1,heur_greedy1s,0,150,8408,30,30,UNKNOWN,unknown,-1,0.00523457,1,-1
+r_n150_p0.25_nA45_nB30_i2,heur_greedy1s,0,150,2794,45,30,UNKNOWN,unknown,-1,0.00193069,1,-1
+r_n150_p0.75_nA30_nB45_i1,heur_greedy1s,0,150,8353,30,45,FEASIBLE,time limit with feasible solution,10,0.00594391,1,0.00594391
+r_n150_p0.25_nA30_nB45_i1,heur_greedy1s,0,150,2822,30,45,FEASIBLE,time limit with feasible solution,4,0.00247627,1,0.00247627
+r_n150_p0.75_nA30_nB45_i0,heur_greedy1s,0,150,8394,30,45,FEASIBLE,time limit with feasible solution,10,0.00618983,1,0.00618983
+r_n150_p0.5_nA30_nB45_i2,heur_greedy1s,0,150,5525,30,45,FEASIBLE,time limit with feasible solution,5,0.00441339,1,0.00441339
+r_n150_p0.5_nA45_nB30_i2,heur_greedy1s,0,150,5567,45,30,UNKNOWN,unknown,-1,0.00214373,1,-1
+r_n150_p0.75_nA30_nB30_i0,heur_greedy1s,0,150,8394,30,30,UNKNOWN,unknown,-1,0.004502,1,-1
+r_n150_p0.25_nA30_nB30_i1,heur_greedy1s,0,150,2834,30,30,UNKNOWN,unknown,-1,0.00217245,1,-1
+r_n150_p0.5_nA30_nB30_i2,heur_greedy1s,0,150,5522,30,30,FEASIBLE,time limit with feasible solution,7,0.0040856,1,0.0040856
+r_n150_p0.5_nA45_nB45_i2,heur_greedy1s,0,150,5526,45,45,UNKNOWN,unknown,-1,0.00293104,1,-1
+r_n150_p0.5_nA30_nB30_i0,heur_greedy1s,0,150,5548,30,30,FEASIBLE,time limit with feasible solution,7,0.00412243,1,0.00412243
+r_n150_p0.25_nA30_nB30_i2,heur_greedy1s,0,150,2797,30,30,FEASIBLE,time limit with feasible solution,3,0.00235562,1,0.00235562
+r_n150_p0.5_nA30_nB45_i0,heur_greedy1s,0,150,5548,30,45,FEASIBLE,time limit with feasible solution,6,0.0043127,1,0.0043127
