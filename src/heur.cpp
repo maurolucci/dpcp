@@ -297,9 +297,8 @@ void dpcp_dsatur_heur(const DPCPInst& dpcp, VertexVector& selected,
 }
 
 // General two-step greedy heuristic for DPCP
-HeurStats dpcp_2_step_greedy_heur(DPCPInst& dpcp, Col& col,
+HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
                                   const Params& params) {
-  dpcp.ensure_step1_preprocessed();
   TimePoint start = ClockType::now();
   HeurStats stats;
 
@@ -330,11 +329,10 @@ HeurStats dpcp_2_step_greedy_heur(DPCPInst& dpcp, Col& col,
 }
 
 // General two-step semigreedy heuristic for DPCP
-HeurStats dpcp_2_step_semigreedy_heur(DPCPInst& dpcp, Col& col,
+HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile,
                                       double timelimit) {
-  dpcp.ensure_step1_preprocessed();
   TimePoint start = ClockType::now();
   HeurStats stats;
   const size_t maxIters = params.heuristicSemigreedyIter;
@@ -634,7 +632,7 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 }
 
 // 3-arg overload: discards iterFile output
-HeurStats dpcp_2_step_semigreedy_heur(DPCPInst& dpcp, Col& col,
+HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params, double timelimit) {
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
@@ -644,8 +642,7 @@ HeurStats dpcp_2_step_semigreedy_heur(DPCPInst& dpcp, Col& col,
 }
 
 // One-step heuristic for DPCP
-HeurStats dpcp_1_step_greedy_heur(DPCPInst& dpcp, Col& col) {
-  dpcp.ensure_step1_preprocessed();
+HeurStats dpcp_1_step_greedy_heur(const DPCPInst& dpcp, Col& col) {
   TimePoint start = ClockType::now();
   HeurStats stats;
 
