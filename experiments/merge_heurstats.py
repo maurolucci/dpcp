@@ -21,6 +21,7 @@ def main() -> int:
         "n",
         "m",
         "state",
+        "terminationReason",
         "value",
         "totalTime",
         "totalIters",
@@ -37,6 +38,35 @@ def main() -> int:
 
                 # first line
                 l0 = f.readline().strip().split(",")
+
+                # Legacy format (13 fields):
+                # instance,solver,run,nvertices,nedges,n,m,state,value,totalTime,totalIters,bestTime,bestIter
+                # Current format (14 fields):
+                # instance,solver,run,nvertices,nedges,n,m,state,terminationReason,value,totalTime,totalIters,bestTime,bestIter
+                if len(l0) >= 14:
+                    termination_reason = l0[8]
+                    value = l0[9]
+                    total_time = l0[10]
+                    total_iters = l0[11]
+                    best_time = l0[12]
+                    best_iter = l0[13]
+                elif len(l0) >= 13:
+                    termination_reason = ""
+                    value = l0[8]
+                    total_time = l0[9]
+                    total_iters = l0[10]
+                    best_time = l0[11]
+                    best_iter = l0[12]
+                elif len(l0) >= 12:
+                    termination_reason = ""
+                    value = l0[8]
+                    total_time = l0[9]
+                    total_iters = l0[10]
+                    best_time = l0[11]
+                    best_iter = pd.NA
+                else:
+                    continue
+
                 entry = [
                     l0[0],  # instance
                     get_solver(l0[1], subdir),  # solver
@@ -46,11 +76,12 @@ def main() -> int:
                     int(l0[5]),  # n
                     int(l0[6]),  # m
                     l0[7],  # state
-                    l0[8],  # value
-                    l0[9],  # totalTime
-                    l0[10],  # totalIters
-                    l0[11],  # bestTime
-                    l0[12],  # bestIter
+                    termination_reason,
+                    value,
+                    total_time,
+                    total_iters,
+                    best_time,
+                    best_iter,
                 ]
 
                 data.append(entry)
