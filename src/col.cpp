@@ -1,6 +1,17 @@
 #include "col.hpp"
 
 #include <cassert>
+#include <stdexcept>
+
+namespace {
+Vertex find_vertex_by_original_id(const DPCPInst& dpcp, size_t originalId) {
+  const Graph& graph = dpcp.get_graph();
+  for (Vertex v : boost::make_iterator_range(vertices(graph))) {
+    if (dpcp.get_original_id(v) == originalId) return v;
+  }
+  throw std::runtime_error("Vertex with requested original id not found");
+}
+}  // namespace
 
 Col::Col() {};
 
@@ -76,18 +87,28 @@ Col Col::translate_coloring(const DPCPInst& currentDpcp,
                             const DPCPInst& originalDPCP) const {
   Col dstCol;
   for (auto& [idv, k] : coloring) {
-    Vertex v = vertex(idv, currentDpcp.get_graph());
-    size_t originalId = currentDpcp.get_original_id(v);
-    dstCol.set_color(originalDPCP, originalId, k);
+    Vertex vCurrent = vertex(idv, currentDpcp.get_graph());
+    size_t originalId = currentDpcp.get_original_id(vCurrent);
+    Vertex vOriginal = find_vertex_by_original_id(originalDPCP, originalId);
+    dstCol.set_color(originalDPCP.get_current_id(vOriginal),
+                     originalDPCP.get_P_part(vOriginal),
+                     originalDPCP.get_Q_part(vOriginal), k);
   }
 
   // Replay collapses in reverse order so chains are propagated correctly:
   // if w<-u and u<-v, first assign color(u)=color(w), then color(v)=color(u).
   const auto& collapsed = currentDpcp.get_collapsed_vertices();
   for (auto it = collapsed.rbegin(); it != collapsed.rend(); ++it) {
-    assert(dstCol.is_colored(it->keptId));
-    assert(!dstCol.is_colored(it->removedId));
-    dstCol.set_color(originalDPCP, it->removedId, dstCol.get_color(it->keptId));
+    Vertex keptVertex = find_vertex_by_original_id(originalDPCP, it->keptId);
+    Vertex removedVertex =
+        find_vertex_by_original_id(originalDPCP, it->removedId);
+    VertexId keptCurrentId = originalDPCP.get_current_id(keptVertex);
+    VertexId removedCurrentId = originalDPCP.get_current_id(removedVertex);
+    assert(dstCol.is_colored(keptCurrentId));
+    assert(!dstCol.is_colored(removedCurrentId));
+    dstCol.set_color(removedCurrentId, originalDPCP.get_P_part(removedVertex),
+                     originalDPCP.get_Q_part(removedVertex),
+                     dstCol.get_color(keptCurrentId));
   }
 
   // Isolated vertices are removed during preprocessing of currentDpcp,
@@ -101,8 +122,8 @@ Col Col::translate_coloring(const DPCPInst& currentDpcp,
 void Col::color_isolated_vertices(
     const DPCPInst& dpcp, const std::list<IsolatedVertex>& isolatedVertices) {
   for (const auto& iso : isolatedVertices) {
-    VertexId id = iso.id;
-    Vertex v = vertex(id, dpcp.get_graph());
+    Vertex v = find_vertex_by_original_id(dpcp, iso.id);
+    VertexId id = dpcp.get_current_id(v);
     size_t pi = dpcp.get_P_part(v);
     size_t qj = dpcp.get_Q_part(v);
     // Decide color
