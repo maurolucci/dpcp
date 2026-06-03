@@ -90,6 +90,9 @@ class DPCPInst {
   [[nodiscard]] bool is_infeasible_instance() const { return isInfeasible; }
   [[nodiscard]] bool has_trivial_solution() const { return hasTrivialSolution; }
   [[nodiscard]] double get_density() const { return density; }
+  [[nodiscard]] bool is_step1_preprocessed() const {
+    return hasStep1Preprocessing;
+  }
 
   // Get the P-part, Q-part, current id, and original id of a vertex
   [[nodiscard]] size_t get_P_part(Vertex v) const { return vertex2Ppart.at(v); }
@@ -114,6 +117,7 @@ class DPCPInst {
 
   // Preprocessing
   void preprocess(bool clique = false);
+  void ensure_step1_preprocessed();
 
   // Branching decisions
   void preselect_vertex(Vertex v);
@@ -135,6 +139,7 @@ class DPCPInst {
   bool isGCP;               // Is a GCP instance?
   bool isInfeasible;        // Is the instance infeasible?
   bool hasTrivialSolution;  // Does the instance have a trivial solution?
+  bool hasStep1Preprocessing;  // Was step 1 preprocessing applied?
   double density;           // Density of the graph (before preprocessing)
 
   // Internal preprocessing steps

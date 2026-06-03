@@ -379,7 +379,6 @@ int main(int argc, const char** argv) {
             heurStats = dpcp_2_step_greedy_heur(dpcp, gcol, params);
             break;
           case 3:
-          case 4:
             if (vm.count("out")) {
               heurStats = dpcp_2_step_semigreedy_heur(
                   dpcp, gcol, params, out.iterFile,

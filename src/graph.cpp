@@ -78,6 +78,7 @@ DPCPInst::DPCPInst(const Graph& graph, const Partition& P, const Partition& Q)
       isGCP(false),
       isInfeasible(false),
       hasTrivialSolution(false),
+      hasStep1Preprocessing(false),
       density(0.0) {
   // Copy the graph structure
   // Careful: vertex descriptors difer!
@@ -129,6 +130,7 @@ DPCPInst::DPCPInst(const DPCPInst& dpcp)
       isGCP(dpcp.is_gcp_instance()),
       isInfeasible(dpcp.is_infeasible_instance()),
       hasTrivialSolution(dpcp.has_trivial_solution()),
+      hasStep1Preprocessing(dpcp.is_step1_preprocessed()),
       density(dpcp.get_density()) {
   const Graph& srcGraph = dpcp.get_graph();
   const VertexMap<size_t>& srcVertex2CurrentId = dpcp.get_vertex2CurrentId();
@@ -275,13 +277,19 @@ void DPCPInst::preprocess(bool clique) {
   preprocess_step4();
 }
 
+void DPCPInst::ensure_step1_preprocessed() {
+  if (!hasStep1Preprocessing) preprocess_step1();
+}
+
 // Preprocess #1: Make each P-part a clique by adding missing edges.
 void DPCPInst::preprocess_step1() {
+  if (hasStep1Preprocessing) return;
   for (size_t pi = 0; pi < get_nP(); ++pi) {
     for (auto it_u = P[pi].begin(); it_u != P[pi].end(); ++it_u)
       for (auto it_v = std::next(it_u); it_v != P[pi].end(); ++it_v)
         if (!edge(*it_u, *it_v, graph).second) add_edge(*it_u, *it_v, graph);
   }
+  hasStep1Preprocessing = true;
 }
 
 // Preprocess #2: If a P-part has only one vertex v, we remove their neighbors
