@@ -11,7 +11,7 @@ declare HEUR_ROOT="3"
 declare HEUR_NODES="2"
 declare VARIANT="2"
 declare ALPHA_HEUR="0.1"
-declare REPETITIONS_HEUR="50000"
+declare REPETITIONS_HEUR="40000"
 
 # Feasibility parameters:
 declare FEAS_ROOT="0"

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# exp5: Evaluation of pricing
+# exp6: Evaluation of pricing
 
 # DPCP heuristic parameters:
 declare HEUR_ROOT="3"
 declare VARIANT="2"
 declare ALPHA_HEUR="0.1"
-declare REPETITIONS_HEUR="50000"
+declare REPETITIONS_HEUR="40000"
 
 # Pricing parameters:
 declare ALPHA_PRI="0.2"

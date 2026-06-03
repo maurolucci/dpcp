@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# exp10: Evaluation of B&P for CFCP on open neighborhoods of DIMAC instances
+# exp11: Evaluation of B&P for CFCP on open neighborhoods of DIMAC instances
 
 declare TIME_LIMIT="7200"
 declare TREE_SEARCH="1"
@@ -11,7 +11,7 @@ declare HEUR_ROOT="3"
 declare HEUR_NODES="2"
 declare VARIANT="2"
 declare ALPHA_HEUR="0.1"
-declare REPETITIONS_HEUR="10000"
+declare REPETITIONS_HEUR="40000"
 
 # Feasibility parameters:
 declare FEAS_ROOT="0"

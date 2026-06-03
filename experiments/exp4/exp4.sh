@@ -6,7 +6,7 @@
 declare HEUR_ROOT="3"
 declare VARIANT="2"
 declare ALPHA_HEUR="0.1"
-declare REPETITIONS_HEUR="50000"
+declare REPETITIONS_HEUR="40000"
 
 # Pricing parameters:
 declare -a ALPHA_PRI=("0.0" "0.1" "0.2" "0.3" "0.4")
