@@ -86,7 +86,6 @@ struct Params {
   //    3: greedy -> P-MWSSP -> ILP
   //    4: greedy -> P,Q-MWSSP -> P-MWSSP -> ILP
   //    5: greedy -> P-MWSSP -> P,Q-MWSSP -> ILP
-  //    6: automatic (depends on graph density)
   // pricingHeur1MaxNCols: maximum number of columns to add with greedy
   // pricing
   // pricingMaxColsPerIter: maximum number of columns added per pricing call
@@ -121,7 +120,7 @@ struct Params {
         inheritPoolMaxCols(1000),
         initializationBigWeight(1000.0),
         preprocessing(true),
-        pricingMethod(4),
+        pricingMethod(2),
         pricingHeur1Alpha(0.1),
         pricingHeur1MaxNCols(1),
         pricingMaxColsPerIter(10),
@@ -152,8 +151,6 @@ struct Params {
         return " (greedy -> P,Q-MWSSP -> P-MWSSP -> ILP)";
       case 5:
         return " (greedy -> P-MWSSP -> P,Q-MWSSP -> ILP)";
-      case 6:
-        return " (auto by density)";
       default:
         return " (unknown)";
     }

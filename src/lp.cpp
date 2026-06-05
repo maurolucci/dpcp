@@ -673,16 +673,6 @@ int LP::pricing(CplexEnv& cenv, PricingEnv& penv, IloNumArray& dualsP,
   bool usePmwss = false;
   int pricingOrder = 1;
   int pricingMethod = params.pricingMethod;
-
-  // Resolve pricing method 6, which depends on the density of the graph
-  if (pricingMethod == 6) {
-    if (dpcp.get_density() <= 0.6) {
-      pricingMethod = 2;
-    } else {
-      pricingMethod = 5;
-    }
-  }
-
   // Resolve pricing pipeline directly from pricingMethod.
   switch (pricingMethod) {
     case 0:

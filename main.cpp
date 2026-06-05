@@ -134,10 +134,10 @@ int main(int argc, const char** argv) {
                      "weight of dummy column during initialization");
   desc.add_options()("preproc-off", "do not preprocess the input graph");
   desc.add_options()(
-      "pricing-method", po::value<int>()->default_value(6),
+      "pricing-method", po::value<int>()->default_value(2),
       "pricing method (0: ILP, 1: greedy + ILP, 2: greedy + P,Q-MWSSP + ILP, "
       "3: greedy + P-MWSSP + ILP, 4: greedy + P,Q-MWSSP + P-MWSSP + ILP, "
-      "5: greedy + P-MWSSP + P,Q-MWSSP + ILP, 6: automatic by density)");
+      "5: greedy + P-MWSSP + P,Q-MWSSP + ILP)");
   desc.add_options()("pricing-greedy-max-cols",
                      po::value<size_t>()->default_value(1000),
                      "maximum number of columns to add with greedy pricing");
@@ -212,8 +212,8 @@ int main(int argc, const char** argv) {
   params.initializationBigWeight = vm["dummy-weight"].as<double>();
   params.preprocessing = !vm.count("preproc-off");
   params.pricingMethod = vm["pricing-method"].as<int>();
-  if (params.pricingMethod < 0 || params.pricingMethod > 6) {
-    std::cerr << "pricing-method must be an integer in [0, 6]" << std::endl;
+  if (params.pricingMethod < 0 || params.pricingMethod > 5) {
+    std::cerr << "pricing-method must be an integer in [0, 5]" << std::endl;
     return 2;
   }
   params.pricingHeur1MaxNCols = vm["pricing-greedy-max-cols"].as<size_t>();

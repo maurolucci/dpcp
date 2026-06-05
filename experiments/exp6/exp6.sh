@@ -10,7 +10,7 @@ declare REPETITIONS_HEUR="40000"
 
 # Pricing parameters:
 declare ALPHA_PRI="0.2"
-declare GREEDY_MAX_COLS="1000"
+declare GREEDY_MAX_COLS="100"
 
 declare INPUT="../../instances/dpcp/er-1"
 declare INSTANCES="$INPUT/instances.txt"
