@@ -23,7 +23,7 @@ declare INHERIT_COLS="3"
 # Pricing parameters:
 declare PRICING_METHOD="2"
 declare ALPHA_PRI="0.2"
-declare GREEDY_MAX_COLS="100"
+declare GREEDY_MAX_COLS="1000"
 declare MAX_COLS_PER_ITER="10"
 declare PRICING_EXACT_TIME="7200"
 
