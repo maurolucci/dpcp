@@ -116,45 +116,50 @@ Stats BP::solve(DPCPInst& origDpcp) {
   };
 
   // Push root node (and solve initial LR)
-  if (const auto state = state_after_push(push(std::move(root)));
-      state.has_value()) {
+  const auto state = state_after_push(push(std::move(root)));
+  if (state.has_value()) {
     return return_stats(*state);
   }
 
-  if (!params.onlyRelaxation) {
-    while (!L.empty()) {
-      // Pop next node
-      show_stats();  // First show_stats, then pop
-      std::unique_ptr<Node> node = std::move(L.back());
-      pop();
+  if (params.onlyRelaxation) {
+    if (*state == LP_INFEASIBLE) {
+      return return_stats(INFEASIBLE);
+    } else if (*state == LP_INTEGER || *state == LP_FRACTIONAL) {
+      return return_stats(FEASIBLE);
+    } else
+      return return_stats(UNKNOWN);
+  }
 
-      // Re-try to prune by bound, since primal_bound could have been improved
-      if (should_prune_by_bound(node->get_obj_value(), primal_bound)) continue;
+  while (!L.empty()) {
+    // Pop next node
+    show_stats();  // First show_stats, then pop
+    std::unique_ptr<Node> node = std::move(L.back());
+    pop();
 
-      // Branch
-      std::vector<std::unique_ptr<Node>> sons;
-      node->branch(sons);
+    // Re-try to prune by bound, since primal_bound could have been improved
+    if (should_prune_by_bound(node->get_obj_value(), primal_bound)) continue;
 
-      if (params.is_verbose(2)) {
-        debugLog << "Branch of node id=" << node->get_id()
-                 << " at depth=" << node->get_depth() << " added "
-                 << sons.size() << " sons" << std::endl;
-      }
+    // Branch
+    std::vector<std::unique_ptr<Node>> sons;
+    node->branch(sons);
 
-      // Push sons (and solve initial LR)
-      for (auto& n : sons) {
-        n->set_id(nextNodeId++);
-        if (const auto state = state_after_push(push(std::move(n)));
-            state.has_value()) {
-          return return_stats(*state);
-        }
+    if (params.is_verbose(2)) {
+      debugLog << "Branch of node id=" << node->get_id()
+               << " at depth=" << node->get_depth() << " added " << sons.size()
+               << " sons" << std::endl;
+    }
+
+    // Push sons (and solve initial LR)
+    for (auto& n : sons) {
+      n->set_id(nextNodeId++);
+      if (const auto state = state_after_push(push(std::move(n)));
+          state.has_value()) {
+        return return_stats(*state);
       }
     }
   }
 
   if (primal_bound == DBL_MAX) return return_stats(INFEASIBLE);
-
-  if (params.onlyRelaxation && !L.empty()) return return_stats(FEASIBLE);
 
   return return_stats(OPTIMAL);
 }
@@ -178,7 +183,8 @@ Stats BP::return_stats(STATE state) {
       std::chrono::duration<double>(ClockType::now() - start_t).count();
   if (stats.time > params.timeLimit) {
     stats.time = params.timeLimit;
-    stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
+    if (!params.onlyRelaxation)
+      stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
   }
   stats.nodes = static_cast<int>(nodes);
   stats.nodesLeft = static_cast<int>(L.size());
