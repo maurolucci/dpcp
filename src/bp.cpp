@@ -116,15 +116,16 @@ Stats BP::solve(DPCPInst& origDpcp) {
   };
 
   // Push root node (and solve initial LR)
-  const auto state = state_after_push(push(std::move(root)));
+  const auto lp_state = push(std::move(root));
+  const auto state = state_after_push(lp_state);
   if (state.has_value()) {
     return return_stats(*state);
   }
 
   if (params.onlyRelaxation) {
-    if (*state == LP_INFEASIBLE) {
+    if (lp_state == LP_INFEASIBLE) {
       return return_stats(INFEASIBLE);
-    } else if (*state == LP_INTEGER || *state == LP_FRACTIONAL) {
+    } else if (lp_state == LP_INTEGER || lp_state == LP_FRACTIONAL) {
       return return_stats(FEASIBLE);
     } else
       return return_stats(UNKNOWN);
