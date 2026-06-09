@@ -113,6 +113,8 @@ class Stats {
   int rootSemigreedyIters;
   // Time required for feasibility check at the root node
   double rootFeasTime;
+  // Time required for column generation at the root node
+  double rootCgTime;
   // For each pricing method, number of columns added, number of calls, and
   // total time required at the root node
   int rootNColsPool, rootNColsHeur, rootNColsMwis1, rootNColsMwis2,
@@ -177,6 +179,7 @@ class Stats {
         rootHeurTime(0.0),
         rootSemigreedyIters(0),
         rootFeasTime(0.0),
+        rootCgTime(0.0),
         rootNColsPool(0),
         rootNColsHeur(0),
         rootNColsMwis1(0),

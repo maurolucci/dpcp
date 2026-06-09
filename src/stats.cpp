@@ -114,6 +114,7 @@ void Stats::write_stats(std::ostream& file) {
 
   file << rootNVertices << "," << rootNEdges << "," << rootNP << "," << rootNQ
        << "," << rootlb << "," << rootub << "," << rootHeurTime << ","
+       << rootCgTime << ","
        << rootSemigreedyIters << "," << rootFeasTime << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
               rootNCallsExact
@@ -202,6 +203,7 @@ void Stats::print_stats(std::ostream& file) {
   file << "\tDPCP heuristic time: " << rootHeurTime << std::endl;
   file << "\tDPCP semigreedy iterations: " << rootSemigreedyIters << std::endl;
   file << "\tDPCP feasibility check time: " << rootFeasTime << std::endl;
+  file << "\tColumn generation time: " << rootCgTime << std::endl;
   file << "\tPricing:" << std::endl;
   file << "\t\tCalls: "
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +

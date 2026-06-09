@@ -191,15 +191,18 @@ def parse_first_line(l0: List[str], subdir: str) -> Dict[str, Any]:
 
 
 def parse_second_line(l1: List[str]) -> Dict[str, Any]:
-    # New format (>= 27): rootNVertices,rootNEdges,rootNP,rootNQ prepended
-    # before rootlb, always including rootSemigreedyIters (27 fields total).
+    # New format (>= 28): rootNVertices,rootNEdges,rootNP,rootNQ prepended
+    # before rootlb, always including rootSemigreedyIters (28 fields total).
+    # With rootCgTime added after rootHeurTime.
     # Old format with semigreedy (>= 23): rootlb first, 23 fields.
     # Old format without semigreedy (< 23): rootlb first, 22 fields.
-    has_root_prepro = len(l1) >= 27
+    has_root_prepro = len(l1) >= 28
     prepro_offset = 4 if has_root_prepro else 0
     has_semigreedy = has_root_prepro or len(l1) >= 23
-    # off = combined offset for fields starting at rootFeasTime
-    off = prepro_offset + (1 if has_semigreedy else 0)
+    has_cg_time = len(l1) >= 28  # New format with rootCgTime
+    cg_time_offset = 1 if has_cg_time else 0
+    # off = combined offset for fields starting at rootSemigreedyIters
+    off = prepro_offset + (1 if has_semigreedy else 0) + cg_time_offset
 
     return {
         "rootNVertices": parse_int(l1[0]) if has_root_prepro else -1,
@@ -209,26 +212,27 @@ def parse_second_line(l1: List[str]) -> Dict[str, Any]:
         "rootlb":        parse_float(l1[0 + prepro_offset]),
         "rootub":        parse_float(l1[1 + prepro_offset]),
         "rootHeurTime":  parse_float(l1[2 + prepro_offset]),
-        "rootSemigreedyIters": parse_int(l1[3 + prepro_offset]) if has_semigreedy else 0,
-        "rootFeasTime":   parse_float(l1[3 + off]),
-        "rootNCalls":     parse_int(l1[4 + off]),
-        "rootNCallsPool": parse_int(l1[5 + off]),
-        "rootNCallsHeur": parse_int(l1[6 + off]),
-        "rootNCallsMwis1": parse_int(l1[7 + off]),
-        "rootNCallsMwis2": parse_int(l1[8 + off]),
-        "rootNCallsExact": parse_int(l1[9 + off]),
-        "rootNCols":      parse_int(l1[10 + off]),
-        "rootNColsPool":  parse_int(l1[11 + off]),
-        "rootNColsHeur":  parse_int(l1[12 + off]),
-        "rootNColsMwis1": parse_int(l1[13 + off]),
-        "rootNColsMwis2": parse_int(l1[14 + off]),
-        "rootNColsExact": parse_int(l1[15 + off]),
-        "rootTime":       parse_float(l1[16 + off]),
-        "rootTimePool":   parse_float(l1[17 + off]),
-        "rootTimeHeur":   parse_float(l1[18 + off]),
-        "rootTimeMwis1":  parse_float(l1[19 + off]),
-        "rootTimeMwis2":  parse_float(l1[20 + off]),
-        "rootTimeExact":  parse_float(l1[21 + off]),
+        "rootCgTime":    parse_float(l1[3 + prepro_offset]) if has_cg_time else 0.0,
+        "rootSemigreedyIters": parse_int(l1[3 + prepro_offset + cg_time_offset]) if has_semigreedy else 0,
+        "rootFeasTime":   parse_float(l1[4 + prepro_offset + cg_time_offset]),
+        "rootNCalls":     parse_int(l1[5 + off]),
+        "rootNCallsPool": parse_int(l1[6 + off]),
+        "rootNCallsHeur": parse_int(l1[7 + off]),
+        "rootNCallsMwis1": parse_int(l1[8 + off]),
+        "rootNCallsMwis2": parse_int(l1[9 + off]),
+        "rootNCallsExact": parse_int(l1[10 + off]),
+        "rootNCols":      parse_int(l1[11 + off]),
+        "rootNColsPool":  parse_int(l1[12 + off]),
+        "rootNColsHeur":  parse_int(l1[13 + off]),
+        "rootNColsMwis1": parse_int(l1[14 + off]),
+        "rootNColsMwis2": parse_int(l1[15 + off]),
+        "rootNColsExact": parse_int(l1[16 + off]),
+        "rootTime":       parse_float(l1[17 + off]),
+        "rootTimePool":   parse_float(l1[18 + off]),
+        "rootTimeHeur":   parse_float(l1[19 + off]),
+        "rootTimeMwis1":  parse_float(l1[20 + off]),
+        "rootTimeMwis2":  parse_float(l1[21 + off]),
+        "rootTimeExact":  parse_float(l1[22 + off]),
     }
 
 

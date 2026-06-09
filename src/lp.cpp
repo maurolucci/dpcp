@@ -393,9 +393,10 @@ LP_STATE LP::solve(double timelimit, double ub) {
   update_stats_from_pricing_summary();
   log_pricing_summary();
 
-  // Save root lower bound
+  // Save root lower bound and column generation time
   if (isRoot) {
     stats.rootlb = objVal;
+    stats.rootCgTime = get_elapsed_time(cgStartTime);
   }
 
   // If no error occurred, recover primal values and objective value to check
