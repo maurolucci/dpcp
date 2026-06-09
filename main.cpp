@@ -81,6 +81,9 @@ int main(int argc, const char** argv) {
       "output directory (if not given, outputs are printed on stdout)");
   desc.add_options()("time,t", po::value<size_t>()->default_value(900),
                      "time limit in seconds (default: 900)");
+  desc.add_options()("relax-time", po::value<size_t>()->default_value(0),
+                     "time limit for LP relaxation column generation (seconds, "
+                     "only with --relax, default: 0 means ignored)");
   desc.add_options()(
       "verbose,v", po::value<int>()->implicit_value(1)->default_value(1),
       "verbosity level (0: quiet, 1: low logging, 2: detailed logging)");
@@ -178,6 +181,7 @@ int main(int argc, const char** argv) {
   std::string solver = vm["solver"].as<std::string>();
   size_t repetitions = vm["repeat"].as<size_t>();
   params.timeLimit = vm["time"].as<size_t>();
+  params.relaxTimeLimit = vm["relax-time"].as<size_t>();
   params.verbose = vm["verbose"].as<int>();
   if (params.verbose < 0 || params.verbose > 2) {
     std::cerr << "verbose must be an integer in [0, 2]" << std::endl;

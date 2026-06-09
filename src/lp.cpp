@@ -231,9 +231,8 @@ std::pair<Column, bool> LP::translate_column(
       translatedCol.add_vertex(v, dpcp.get_P_part(v), dpcp.get_Q_part(v));
   }
 
-  const bool isValidColumn =
-      allMapped && !translatedCol.stable.empty() &&
-      translatedCol.check(dpcp.get_graph());
+  const bool isValidColumn = allMapped && !translatedCol.stable.empty() &&
+                             translatedCol.check(dpcp.get_graph());
   return {std::move(translatedCol), isValidColumn};
 }
 
@@ -302,6 +301,7 @@ LP_STATE LP::solve(double timelimit, double ub) {
   }
 
   // Initialize cplex environment
+  auto cgStartTime = std::chrono::high_resolution_clock::now();
   CplexEnv cenv;
   IloCplex cplex(cenv.Xmodel);
   set_parameters(cenv, cplex);
@@ -336,7 +336,12 @@ LP_STATE LP::solve(double timelimit, double ub) {
   // Start the column generation loop
   while (state == LP_UNSOLVED) {
     // Set time limit
-    double timelimit2 = timelimit - get_elapsed_time(startTime);
+    double timelimit2;
+    if (isRoot && params.onlyRelaxation && params.relaxTimeLimit > 0) {
+      timelimit2 = params.relaxTimeLimit - get_elapsed_time(cgStartTime);
+    } else {
+      timelimit2 = timelimit - get_elapsed_time(startTime);
+    }
     if (timelimit2 < 0) {
       state = LP_TIME_EXCEEDED;
       break;
@@ -444,10 +449,12 @@ LP_STATE LP::solve(double timelimit, double ub) {
     }
 
     if (params.is_verbose(2)) {
+      double cgElapsedTime = get_elapsed_time(cgStartTime);
       debugLog << "LP solve end: state=" << state << "("
                << get_lp_state_as_str(state) << "), objVal=" << objVal
                << ", #posVars=" << posVars.size()
-               << ", time=" << get_elapsed_time(startTime) << std::endl;
+               << ", cg_time=" << cgElapsedTime
+               << ", total_time=" << get_elapsed_time(startTime) << std::endl;
     }
 
     values.end();

@@ -22,6 +22,14 @@ std::string Stats::get_state_as_str() {
       return "MEM_EXCEEDED_PR";
     case INIT_FAIL:
       return "INIT_FAIL";
+    case OPTIMAL_RELAX:
+      return "OPTIMAL_RELAX";
+    case INFEASIBLE_RELAX:
+      return "INFEASIBLE_RELAX";
+    case TIMELIMIT_RELAX:
+      return "TIMELIMIT_RELAX";
+    case UNKNOWN_RELAX:
+      return "UNKNOWN_RELAX";
     default:
       return "UNKNOWN";
   }
@@ -51,6 +59,14 @@ std::string Stats::get_termination_reason() {
       return "memory limit reached in pricing";
     case INIT_FAIL:
       return "initialization failed";
+    case OPTIMAL_RELAX:
+      return "root relaxation optimal";
+    case INFEASIBLE_RELAX:
+      return "root relaxation infeasible";
+    case TIMELIMIT_RELAX:
+      return "root relaxation time limit";
+    case UNKNOWN_RELAX:
+      return "root relaxation unknown";
     default:
       return "unknown";
   }
@@ -96,10 +112,9 @@ void Stats::write_stats(std::ostream& file) {
        << nsolLR << "," << nsolGCP << "," << nsolTrivial << "," << ninitSol
        << "," << ninitDummy << "," << ninitSol + ninitDummy << std::endl;
 
-    file << rootNVertices << "," << rootNEdges << "," << rootNP << "," << rootNQ
+  file << rootNVertices << "," << rootNEdges << "," << rootNP << "," << rootNQ
        << "," << rootlb << "," << rootub << "," << rootHeurTime << ","
-      << rootSemigreedyIters << "," << rootFeasTime
-       << ","
+       << rootSemigreedyIters << "," << rootFeasTime << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
               rootNCallsExact
        << "," << rootNCallsPool << "," << rootNCallsHeur << ","
@@ -185,8 +200,7 @@ void Stats::print_stats(std::ostream& file) {
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;
   file << "\tDPCP heuristic time: " << rootHeurTime << std::endl;
-    file << "\tDPCP semigreedy iterations: " << rootSemigreedyIters
-      << std::endl;
+  file << "\tDPCP semigreedy iterations: " << rootSemigreedyIters << std::endl;
   file << "\tDPCP feasibility check time: " << rootFeasTime << std::endl;
   file << "\tPricing:" << std::endl;
   file << "\t\tCalls: "

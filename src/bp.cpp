@@ -124,11 +124,16 @@ Stats BP::solve(DPCPInst& origDpcp) {
 
   if (params.onlyRelaxation) {
     if (lp_state == LP_INFEASIBLE) {
-      return return_stats(INFEASIBLE);
-    } else if (lp_state == LP_INTEGER || lp_state == LP_FRACTIONAL) {
-      return return_stats(FEASIBLE);
+      return return_stats(INFEASIBLE_RELAX);
+    } else if (lp_state == LP_INTEGER) {
+      return return_stats(OPTIMAL_RELAX);
+    } else if (lp_state == LP_FRACTIONAL) {
+      return return_stats(OPTIMAL_RELAX);
+    } else if (lp_state == LP_TIME_EXCEEDED ||
+               lp_state == LP_TIME_EXCEEDED_PR) {
+      return return_stats(TIMELIMIT_RELAX);
     } else
-      return return_stats(UNKNOWN);
+      return return_stats(UNKNOWN_RELAX);
   }
 
   while (!L.empty()) {
@@ -184,18 +189,35 @@ Stats BP::return_stats(STATE state) {
       std::chrono::duration<double>(ClockType::now() - start_t).count();
   if (stats.time > params.timeLimit) {
     stats.time = params.timeLimit;
-    if (!params.onlyRelaxation)
-      stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
   }
   stats.nodes = static_cast<int>(nodes);
   stats.nodesLeft = static_cast<int>(L.size());
-  stats.ub = static_cast<int>(primal_bound + 0.5);
-  if (state == OPTIMAL) {
-    stats.lb = primal_bound;
-    stats.gap = 0.0;
-  } else if (state != INFEASIBLE) {
-    stats.lb = calculate_dual_bound();
-    stats.gap = get_gap() / 100;
+  if (primal_bound != DBL_MAX) {
+    stats.ub = static_cast<int>(primal_bound + 0.5);
+  }
+
+  if (params.onlyRelaxation) {
+    if (state != INFEASIBLE_RELAX) {
+      stats.lb = stats.rootlb;
+      if (primal_bound != DBL_MAX) {
+        stats.gap = get_gap() / 100;
+      }
+    }
+  } else {
+    // Branch-and-Price mode: lower bound from the queue
+    if (state == OPTIMAL) {
+      stats.lb = primal_bound;
+      stats.gap = 0.0;
+    } else if (state != INFEASIBLE) {
+      stats.lb = calculate_dual_bound();
+      if (primal_bound != DBL_MAX) {
+        stats.gap = get_gap() / 100;
+      }
+    }
+    // Override state if time exceeded
+    if (stats.time > params.timeLimit) {
+      stats.state = primal_bound == DBL_MAX ? TIME_EXCEEDED : FEASIBLE;
+    }
   }
 
   return stats;

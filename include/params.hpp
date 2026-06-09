@@ -6,12 +6,15 @@
 struct Params {
   // General options
   // timeLimit: overall time limit for the algorithm (in seconds)
+  // relaxTimeLimit: time limit for LP relaxation column generation at root
+  //   (only used with --relax, excludes heuristic, feas. check time, etc.)
   // treeSearch: tree search strategy in B&P
   //   1: best bound
   //   2: depth-first search
   // onlyRelaxation: solve only the root node
   // verbose: verbosity level (0: quiet, 1: low, 2: detailed)
   size_t timeLimit;
+  size_t relaxTimeLimit;
   int treeSearch;
   bool onlyRelaxation;
   int verbose;
@@ -103,6 +106,7 @@ struct Params {
 
   Params()
       : timeLimit(900),
+        relaxTimeLimit(0),
         treeSearch(1),
         onlyRelaxation(false),
         verbose(0),
