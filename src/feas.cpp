@@ -12,6 +12,8 @@ extern "C" {
 
 #include <cfloat>
 #include <chrono>
+#include <unordered_map>
+#include <unordered_set>
 
 #define FEASIBILITY_EPSILON 0.00001  // 10e-5
 
@@ -81,7 +83,7 @@ Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp, Col& col,
   if (newsets[0].count == static_cast<int>(dpcp.get_nP())) {
     // First, find selected vertices
     VertexVector selected;
-    std::map<size_t, std::set<size_t>> adj;
+    std::unordered_map<size_t, std::unordered_set<size_t>> adj;
     for (int i = 0; i < newsets[0].count; ++i) {
       int vi = newsets[0].members[i];
       Vertex v = vertex(vi, graph);
