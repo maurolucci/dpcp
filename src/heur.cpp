@@ -61,7 +61,7 @@ size_t get_collapsed_degree(const DPCPInst& dpcp, const RemovedMap& removed,
   return Qdegree.size();
 }
 
-// Criterion: RCDEG (restricted colapsed degree)
+// Criterion: RCDEG (restricted collapsed degree)
 // Restriction of CDEG, we ignore Q-parts that contains a vertex adjacent to a
 // selected vertex in Q_{j(v)}
 size_t get_restricted_collapsed_degree(const DPCPInst& dpcp,
@@ -72,14 +72,13 @@ size_t get_restricted_collapsed_degree(const DPCPInst& dpcp,
   const size_t pv = dpcp.get_P_part(v);
   const size_t qv = dpcp.get_Q_part(v);
   std::unordered_set<size_t> Qdegree;
-  for (Vertex u :
-       boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
-    if (removed.at(u)) continue;
+  for (Vertex u : selected) {
     size_t qu = dpcp.get_Q_part(u);
-    if (dpcp.get_P_part(u) != pv &&
-        ((qu < qv && (adj.count(qu) == 0 || adj.at(qu).count(qv) == 0)) ||
-         (qu > qv && (adj.count(qv) == 0 || adj.at(qv).count(qu) == 0))))
-      Qdegree.insert(qu);
+    if (qv == qu || !edge(u, v, dpcp.get_graph()).second) continue;
+    Qdegree.insert(qu);
+  }
+  if (adj.count(qv) > 0) {
+    for (size_t qj : adj.at(qv)) Qdegree.insert(qj);
   }
   return Qdegree.size();
 }
@@ -246,10 +245,8 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected, CollapsedMap& adj,
     for (Vertex u : selected) {
       if (!edge(u, v, dpcp.get_graph()).second) continue;
       size_t qj2 = dpcp.get_Q_part(u);
-      if (qj < qj2)
-        adj[qj].insert(qj2);
-      else if (qj > qj2)
-        adj[qj2].insert(qj);
+      adj[qj].insert(qj2);
+      adj[qj2].insert(qj);
     }
     selected.push_back(v);
 
@@ -295,6 +292,7 @@ void dpcp_dsatur_heur(const DPCPInst& dpcp, VertexVector& selected,
   // Seconds, build the edge list of the subgraph to color
   for (auto& [qj1, adjQj] : adj)
     for (size_t qj2 : adjQj) {
+      if (qj1 >= qj2) continue;  // Avoid duplicates
       elist[2 * ecount] = qjToSubIndex[qj1];
       elist[2 * ecount + 1] = qjToSubIndex[qj2];
       ecount++;
