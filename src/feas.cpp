@@ -254,7 +254,7 @@ Stats dpcp_decide_feasibility_ilp(DPCPInst& dpcp, Col& col, int timeLimit,
     cplex.getValues(vals, x);
     // First, find selected vertices
     VertexVector selected;
-    std::map<size_t, std::set<size_t>> adj;
+    std::unordered_map<size_t, std::unordered_set<size_t>> adj;
     for (auto vv : boost::make_iterator_range(vertices(graph))) {
       Vertex v = vertex(dpcp.get_current_id(vv), graph);
       if (vals[dpcp.get_current_id(v)] > 0.5) {
