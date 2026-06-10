@@ -162,6 +162,7 @@ def main() -> int:
 
     consolidate_variant(args.base_dir, args.output_dir, "v1")
     consolidate_variant(args.base_dir, args.output_dir, "v2")
+    consolidate_variant(args.base_dir, args.output_dir, "v3")
 
     print("Consolidated files written:")
     print(args.output_dir / "semigreedy2s-v1-value.iter")
@@ -170,6 +171,9 @@ def main() -> int:
     print(args.output_dir / "semigreedy2s-v2-value.iter")
     print(args.output_dir / "semigreedy2s-v2-time.iter")
     print(args.output_dir / "semigreedy2s-v2-found.iter")
+    print(args.output_dir / "semigreedy2s-v3-value.iter")
+    print(args.output_dir / "semigreedy2s-v3-time.iter")
+    print(args.output_dir / "semigreedy2s-v3-found.iter")
     return 0
 
 
