@@ -20,6 +20,7 @@ using ClockType = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::_V2::system_clock::time_point;
 
 using RemovedMap = std::unordered_map<Vertex, bool>;
+using CollapsedMap = std::unordered_map<size_t, std::unordered_set<size_t>>;
 
 /******************* */
 /* 2-STEP HEURISTICS */
@@ -27,12 +28,11 @@ using RemovedMap = std::unordered_map<Vertex, bool>;
 
 // Two-step greedy heuristic criteria
 
-// DEG-REAL (DEG)
+// Criterion: DEG (degree)
 // Degree of v in G, ignoring neighbors in P_{i(v)}
-size_t get_real_degree(const DPCPInst& dpcp, const RemovedMap& removed,
-                       const VertexVector& selected,
-                       const std::map<size_t, std::set<size_t>>& adj,
-                       const Vertex& v) {
+size_t get_degree(const DPCPInst& dpcp, const RemovedMap& removed,
+                  const VertexVector& selected, const CollapsedMap& adj,
+                  const Vertex& v) {
   size_t degree = 0;
   const size_t pv = dpcp.get_P_part(v);
   for (Vertex u :
@@ -43,29 +43,12 @@ size_t get_real_degree(const DPCPInst& dpcp, const RemovedMap& removed,
   return degree;
 }
 
-// DEG-Q (used for breaking ties)
-// Degree of v in G[Q_{j(v)}]
-size_t get_Q_degree(const DPCPInst& dpcp, const RemovedMap& removed,
-                    const VertexVector& selected,
-                    const std::map<size_t, std::set<size_t>>& adj,
-                    const Vertex& v) {
-  size_t neighbors = 0;
-  const size_t qv = dpcp.get_Q_part(v);
-  for (Vertex u :
-       boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
-    if (removed.at(u)) continue;
-    if (dpcp.get_Q_part(u) == qv) neighbors++;
-  }
-  return neighbors;
-}
-
-// DEG-COLLAPSED (DEG2)
-// Degree of v in the collapsed graph according to Q,
-// ignoring neighbors in P_{i(v)} and Q_{j(v)}
+// Criterion: CDEG (collapsed degree)
+// Number of Q-parts that contain a neighbor of v, ignoring neighbors in
+// P_{i(v)}
 size_t get_collapsed_degree(const DPCPInst& dpcp, const RemovedMap& removed,
                             const VertexVector& selected,
-                            const std::map<size_t, std::set<size_t>>& adj,
-                            const Vertex& v) {
+                            const CollapsedMap& adj, const Vertex& v) {
   const size_t pv = dpcp.get_P_part(v);
   const size_t qv = dpcp.get_Q_part(v);
   std::unordered_set<size_t> Qdegree;
@@ -78,23 +61,64 @@ size_t get_collapsed_degree(const DPCPInst& dpcp, const RemovedMap& removed,
   return Qdegree.size();
 }
 
-// variant 1: DEG (get_real_degree), variant 2: DEG2 (get_collapsed_degree)
+// Criterion: RCDEG (restricted colapsed degree)
+// Restriction of CDEG, we ignore Q-parts that contains a vertex adjacent to a
+// selected vertex in Q_{j(v)}
+size_t get_restricted_collapsed_degree(const DPCPInst& dpcp,
+                                       const RemovedMap& removed,
+                                       const VertexVector& selected,
+                                       const CollapsedMap& adj,
+                                       const Vertex& v) {
+  const size_t pv = dpcp.get_P_part(v);
+  const size_t qv = dpcp.get_Q_part(v);
+  std::unordered_set<size_t> Qdegree;
+  for (Vertex u :
+       boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
+    if (removed.at(u)) continue;
+    size_t qu = dpcp.get_Q_part(u);
+    if (dpcp.get_P_part(u) != pv &&
+        ((qu < qv && (adj.count(qu) == 0 || adj.at(qu).count(qv) == 0)) ||
+         (qu > qv && (adj.count(qv) == 0 || adj.at(qv).count(qu) == 0))))
+      Qdegree.insert(qu);
+  }
+  return Qdegree.size();
+}
+
+// Criterion: QDEG (used for breaking ties)
+// Degree of v in G[Q_{j(v)}]
+size_t get_Q_degree(const DPCPInst& dpcp, const RemovedMap& removed,
+                    const VertexVector& selected, const CollapsedMap& adj,
+                    const Vertex& v) {
+  size_t neighbors = 0;
+  const size_t qv = dpcp.get_Q_part(v);
+  for (Vertex u :
+       boost::make_iterator_range(adjacent_vertices(v, dpcp.get_graph()))) {
+    if (removed.at(u)) continue;
+    if (dpcp.get_Q_part(u) == qv) neighbors++;
+  }
+  return neighbors;
+}
+
+// variant 1: DEG  (get_degree), variant 2: CDEG (get_collapsed_degree), variant
+// 3: RCDEG (get_restricted_collapsed_degree)
 size_t evaluate_vertex(const DPCPInst& dpcp, const RemovedMap& removed,
-                       const VertexVector& selected,
-                       const std::map<size_t, std::set<size_t>>& adj,
+                       const VertexVector& selected, const CollapsedMap& adj,
                        size_t variant, const Vertex& v) {
   if (variant == 1)
-    return get_real_degree(dpcp, removed, selected, adj, v);
-  else
+    return get_degree(dpcp, removed, selected, adj, v);
+  else if (variant == 2)
     return get_collapsed_degree(dpcp, removed, selected, adj, v);
+  else if (variant == 3)
+    return get_restricted_collapsed_degree(dpcp, removed, selected, adj, v);
+  else
+    throw std::invalid_argument("Invalid heuristic variant");
 }
 
 // Function to select the next vertex v following a greedy strategy
 Vertex greedy_vertex_selector(const DPCPInst& dpcp,
                               const VertexVector& candidates,
                               const RemovedMap& removed,
-                              const VertexVector& selected,
-                              std::map<size_t, std::set<size_t>>& adj,
+                              const VertexVector& selected, CollapsedMap& adj,
                               const Params& params) {
   Vertex minVertex = NULL;
   size_t minVal = std::numeric_limits<size_t>::max();
@@ -126,8 +150,7 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
                                   const VertexVector& candidates,
                                   const RemovedMap& removed,
                                   const VertexVector& selected,
-                                  std::map<size_t, std::set<size_t>>& adj,
-                                  const Params& params) {
+                                  CollapsedMap& adj, const Params& params) {
   // First, find the lowest and highest degree among the candidates
   size_t minVal = std::numeric_limits<size_t>::max();
   size_t maxVal = 0;
@@ -157,8 +180,7 @@ Vertex semigreedy_vertex_selector(const DPCPInst& dpcp,
 
 using Heur2SVertexSelector = Vertex (*)(const DPCPInst&, const VertexVector&,
                                         const RemovedMap&, const VertexVector&,
-                                        std::map<size_t, std::set<size_t>>&,
-                                        const Params&);
+                                        CollapsedMap&, const Params&);
 
 // Update the information after removing a vertex v
 void update_info(const DPCPInst& dpcp, RemovedMap& removed, Vertex v,
@@ -171,9 +193,8 @@ void update_info(const DPCPInst& dpcp, RemovedMap& removed, Vertex v,
 // First step of the 2-step heuristic for DPCP
 // Select a set of vertices of size |P|, one from each P[pi], such that the
 // selected vertices of each Q[qj] are a stable set
-bool first_step(const DPCPInst& dpcp, VertexVector& selected,
-                std::map<size_t, std::set<size_t>>& adj, const Params& params,
-                Heur2SVertexSelector vertexSelector) {
+bool first_step(const DPCPInst& dpcp, VertexVector& selected, CollapsedMap& adj,
+                const Params& params, Heur2SVertexSelector vertexSelector) {
   // Map with the removed vertices
   RemovedMap removed;
   for (Vertex u : boost::make_iterator_range(vertices(dpcp.get_graph())))
@@ -249,7 +270,7 @@ bool first_step(const DPCPInst& dpcp, VertexVector& selected,
 // Color the selected vertices using DSATUR on the graph induced by them,
 // collapsing vertices of each Q[qj]
 void dpcp_dsatur_heur(const DPCPInst& dpcp, VertexVector& selected,
-                      std::map<size_t, std::set<size_t>>& adj, Col& col) {
+                      CollapsedMap& adj, Col& col) {
   std::map<size_t, size_t>
       qjToSubIndex;  // Map from qj to its new index (in the subgraph)
   std::vector<size_t>
@@ -303,9 +324,9 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
   HeurStats stats;
 
   // First step
-  VertexVector selected;                   // Vector of selected vertices
-  std::map<size_t, std::set<size_t>> adj;  // Adjacent list of the subgraph
-                                           // induced by the selected vertices
+  VertexVector selected;  // Vector of selected vertices
+  CollapsedMap adj;       // Adjacent list of the subgraph
+                          // induced by the selected vertices
   bool success =
       first_step(dpcp, selected, adj, params, greedy_vertex_selector);
   if (!success) {
@@ -345,9 +366,9 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
     }
 
     // First step
-    VertexVector selected;                   // Vector of selected vertices
-    std::map<size_t, std::set<size_t>> adj;  // Adjacent list of the subgraph
-                                             // induced by the selected vertices
+    VertexVector selected;  // Vector of selected vertices
+    CollapsedMap adj;       // Adjacent list of the subgraph
+                            // induced by the selected vertices
     bool success =
         first_step(dpcp, selected, adj, params, semigreedy_vertex_selector);
     if (success) {

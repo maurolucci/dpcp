@@ -101,9 +101,9 @@ int main(int argc, const char** argv) {
   desc.add_options()("heur-nodes", po::value<int>()->default_value(2),
                      "type of heuristic for other nodes (0: no heuristic, 1: "
                      "greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
-  desc.add_options()("heur-2step-variant",
-                     po::value<size_t>()->default_value(2),
-                     "variant of the 2-step heuristic (1: DEG, 2: DEG2)");
+  desc.add_options()(
+      "heur-2step-variant", po::value<size_t>()->default_value(2),
+      "variant of the 2-step heuristic (1: DEG, 2: CDEG, 3: RCDEG)");
   desc.add_options()("heur-semigreedy-alpha",
                      po::value<double>()->default_value(0.1),
                      "alpha parameter for the semi-greedy heuristic");
@@ -196,8 +196,9 @@ int main(int argc, const char** argv) {
   params.heuristicRootNode = vm["heur-root"].as<int>();
   params.heuristicOtherNodes = vm["heur-nodes"].as<int>();
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
-  if (params.heuristic2stepVariant < 1 || params.heuristic2stepVariant > 2) {
-    std::cerr << "heur-2step-variant must be 1 (DEG) or 2 (DEG2)" << std::endl;
+  if (params.heuristic2stepVariant < 1 || params.heuristic2stepVariant > 3) {
+    std::cerr << "heur-2step-variant must be 1 (DEG), 2 (CDEG), or 3 (RCDEG)"
+              << std::endl;
     return 2;
   }
   params.heuristicSemigreedyAlpha = vm["heur-semigreedy-alpha"].as<double>();
