@@ -196,7 +196,7 @@ def parse_second_line(l1: List[str]) -> Dict[str, Any]:
     # With rootCgTime added after rootHeurTime.
     # Old format with semigreedy (>= 23): rootlb first, 23 fields.
     # Old format without semigreedy (< 23): rootlb first, 22 fields.
-    has_root_prepro = len(l1) >= 28
+    has_root_prepro = len(l1) >= 27
     prepro_offset = 4 if has_root_prepro else 0
     has_semigreedy = has_root_prepro or len(l1) >= 23
     has_cg_time = len(l1) >= 28  # New format with rootCgTime
