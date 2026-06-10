@@ -1,13 +1,16 @@
 #include <iostream>
 #include <limits>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "col.hpp"
 #include "graph.hpp"
 #include "params.hpp"
 #include "stats.hpp"
 
-void dpcp_dsatur_heur(const DPCPInst& dpcp, VertexVector& selected,
-                      std::map<size_t, std::set<size_t>>& adj, Col& col);
+void dpcp_dsatur_heur(
+    const DPCPInst& dpcp, VertexVector& selected,
+    std::unordered_map<size_t, std::unordered_set<size_t>>& adj, Col& col);
 
 HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
                                   const Params& params);
