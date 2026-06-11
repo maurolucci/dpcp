@@ -33,7 +33,7 @@ struct Params {
   // heuristic2stepVariant: variant of the 2-step heuristic
   //    1: DEG
   //    2: CDEG
-  //    3: RCDEG
+  //    3: SCDEG
   // heuristicSemigreedyAlpha: alpha parameter for semi-greedy heuristic
   // heuristicSemigreedyIter: number of iterations for semi-greedy heuristic
   // heuristicSemigreedyTimeLimit: time limit (seconds) for semi-greedy

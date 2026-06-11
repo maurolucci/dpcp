@@ -61,15 +61,13 @@ size_t get_collapsed_degree(const DPCPInst& dpcp, const RemovedMap& removed,
   return Qdegree.size();
 }
 
-// Criterion: RCDEG (restricted collapsed degree)
-// Restriction of CDEG, we ignore Q-parts that contains a vertex adjacent to a
-// selected vertex in Q_{j(v)}
-size_t get_restricted_collapsed_degree(const DPCPInst& dpcp,
-                                       const RemovedMap& removed,
-                                       const VertexVector& selected,
-                                       const CollapsedMap& adj,
-                                       const Vertex& v) {
-  const size_t pv = dpcp.get_P_part(v);
+// Criterion: SCDEG (selected collapsed degree)
+// Number of Q-parts that contain a neighbor of v from selected vertices,
+// plus uncounted Q-parts already connected in the collapsed graph
+size_t get_selected_collapsed_degree(const DPCPInst& dpcp,
+                                     const RemovedMap& removed,
+                                     const VertexVector& selected,
+                                     const CollapsedMap& adj, const Vertex& v) {
   const size_t qv = dpcp.get_Q_part(v);
   std::unordered_set<size_t> Qdegree;
   for (Vertex u : selected) {
@@ -98,8 +96,8 @@ size_t get_Q_degree(const DPCPInst& dpcp, const RemovedMap& removed,
   return neighbors;
 }
 
-// variant 1: DEG  (get_degree), variant 2: CDEG (get_collapsed_degree), variant
-// 3: RCDEG (get_restricted_collapsed_degree)
+// variant 1: DEG (get_degree), variant 2: CDEG (get_collapsed_degree), variant
+// 3: SCDEG (get_selected_collapsed_degree)
 size_t evaluate_vertex(const DPCPInst& dpcp, const RemovedMap& removed,
                        const VertexVector& selected, const CollapsedMap& adj,
                        size_t variant, const Vertex& v) {
@@ -108,7 +106,7 @@ size_t evaluate_vertex(const DPCPInst& dpcp, const RemovedMap& removed,
   else if (variant == 2)
     return get_collapsed_degree(dpcp, removed, selected, adj, v);
   else if (variant == 3)
-    return get_restricted_collapsed_degree(dpcp, removed, selected, adj, v);
+    return get_selected_collapsed_degree(dpcp, removed, selected, adj, v);
   else
     throw std::invalid_argument("Invalid heuristic variant");
 }
