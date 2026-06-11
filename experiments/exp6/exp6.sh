@@ -7,7 +7,7 @@ declare TIME="900"
 
 # DPCP heuristic parameters:
 declare HEUR_ROOT="3"
-declare VARIANT="2"
+declare VARIANT="3"
 declare ALPHA_HEUR="0.1"
 declare REPETITIONS_HEUR="40000"
 
