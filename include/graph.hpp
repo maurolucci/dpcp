@@ -113,7 +113,7 @@ class DPCPInst {
   void collapse_vertices(Vertex u, Vertex v);
 
   // Preprocessing
-  void preprocess(bool clique = false);
+  void preprocess(bool clique = false, bool others = false);
 
   // Branching decisions
   void preselect_vertex(Vertex v);

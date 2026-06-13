@@ -88,7 +88,7 @@ Stats BP::solve(DPCPInst& origDpcp) {
   auto root = std::make_unique<Node>(origDpcp, params, stats, log, debugLog,
                                      colLog, true);
   DPCPInst& dpcp = root->get_lp().get_dpcp_inst();
-  if (params.preprocessing) dpcp.preprocess(true);
+  dpcp.preprocess(true, params.preprocessing);
 
   log << "After preprocessing: |V|=" << num_vertices(dpcp.get_graph())
       << ", |E|=" << num_edges(dpcp.get_graph()) << ", |P|=" << dpcp.get_nP()

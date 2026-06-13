@@ -267,12 +267,14 @@ void DPCPInst::collapse_vertices(Vertex u, Vertex v) {
   collapsedVertices.push_back(CollapsedVertex{uOriginalId, vOriginalId});
 }
 
-void DPCPInst::preprocess(bool clique) {
+void DPCPInst::preprocess(bool clique, bool others) {
   if (clique) preprocess_step1();
-  preprocess_step2();
-  preprocess_step3();
-  preprocess_step3b();
-  preprocess_step4();
+  if (others) {
+    preprocess_step2();
+    preprocess_step3();
+    preprocess_step3b();
+    preprocess_step4();
+  }
 }
 
 // Preprocess #1: Make each P-part a clique by adding missing edges.

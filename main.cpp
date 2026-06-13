@@ -373,7 +373,7 @@ int main(int argc, const char** argv) {
           lowLog << "Solving instance " << path << " with DPCP heuristic"
                  << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        if (params.preprocessing) dpcp.preprocess();
+        dpcp.preprocess(false, params.preprocessing);
         HeurStats heurStats;
         Col gcol;
         switch (params.heuristicRootNode) {

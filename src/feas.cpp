@@ -23,8 +23,8 @@ Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp, Col& col,
   auto start = std::chrono::high_resolution_clock::now();
 
   // Preprocess if requested
+  dpcp.preprocess(true, preprocess);
   if (preprocess) {
-    dpcp.preprocess();
     // Check infeasibility after preprocessing
     if (dpcp.is_infeasible_instance()) {
       Stats stats;
@@ -80,7 +80,7 @@ Stats dpcp_decide_feasibility_enumerative(DPCPInst& dpcp, Col& col,
 
   // If the maximum stable set has size |A|, then we have found a feasible
   // solution of DPCP
-  if (newsets[0].count == static_cast<int>(dpcp.get_nP())) {
+  if (newsets[0].count >= static_cast<int>(dpcp.get_nP())) {
     // First, find selected vertices
     VertexVector selected;
     std::unordered_map<size_t, std::unordered_set<size_t>> adj;
@@ -163,8 +163,8 @@ Stats dpcp_decide_feasibility_ilp(DPCPInst& dpcp, Col& col, int timeLimit,
   auto start = std::chrono::high_resolution_clock::now();
 
   // Preprocess if requested
+  dpcp.preprocess(true, preprocess);
   if (preprocess) {
-    dpcp.preprocess();
     // Check infeasibility after preprocessing
     if (dpcp.is_infeasible_instance()) {
       Stats stats;

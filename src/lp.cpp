@@ -99,7 +99,7 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     auto it = vmap.find(v);
     assert(it != vmap.end());
     dpcp.preselect_vertex(it->second);
-    if (params.preprocessing) dpcp.preprocess();
+    dpcp.preprocess(false, params.preprocessing);
     if (params.is_verbose(2)) {
       debugLog << "Left child after preprocessing: |V|=" << num_vertices(graph)
                << ", |E|=" << num_edges(graph) << ", |P|=" << dpcp.get_nP()
@@ -111,7 +111,7 @@ LP::LP(const LP& other, BRANCH_NODE branchNode)
     auto it = vmap.find(v);
     assert(it != vmap.end());
     dpcp.forbid_vertex(it->second);
-    if (params.preprocessing) dpcp.preprocess();
+    dpcp.preprocess(false, params.preprocessing);
     if (params.is_verbose(2)) {
       debugLog << "Right child after preprocessing: |V|=" << num_vertices(graph)
                << ", |E|=" << num_edges(graph) << ", |P|=" << dpcp.get_nP()
