@@ -1,9 +1,9 @@
 #!/bin/bash
 
-declare N="150"
+declare N="200"
 declare NA="30" # 0.2*N
 declare -a P=("0.25" "0.5" "0.75")
-declare -a NB=("1" "3" "8")
+declare -a NB=("2" "4" "9")
 declare num="5"
 
 SRC="gen_random_dpcp1.py"
