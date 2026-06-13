@@ -2,7 +2,7 @@
 
 # exp9: Infeasible instances
 
-declare TIME_LIMIT="900"
+declare TIME_LIMIT="7200"
 declare TREE_SEARCH="1"
 declare VERBOSE="2"
 
@@ -54,6 +54,6 @@ do
     time $BIN -s feas-ilp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE --heur-root $HEUR_ROOT
 
     # Maximum stable set
-    timeout 15m $BIN -s feas-enum -f "$INPUT/$LINE" -o "$OUT/" --verbose $VERBOSE
+    timeout 120m $BIN -s feas-enum -f "$INPUT/$LINE" -o "$OUT/" --verbose $VERBOSE
 
 done < "$INSTANCES"
