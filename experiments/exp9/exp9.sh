@@ -7,11 +7,8 @@ declare TREE_SEARCH="1"
 declare VERBOSE="2"
 
 # DPCP heuristic parameters:
-declare HEUR_ROOT="3"
-declare HEUR_NODES="2"
-declare VARIANT="3"
-declare ALPHA_HEUR="0.1"
-declare REPETITIONS_HEUR="40000"
+declare HEUR_ROOT="0"
+declare HEUR_NODES="0"
 
 # Feasibility parameters:
 declare FEAS_ROOT="0"
@@ -47,15 +44,14 @@ do
 
     # B&P  
     time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --tree-search $TREE_SEARCH --verbose $VERBOSE \
-    --heur-root $HEUR_ROOT --heur-nodes $HEUR_NODES --heur-2step-variant $VARIANT \
-    --heur-semigreedy-alpha $ALPHA_HEUR --heur-semigreedy-iter $REPETITIONS_HEUR \
+    --heur-root $HEUR_ROOT --heur-nodes $HEUR_NODES \
     --feas-root $FEAS_ROOT --feas-nodes $FEAS_NODES --inherit-cols $INHERIT_COLS \
     --pricing-method $PRICING_METHOD --pricing-greedy-alpha $ALPHA_PRI \
     --pricing-greedy-max-cols $GREEDY_MAX_COLS --pricing-max-cols-per-iter $MAX_COLS_PER_ITER \
     --pricing-exact-time $PRICING_EXACT_TIME --branching-variable $BRANCHING_VARIABLE
 
     # ILP
-    time $BIN -s feas-ilp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE
+    time $BIN -s feas-ilp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE --heur-root $HEUR_ROOT
 
     # Maximum stable set
     timeout 15m $BIN -s feas-enum -f "$INPUT/$LINE" -o "$OUT/" --verbose $VERBOSE
