@@ -48,7 +48,7 @@ do
     --feas-root $FEAS_ROOT --feas-nodes $FEAS_NODES --inherit-cols $INHERIT_COLS \
     --pricing-method $PRICING_METHOD --pricing-greedy-alpha $ALPHA_PRI \
     --pricing-greedy-max-cols $GREEDY_MAX_COLS --pricing-max-cols-per-iter $MAX_COLS_PER_ITER \
-    --pricing-exact-time $PRICING_EXACT_TIME --branching-variable $BRANCHING_VARIABLE
+    --pricing-exact-time $PRICING_EXACT_TIME --branching-variable $BRANCHING_VARIABLE --preproc-off
 
     # ILP
     time $BIN -s feas-ilp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE --heur-root $HEUR_ROOT
