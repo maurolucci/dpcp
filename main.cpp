@@ -103,7 +103,7 @@ int main(int argc, const char** argv) {
                      "heuristic (dummy variable), 1: greedy 1-step, 2: greedy "
                      "2-step, 3: semi-greedy 2-step)");
   desc.add_options()(
-      "heur-2step-variant", po::value<size_t>()->default_value(2),
+      "heur-2step-variant", po::value<size_t>()->default_value(3),
       "variant of the 2-step heuristic (1: DEG, 2: CDEG, 3: SCDEG)");
   desc.add_options()("heur-semigreedy-alpha",
                      po::value<double>()->default_value(0.1),

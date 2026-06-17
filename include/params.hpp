@@ -113,7 +113,7 @@ struct Params {
         verbose(0),
         heuristicInitial(3),
         heuristicNodes(2),
-        heuristic2stepVariant(2),
+        heuristic2stepVariant(3),
         heuristicSemigreedyAlpha(0.2),
         heuristicSemigreedyIter(50000),
         heuristicSemigreedyTimeLimit(60),
