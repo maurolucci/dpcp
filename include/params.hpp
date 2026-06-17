@@ -125,7 +125,7 @@ struct Params {
         inheritPoolMaxCols(1000),
         initializationBigWeight(1000.0),
         preprocessing(true),
-        pricingMethod(2),
+        pricingMethod(4),
         pricingHeur1Alpha(0.1),
         pricingHeur1MaxNCols(1),
         pricingMaxColsPerIter(10),
@@ -262,7 +262,7 @@ struct Params {
     if (heuristicNodes == 2 || heuristicNodes == 3)
       out << ", variant: " << heuristic2stepVariant
           << get_heur_variant(heuristic2stepVariant);
-    if (heuristicNodes)
+    if (heuristicNodes == 3)
       out << ", alpha: " << heuristicSemigreedyAlpha
           << ", iterations: " << heuristicSemigreedyIter
           << ", time limit: " << heuristicSemigreedyTimeLimit << "s";

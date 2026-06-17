@@ -138,7 +138,7 @@ int main(int argc, const char** argv) {
                      "weight of dummy column during initialization");
   desc.add_options()("preproc-off", "do not preprocess the input graph");
   desc.add_options()(
-      "pricing-method", po::value<int>()->default_value(2),
+      "pricing-method", po::value<int>()->default_value(4),
       "pricing method (0: ILP, 1: greedy + ILP, 2: greedy + P,Q-MWSSP + ILP, "
       "3: greedy + P-MWSSP + ILP, 4: greedy + P,Q-MWSSP + P-MWSSP + ILP, "
       "5: greedy + P-MWSSP + P,Q-MWSSP + ILP)");

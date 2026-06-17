@@ -559,9 +559,10 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
 }
 
 // Run heuristic solution of the DPCP instances
-HeurStats LP::run_heuristic(std::optional<size_t> valueEarlyStop) {
+HeurStats LP::run_heuristic(int heuristicType,
+                            std::optional<size_t> valueEarlyStop) {
   HeurStats heurStats;
-  switch (params.heuristicNodes) {
+  switch (heuristicType) {
     case 0:
       break;
     case 1:
@@ -584,7 +585,7 @@ HeurStats LP::run_heuristic(std::optional<size_t> valueEarlyStop) {
 
 // Heuristic initialization of current node
 void LP::heuristic_initialization() {
-  HeurStats heurStats = run_heuristic();
+  HeurStats heurStats = run_heuristic(params.heuristicNodes, std::nullopt);
   // Update heuristic stats
   if (isRoot) {
     stats.rootHeurTime = heurStats.totalTime;
@@ -598,7 +599,7 @@ void LP::heuristic_initialization() {
 // Find heuristic solution
 void LP::find_heuristic_solution(std::optional<size_t> valueEarlyStop) {
   coloring.reset_coloring();
-  HeurStats heurStats = run_heuristic(valueEarlyStop);
+  HeurStats heurStats = run_heuristic(params.heuristicInitial, valueEarlyStop);
   stats.initialHeurValue = heurStats.value;
   stats.initialHeurTime = heurStats.totalTime;
   stats.initialSemigreedyIters = heurStats.totalIters;
