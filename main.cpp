@@ -109,7 +109,7 @@ int main(int argc, const char** argv) {
                      po::value<double>()->default_value(0.1),
                      "alpha parameter for the semi-greedy heuristic");
   desc.add_options()("heur-semigreedy-iter",
-                     po::value<size_t>()->default_value(50000),
+                     po::value<size_t>()->default_value(40000),
                      "number of iterations for the semi-greedy heuristic");
   desc.add_options()("heur-semigreedy-time",
                      po::value<size_t>()->default_value(60),
@@ -377,7 +377,7 @@ int main(int argc, const char** argv) {
         dpcp.preprocess(false, params.preprocessing);
         HeurStats heurStats;
         Col gcol;
-        switch (params.heuristicRootNode) {
+        switch (params.heuristicInitial) {
           case 1:
             heurStats = dpcp_1_step_greedy_heur(dpcp, gcol);
             break;
@@ -396,8 +396,8 @@ int main(int argc, const char** argv) {
             }
             break;
           default:
-            std::cerr << "Unknown heuristic root node: "
-                      << params.heuristicRootNode << std::endl;
+            std::cerr << "Unknown heuristic initial: "
+                      << params.heuristicInitial << std::endl;
             return 2;
         }
         // Recover coloring for the original graph
