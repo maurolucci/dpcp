@@ -357,7 +357,7 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
 
   for (size_t i = 0; i < maxIters; ++i) {
     if (std::chrono::duration<double>(ClockType::now() - start).count() >=
-        stats.heuristicSemigreedyTimeLimit) {
+        params.heuristicSemigreedyTimeLimit) {
       break;
     }
 
