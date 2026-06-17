@@ -50,7 +50,7 @@ do
     time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --tree-search $TREE_SEARCH --verbose $VERBOSE \
     --heur-initial $HEURISTIC_INITIAL --heur-nodes $HEUR_NODES --heur-2step-variant $VARIANT \
     --heur-semigreedy-alpha $HEURISTIC_INITIAL_ALPHA --heur-semigreedy-iter $HEURISTIC_INITIAL_REPETITIONS \
-    --heur-semigreedy-time-limit $HEURISTIC_INITIAL_MAXTIME \
+    --heur-semigreedy-time $HEURISTIC_INITIAL_MAXTIME \
     --feas-root $FEAS_ROOT --feas-nodes $FEAS_NODES --inherit-cols $INHERIT_COLS \
     --pricing-method $PRICING_METHOD --pricing-greedy-alpha $ALPHA_PRI \
     --pricing-greedy-max-cols $GREEDY_MAX_COLS --pricing-max-cols-per-iter $MAX_COLS_PER_ITER \
