@@ -559,7 +559,7 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
 }
 
 // Run heuristic solution of the DPCP instances
-HeurStats run_heuristic(std::optional<size_t> valueEarlyStop) {
+HeurStats LP::run_heuristic(std::optional<size_t> valueEarlyStop) {
   HeurStats heurStats;
   switch (params.heuristicNodes) {
     case 0:
