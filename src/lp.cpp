@@ -572,8 +572,7 @@ HeurStats LP::run_heuristic(std::optional<size_t> valueEarlyStop) {
       break;
     case 3:
       heurStats =
-          dpcp_2_step_semigreedy_heur(dpcp, coloring, params, valueEarlyStop),
-      ;
+          dpcp_2_step_semigreedy_heur(dpcp, coloring, params, valueEarlyStop);
       break;
     default:
       log << "Warning: unknown heuristic code " << params.heuristicNodes
