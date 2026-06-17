@@ -17,22 +17,20 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
 
   // Try to find an initial coloring with the heuristic
   Col initialCol;
-  if (params.heuristicRootNode == 1)
+  if (params.heuristicInitial == 1)
     heurStats = dpcp_1_step_greedy_heur(dpcp, initialCol);
-  else if (params.heuristicRootNode == 2)
+  else if (params.heuristicInitial == 2)
     heurStats = dpcp_2_step_greedy_heur(dpcp, initialCol, params);
-  else if (params.heuristicRootNode == 3)
-    heurStats = dpcp_2_step_semigreedy_heur(
-        dpcp, initialCol, params,
-        static_cast<double>(params.heuristicSemigreedyTimeLimit));
+  else if (params.heuristicInitial == 3)
+    heurStats = dpcp_2_step_semigreedy_heur(dpcp, initialCol, params);
 
   // Save initial solution stats
-  if (params.heuristicRootNode >= 1 && params.heuristicRootNode <= 4) {
-    stats.rootub = initialCol.get_n_colors();
-    stats.rootHeurTime = heurStats.totalTime;
-    stats.rootSemigreedyIters = (params.heuristicRootNode == 3)
-                                  ? static_cast<int>(heurStats.totalIters)
-                                  : 0;
+  if (params.heuristicInitial >= 1 && params.heuristicInitial <= 4) {
+    stats.initialHeurValue = initialCol.get_n_colors();
+    stats.initialHeurTime = heurStats.totalTime;
+    stats.initialSemigreedyIters = (params.heuristicInitial == 3)
+                                       ? static_cast<int>(heurStats.totalIters)
+                                       : 0;
   }
 
   // Number of colors
