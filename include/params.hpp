@@ -20,12 +20,12 @@ struct Params {
   int verbose;
 
   // Heuristic options
-  // heuristicRootNode: type of heuristic for the root node
+  // heuristicInitial: type of heuristic for the initial solution
   //    0: no heuristic
   //    1: greedy 1-step heuristic
   //    2: greedy 2-step heuristic
   //    3: semi-greedy 2-step heuristic (default)
-  // heuristicOtherNodes: type of heuristic for other nodes
+  // heuristicNodes: type of heuristic for initializing nodes
   //    0: no heuristic
   //    1: greedy 1-step heuristic
   //    2: greedy 2-step heuristic (default)
@@ -38,8 +38,8 @@ struct Params {
   // heuristicSemigreedyIter: number of iterations for semi-greedy heuristic
   // heuristicSemigreedyTimeLimit: time limit (seconds) for semi-greedy
   // heuristic runs
-  int heuristicRootNode;
-  int heuristicOtherNodes;
+  int heuristicInitial;
+  int heuristicNodes;
   size_t heuristic2stepVariant;
   double heuristicSemigreedyAlpha;
   size_t heuristicSemigreedyIter;
@@ -111,8 +111,8 @@ struct Params {
         treeSearch(1),
         onlyRelaxation(false),
         verbose(0),
-        heuristicRootNode(3),
-        heuristicOtherNodes(2),
+        heuristicInitial(3),
+        heuristicNodes(2),
         heuristic2stepVariant(2),
         heuristicSemigreedyAlpha(0.2),
         heuristicSemigreedyIter(50000),
@@ -247,24 +247,22 @@ struct Params {
     out << "Only relaxation: " << (onlyRelaxation ? "enabled" : "disabled")
         << std::endl;
     out << "Verbose level: " << verbose << std::endl;
-    out << "Heuristic root node: " << heuristicRootNode
-        << get_heur_name(heuristicRootNode);
-    if (heuristicRootNode == 2 || heuristicRootNode == 3 ||
-        heuristicRootNode == 4)
+    out << "Heuristic initial solution: " << heuristicInitial
+        << get_heur_name(heuristicInitial);
+    if (heuristicInitial == 2 || heuristicInitial == 3)
       out << ", variant: " << heuristic2stepVariant
           << get_heur_variant(heuristic2stepVariant);
-    if (heuristicRootNode == 3 || heuristicRootNode == 4)
+    if (heuristicInitial == 3)
       out << ", alpha: " << heuristicSemigreedyAlpha
           << ", iterations: " << heuristicSemigreedyIter
           << ", time limit: " << heuristicSemigreedyTimeLimit << "s";
     out << std::endl;
-    out << "Heuristic other nodes: " << heuristicOtherNodes
-        << get_heur_name(heuristicOtherNodes);
-    if (heuristicRootNode == 2 || heuristicRootNode == 3 ||
-        heuristicRootNode == 4)
+    out << "Heuristic for nodes: " << heuristicNodes
+        << get_heur_name(heuristicNodes);
+    if (heuristicNodes == 2 || heuristicNodes == 3)
       out << ", variant: " << heuristic2stepVariant
           << get_heur_variant(heuristic2stepVariant);
-    if (heuristicOtherNodes == 3 || heuristicRootNode == 4)
+    if (heuristicNodes)
       out << ", alpha: " << heuristicSemigreedyAlpha
           << ", iterations: " << heuristicSemigreedyIter
           << ", time limit: " << heuristicSemigreedyTimeLimit << "s";

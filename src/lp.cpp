@@ -281,14 +281,15 @@ LP_STATE LP::solve(double timelimit, double ub) {
   }
 
   // Apply heuristic at the current node
-  heuristic_solve(timelimit - get_elapsed_time(startTime));
+  heuristic_initialization();
   if (params.is_verbose(2)) {
     if (has_heur_solution())
-      debugLog << "LP heuristic solution: " << coloring.get_n_colors()
-               << " colors, " << get_elapsed_time(startTime) << " seconds."
-               << std::endl;
+      debugLog << "Node initialized with heuristic solution: "
+               << coloring.get_n_colors() << " colors, "
+               << get_elapsed_time(startTime) << " seconds." << std::endl;
     else
-      debugLog << "LP heuristic failed to find a solution." << std::endl;
+      debugLog << "Node initialized with heuristic solution failed."
+               << std::endl;
   }
 
   // Apply feasibility check at the current node
@@ -459,6 +460,20 @@ LP_STATE LP::solve(double timelimit, double ub) {
     }
 
     values.end();
+
+    // If root node and LP_FRACTIONAL, run initial heuristic
+    // Use the ceil of the LR value to early stop the heuristic
+    if (isRoot && state == LP_FRACTIONAL) {
+      find_heuristic_solution(std::ceil(objVal));
+      if (params.is_verbose(2)) {
+        if (has_heur_solution())
+          debugLog << "Heuristic solution: " << coloring.get_n_colors()
+                   << " colors, " << get_elapsed_time(startTime) << " seconds."
+                   << std::endl;
+        else
+          debugLog << "Heuristic failed to find a solution." << std::endl;
+      }
+    }
   }
 
   cplex.end();
@@ -543,14 +558,12 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
   return state;
 }
 
-// Heuristic solution of the DPCP instances at the current node
-// The heuristic used is selected depending on the parameters
-void LP::heuristic_solve(double timelimit) {
+// Run heuristic solution of the DPCP instances
+HeurStats run_heuristic(std::optional<size_t> valueEarlyStop) {
   HeurStats heurStats;
-  int heur = isRoot ? params.heuristicRootNode : params.heuristicOtherNodes;
-  switch (heur) {
+  switch (params.heuristicNodes) {
     case 0:
-      return;
+      break;
     case 1:
       heurStats = dpcp_1_step_greedy_heur(dpcp, coloring);
       break;
@@ -558,24 +571,38 @@ void LP::heuristic_solve(double timelimit) {
       heurStats = dpcp_2_step_greedy_heur(dpcp, coloring, params);
       break;
     case 3:
-      heurStats = dpcp_2_step_semigreedy_heur(dpcp, coloring, params);
+      heurStats =
+          dpcp_2_step_semigreedy_heur(dpcp, coloring, params, valueEarlyStop),
+      ;
       break;
     default:
-      log << "Warning: unknown heuristic code " << heur
+      log << "Warning: unknown heuristic code " << params.heuristicNodes
           << ", skipping heuristic solve." << std::endl;
-      return;
+      break;
   }
+  return heurStats;
+}
 
+// Heuristic initialization of current node
+void LP::heuristic_initialization() {
+  HeurStats heurStats = run_heuristic();
   // Update heuristic stats
   if (isRoot) {
     stats.rootHeurTime = heurStats.totalTime;
-    stats.rootSemigreedyIters =
-        (heur == 3) ? static_cast<int>(heurStats.totalIters) : 0;
     if (heurStats.state == FEASIBLE) stats.rootub = heurStats.value;
   } else {
     stats.otherNodesHeurTime += heurStats.totalTime;
   }
+  return;
+}
 
+// Find heuristic solution
+void LP::find_heuristic_solution(std::optional<size_t> valueEarlyStop) {
+  coloring.reset_coloring();
+  HeurStats heurStats = run_heuristic(valueEarlyStop);
+  stats.initialHeurValue = heurStats.value;
+  stats.initialHeurTime = heurStats.totalTime;
+  stats.initialSemigreedyIters = heurStats.totalIters;
   return;
 }
 

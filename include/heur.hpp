@@ -1,5 +1,6 @@
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -15,13 +16,13 @@ void dpcp_dsatur_heur(
 HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
                                   const Params& params);
 
-HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
-                                      const Params& params,
-                                      std::ostream& iterFile,
-                                      double timelimit = 60.0);
+HeurStats dpcp_2_step_semigreedy_heur(
+    const DPCPInst& dpcp, Col& col, const Params& params,
+    std::ostream& iterFile,
+    std::optional<size_t> valueEarlyStop = std::nullopt);
 
-HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
-                                      const Params& params,
-                                      double timelimit = 60.0);
+HeurStats dpcp_2_step_semigreedy_heur(
+    const DPCPInst& dpcp, Col& col, const Params& params,
+    std::optional<size_t> valueEarlyStop = std::nullopt);
 
 HeurStats dpcp_1_step_greedy_heur(const DPCPInst& dpcp, Col& col);

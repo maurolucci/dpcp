@@ -103,7 +103,8 @@ void Stats::write_stats(std::ostream& file) {
        << nedges << "," << nP << "," << nQ << "," << nvars << "," << ncons
        << "," << get_state_as_str() << "," << get_termination_reason() << ","
        << time << "," << nodes << "," << nodesLeft << "," << lb << "," << ub
-       << "," << gap << "," << nNodesInt << "," << nNodesFrac << ","
+       << "," << gap << "," << initialHeurValue << "," << initialHeurTime << ","
+       << initialSemigreedyIters << "," << nNodesInt << "," << nNodesFrac << ","
        << nNodesGcp << "," << nNodesTrivial << ","
        << nNodesInfeasPrepro + nNodesInfeasCheck + nNodesInfeasAux << ","
        << nNodesInfeasPrepro << "," << nNodesInfeasCheck << ","
@@ -114,8 +115,7 @@ void Stats::write_stats(std::ostream& file) {
 
   file << rootNVertices << "," << rootNEdges << "," << rootNP << "," << rootNQ
        << "," << rootlb << "," << rootub << "," << rootHeurTime << ","
-       << rootCgTime << ","
-       << rootSemigreedyIters << "," << rootFeasTime << ","
+       << rootFeasTime << "," << rootCgTime << ","
        << rootNCallsPool + rootNCallsHeur + rootNCallsMwis1 + rootNCallsMwis2 +
               rootNCallsExact
        << "," << rootNCallsPool << "," << rootNCallsHeur << ","
@@ -176,6 +176,10 @@ void Stats::print_stats(std::ostream& file) {
   file << "Lower bound: " << lb << std::endl;
   file << "Upper bound: " << ub << std::endl;
   file << "Gap: " << gap << std::endl;
+  file << "Initial heuristic value: " << initialHeurValue << std::endl;
+  file << "Initial heuristic time: " << initialHeurTime << std::endl;
+  file << "Initial semigreedy iterations: " << initialSemigreedyIters
+       << std::endl;
   file << "Node counts: " << nNodesInt << " (LP integer), " << nNodesFrac
        << " (LP fractional), " << nNodesGcp << " (GCP), " << nNodesTrivial
        << " (trivial), "
@@ -200,9 +204,8 @@ void Stats::print_stats(std::ostream& file) {
   file << "\tnQ after preprocessing: " << rootNQ << std::endl;
   file << "\tLower bound: " << rootlb << std::endl;
   file << "\tUpper bound: " << rootub << std::endl;
-  file << "\tDPCP heuristic time: " << rootHeurTime << std::endl;
-  file << "\tDPCP semigreedy iterations: " << rootSemigreedyIters << std::endl;
-  file << "\tDPCP feasibility check time: " << rootFeasTime << std::endl;
+  file << "\tHeuristic time: " << rootHeurTime << std::endl;
+  file << "\tFeasibility check time: " << rootFeasTime << std::endl;
   file << "\tColumn generation time: " << rootCgTime << std::endl;
   file << "\tPricing:" << std::endl;
   file << "\t\tCalls: "

@@ -349,7 +349,7 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile,
-                                      double timelimit) {
+                                      std::optional<size_t> valueEarlyStop) {
   TimePoint start = ClockType::now();
   HeurStats stats;
   const size_t maxIters = params.heuristicSemigreedyIter;
@@ -357,7 +357,7 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
 
   for (size_t i = 0; i < maxIters; ++i) {
     if (std::chrono::duration<double>(ClockType::now() - start).count() >=
-        timelimit) {
+        stats.heuristicSemigreedyTimeLimit) {
       break;
     }
 
@@ -377,6 +377,11 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
         stats.bestTime =
             std::chrono::duration<double>(ClockType::now() - start).count();
         stats.bestIter = i;
+        // Early stop if we reach the target value
+        if (valueEarlyStop.has_value() &&
+            col.get_n_colors() <= valueEarlyStop.value()) {
+          break;
+        }
       }
     }
 
@@ -650,12 +655,14 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
-                                      const Params& params, double timelimit) {
+                                      const Params& params,
+                                      std::optional<size_t> valueEarlyStop) {
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;
   std::ostream nullstream(&nullBuffer);
-  return dpcp_2_step_semigreedy_heur(dpcp, col, params, nullstream, timelimit);
+  return dpcp_2_step_semigreedy_heur(dpcp, col, params, nullstream,
+                                     valueEarlyStop);
 }
 
 // One-step heuristic for DPCP

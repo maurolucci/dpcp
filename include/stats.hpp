@@ -84,6 +84,12 @@ class Stats {
   int ub;
   // Final optimality gap (in percentage)
   double gap;
+  // Value of the initial heuristic solution (if any)
+  double initialHeurValue;
+  // Time required for finding the initial solution at the root node
+  double initialHeurTime;
+  // Number of semigreedy iterations executed at the root node
+  int initialSemigreedyIters;
   // Number of infeasible nodes detected in the B&P tree, by source
   int nNodesInfeasPrepro, nNodesInfeasCheck, nNodesInfeasAux;
   // Number of nodes by type detected in the B&P tree
@@ -107,10 +113,8 @@ class Stats {
   double rootlb;
   // Root upper bound
   int rootub;
-  // Time required for finding the initial solution at the root node
+  // Time requiered for heuristic solution at the root node
   double rootHeurTime;
-  // Number of semigreedy iterations executed at the root node
-  int rootSemigreedyIters;
   // Time required for feasibility check at the root node
   double rootFeasTime;
   // Time required for column generation at the root node
@@ -156,6 +160,9 @@ class Stats {
         lb(-1.0),
         ub(-1),
         gap(-1.0),
+        initialHeurValue(-1.0),
+        initialHeurTime(0.0),
+        initialSemigreedyIters(0),
         nNodesInfeasPrepro(0),
         nNodesInfeasCheck(0),
         nNodesInfeasAux(0),
@@ -177,7 +184,6 @@ class Stats {
         rootlb(-1.0),
         rootub(-1),
         rootHeurTime(0.0),
-        rootSemigreedyIters(0),
         rootFeasTime(0.0),
         rootCgTime(0.0),
         rootNColsPool(0),

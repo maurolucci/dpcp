@@ -95,12 +95,13 @@ int main(int argc, const char** argv) {
   desc.add_options()("ub", po::value<double>()->default_value(DBL_MAX),
                      "initial upper bound on the optimal solution value");
   desc.add_options()(
-      "heur-root", po::value<int>()->default_value(3),
-      "type of heuristic for the root node (0: no heuristic, "
+      "heur-initial", po::value<int>()->default_value(3),
+      "type of heuristic for the initial solution (0: no heuristic, "
       "1: greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
   desc.add_options()("heur-nodes", po::value<int>()->default_value(2),
-                     "type of heuristic for other nodes (0: no heuristic, 1: "
-                     "greedy 1-step, 2: greedy 2-step, 3: semi-greedy 2-step)");
+                     "type of heuristic for initializing nodes (0: no "
+                     "heuristic (dummy variable), 1: greedy 1-step, 2: greedy "
+                     "2-step, 3: semi-greedy 2-step)");
   desc.add_options()(
       "heur-2step-variant", po::value<size_t>()->default_value(2),
       "variant of the 2-step heuristic (1: DEG, 2: CDEG, 3: SCDEG)");
@@ -193,8 +194,8 @@ int main(int argc, const char** argv) {
     return 2;
   }
   params.onlyRelaxation = vm.count("relax");
-  params.heuristicRootNode = vm["heur-root"].as<int>();
-  params.heuristicOtherNodes = vm["heur-nodes"].as<int>();
+  params.heuristicInitial = vm["heur-initial"].as<int>();
+  params.heuristicNodes = vm["heur-nodes"].as<int>();
   params.heuristic2stepVariant = vm["heur-2step-variant"].as<size_t>();
   if (params.heuristic2stepVariant < 1 || params.heuristic2stepVariant > 3) {
     std::cerr << "heur-2step-variant must be 1 (DEG), 2 (CDEG), or 3 (RCDEG)"

@@ -150,7 +150,10 @@ class LP {
   LP_STATE gcp_solve(double timelimit, double ub);
 
   // Heuristic solution of the DPCP instances at the current node
-  void heuristic_solve(double timelimit);
+  HeurStats run_heuristic(std::optional<size_t> valueEarlyStop = std::nullopt);
+  void heuristic_initialization();
+  void find_heuristic_solution(
+      std::optional<size_t> valueEarlyStop = std::nullopt);
 
   // Feasibility check of the DPCP instance at the current node
   bool feasibility_solve();
