@@ -387,13 +387,10 @@ int main(int argc, const char** argv) {
             break;
           case 3:
             if (vm.count("out")) {
-              heurStats = dpcp_2_step_semigreedy_heur(
-                  dpcp, gcol, params, out.iterFile,
-                  static_cast<double>(params.heuristicSemigreedyTimeLimit));
+              heurStats =
+                  dpcp_2_step_semigreedy_heur(dpcp, gcol, params, out.iterFile);
             } else {
-              heurStats = dpcp_2_step_semigreedy_heur(
-                  dpcp, gcol, params,
-                  static_cast<double>(params.heuristicSemigreedyTimeLimit));
+              heurStats = dpcp_2_step_semigreedy_heur(dpcp, gcol, params);
             }
             break;
           default:
