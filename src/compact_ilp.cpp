@@ -4,6 +4,7 @@
 #include <ilcplex/ilocplex.h>
 
 #include <cfloat>
+#include <chrono>
 #include <iostream>
 #include <map>
 #include <string>
@@ -14,6 +15,9 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
                 std::ostream& debugLog, Col& col) {
   Stats stats;
   HeurStats heurStats;
+
+  // Initial time
+  auto startTime = std::chrono::high_resolution_clock::now();
 
   // Try to find an initial coloring with the heuristic
   Col initialCol;
@@ -188,7 +192,9 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
   stats.nvars = static_cast<int>(cplex.getNcols());
   stats.ncons = static_cast<int>(cplex.getNrows());
   stats.state = state;
-  stats.time = cplex.getTime();
+  stats.time = std::chrono::duration<double>(
+                   std::chrono::high_resolution_clock::now() - startTime)
+                   .count();
   stats.nodes = static_cast<int>(cplex.getNnodes());
   stats.lb = cplex.getBestObjValue();
   stats.ub = -1;
