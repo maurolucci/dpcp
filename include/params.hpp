@@ -181,7 +181,9 @@ struct Params {
       case 1:
         return " (deg)";
       case 2:
-        return " (deg2)";
+        return " (qdeg)";
+      case 3:
+        return " (sqdeg)";
       default:
         return " (unknown)";
     }
