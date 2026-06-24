@@ -40,18 +40,18 @@ do
     do
         if [[ "$h" == "greedy1s" ]]; then
             echo "Solving with heuristic: $h"
-            time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/" --heur-root 1 --preproc-off
+            time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/" --heur-initial 1 --preproc-off
         elif [[ "$h" == "greedy2s" ]]; then
             for v in "${VARIANTS[@]}"
             do
                 echo "Solving with heuristic: $h, variant: $v"
-                time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-root 2 --heur-2step-variant $v --preproc-off
+                time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-initial 2 --heur-2step-variant $v --preproc-off
             done
         elif [[ "$h" == "semigreedy2s" ]]; then
             for v in "${VARIANTS[@]}"
             do
             	echo "Solving with heuristic: $h, variant: $v, repetition: $REPETITIONS"
-            	time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-root 3 --heur-2step-variant $v --heur-semigreedy-iter $REPETITIONS --heur-semigreedy-alpha $ALPHA --heur-semigreedy-time $TIME --preproc-off
+            	time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/" --heur-initial 3 --heur-2step-variant $v --heur-semigreedy-iter $REPETITIONS --heur-semigreedy-alpha $ALPHA --heur-semigreedy-time $TIME --preproc-off
             done
         fi
     done
