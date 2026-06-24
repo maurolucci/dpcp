@@ -5,6 +5,7 @@
 declare -a HEURS=("semigreedy2s")
 declare -a VARIANTS=("1" "2" "3")
 declare -a ALPHA=("0.1" "0.15" "0.2" "0.25" "0.3" "0.35" "0.4")
+declare TIME=300
 
 declare INPUT="../../instances/dpcp/er-1"
 declare INSTANCES="$INPUT/instances.txt"
@@ -55,7 +56,7 @@ do
                 for a in "${ALPHA[@]}"
                 do
                     echo "Solving with heuristic: $h, variant: $v, alpha: $a"
-                    time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/a$a/" --heur-initial 3 --heur-2step-variant $v --heur-semigreedy-alpha $a --heur-semigreedy-iter 50000 --preproc-off
+                    time $BIN -s heur -f "$INPUT/$LINE" -o "$OUT/$h/v$v/a$a/" --heur-initial 3 --heur-2step-variant $v --heur-semigreedy-alpha $a --heur-semigreedy-iter 50000 --heur-semigreedy-time $TIME --preproc-off
                 done
             done
         fi
