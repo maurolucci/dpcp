@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a N=("16" "10" "8")
+declare -a N=("18" "12" "9")
 declare -a R=("20" "32" "46")
 declare num="5"
 
