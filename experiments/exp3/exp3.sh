@@ -4,7 +4,7 @@
 
 declare -a HEURS=("greedy1s" "greedy2s" "semigreedy2s")
 declare -a VARIANTS=("1" "2" "3")
-declare ALPHA="0.1"
+declare ALPHA="0.15"
 declare REPETITIONS="100000"
 declare TIME="3600"
 

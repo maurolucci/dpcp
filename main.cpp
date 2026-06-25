@@ -106,7 +106,7 @@ int main(int argc, const char** argv) {
       "heur-2step-variant", po::value<size_t>()->default_value(3),
       "variant of the 2-step heuristic (1: DEG, 2: CDEG, 3: SCDEG)");
   desc.add_options()("heur-semigreedy-alpha",
-                     po::value<double>()->default_value(0.1),
+                     po::value<double>()->default_value(0.15),
                      "alpha parameter for the semi-greedy heuristic");
   desc.add_options()("heur-semigreedy-iter",
                      po::value<size_t>()->default_value(40000),

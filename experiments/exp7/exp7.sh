@@ -8,7 +8,7 @@ declare VERBOSE="2"
 
 # Initial heuristic parameters:
 declare HEURISTIC_INITIAL="3"
-declare HEURISTIC_INITIAL_ALPHA="0.1"
+declare HEURISTIC_INITIAL_ALPHA="0.15"
 declare HEURISTIC_INITIAL_REPETITIONS="40000"
 declare HEURISTIC_INITIAL_MAXTIME="60"
 
