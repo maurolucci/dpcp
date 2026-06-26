@@ -12,8 +12,9 @@
 using Column = StableEnv;
 using Pool = std::vector<Column>;
 
-void dpcp_dsatur_heur(const DPCPInst& dpcp, const VertexVector& selected,
-                      const CollapsedMap& adj, Col& col);
+void dpcp_dsatur_heur(
+    const DPCPInst& dpcp, VertexVector& selected,
+    std::unordered_map<size_t, std::unordered_set<size_t>>& adj, Col& col);
 
 HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
                                   const Params& params);
