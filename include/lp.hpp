@@ -151,10 +151,9 @@ class LP {
 
   // Heuristic solution of the DPCP instances at the current node
   HeurStats run_heuristic(int heuristicType,
-                          std::optional<size_t> valueEarlyStop = std::nullopt);
+                          std::optional<Pool>& pool = std::nullopt);
   void heuristic_initialization();
-  void find_heuristic_solution(
-      std::optional<size_t> valueEarlyStop = std::nullopt);
+  void find_heuristic_solution();
 
   // Feasibility check of the DPCP instance at the current node
   bool feasibility_solve();

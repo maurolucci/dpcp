@@ -349,7 +349,7 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile,
-                                      std::optional<size_t> valueEarlyStop) {
+                                      std::optional<Pool>& pool) {
   TimePoint start = ClockType::now();
   HeurStats stats;
   const size_t maxIters = params.heuristicSemigreedyIter;
@@ -377,10 +377,14 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
         stats.bestTime =
             std::chrono::duration<double>(ClockType::now() - start).count();
         stats.bestIter = i;
-        // Early stop if we reach the target value
-        if (valueEarlyStop.has_value() &&
-            col.get_n_colors() <= valueEarlyStop.value()) {
-          break;
+      }
+
+      // Fill the pool with the new coloring
+      if (pool.has_value() && pool->size() < pool->capacity()) {
+        for (size_t k = 0; k < newCol.get_n_colors(); ++k) {
+          StableEnv stab = newCol.get_stable(dpcp, k);
+          pool->push_back(stab);
+          if (pool->size() >= pool->capacity()) break;
         }
       }
     }
@@ -414,11 +418,11 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
 // Struct with the vertex information needed by the 1-step heuristic for
 // DPCP
 struct Heur1SVertexInfo {
-  bool removed;               // whether the vertex has been removed
-  Color color;                // color of the vertex (-1: uncolored)
-  std::set<Color> adjColors;  // set of adjacent colors
-  std::set<Vertex>
-      uncolNeighbors;  // set of uncolored neighbors (outside of P[pi] U Q[qj])
+  bool removed;                     // whether the vertex has been removed
+  Color color;                      // color of the vertex (-1: uncolored)
+  std::set<Color> adjColors;        // set of adjacent colors
+  std::set<Vertex> uncolNeighbors;  // set of uncolored neighbors (outside of
+                                    // P[pi] U Q[qj])
   std::map<size_t, size_t> degree;  // Q-degree
   size_t pi;
   size_t qj;
@@ -656,13 +660,12 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
-                                      std::optional<size_t> valueEarlyStop) {
+                                      std::optional<Pool>& pool) {
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;
   std::ostream nullstream(&nullBuffer);
-  return dpcp_2_step_semigreedy_heur(dpcp, col, params, nullstream,
-                                     valueEarlyStop);
+  return dpcp_2_step_semigreedy_heur(dpcp, col, params, nullstream, pool);
 }
 
 // One-step heuristic for DPCP

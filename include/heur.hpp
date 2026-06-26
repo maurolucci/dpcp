@@ -9,20 +9,19 @@
 #include "params.hpp"
 #include "stats.hpp"
 
-void dpcp_dsatur_heur(
-    const DPCPInst& dpcp, VertexVector& selected,
-    std::unordered_map<size_t, std::unordered_set<size_t>>& adj, Col& col);
+using Column = StableEnv;
+using Pool = std::vector<Column>;
 
 HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
                                   const Params& params);
 
-HeurStats dpcp_2_step_semigreedy_heur(
-    const DPCPInst& dpcp, Col& col, const Params& params,
-    std::ostream& iterFile,
-    std::optional<size_t> valueEarlyStop = std::nullopt);
+HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
+                                      const Params& params,
+                                      std::ostream& iterFile,
+                                      std::optional<Pool>& pool = std::nullopt);
 
-HeurStats dpcp_2_step_semigreedy_heur(
-    const DPCPInst& dpcp, Col& col, const Params& params,
-    std::optional<size_t> valueEarlyStop = std::nullopt);
+HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
+                                      const Params& params,
+                                      std::optional<Pool>& pool = std::nullopt);
 
 HeurStats dpcp_1_step_greedy_heur(const DPCPInst& dpcp, Col& col);
