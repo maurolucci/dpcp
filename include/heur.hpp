@@ -18,10 +18,10 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
                                       std::ostream& iterFile,
-                                      std::optional<Pool>& pool = std::nullopt);
+                                      Pool* pool = nullptr);
 
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
-                                      std::optional<Pool>& pool = std::nullopt);
+                                      Pool* pool = nullptr);
 
 HeurStats dpcp_1_step_greedy_heur(const DPCPInst& dpcp, Col& col);

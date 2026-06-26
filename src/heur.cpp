@@ -348,8 +348,7 @@ HeurStats dpcp_2_step_greedy_heur(const DPCPInst& dpcp, Col& col,
 // General two-step semigreedy heuristic for DPCP
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
                                       const Params& params,
-                                      std::ostream& iterFile,
-                                      std::optional<Pool>& pool) {
+                                      std::ostream& iterFile, Pool* pool) {
   TimePoint start = ClockType::now();
   HeurStats stats;
   const size_t maxIters = params.heuristicSemigreedyIter;
@@ -380,7 +379,7 @@ HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
       }
 
       // Fill the pool with the new coloring
-      if (pool.has_value() && pool->size() < pool->capacity()) {
+      if (pool && pool->size() < pool->capacity()) {
         for (size_t k = 0; k < newCol.get_n_colors(); ++k) {
           StableEnv stab = newCol.get_stable(dpcp, k);
           pool->push_back(stab);
@@ -659,8 +658,7 @@ bool single_step(const DPCPInst& dpcp, Col& col, bool greedy) {
 
 // 3-arg overload: discards iterFile output
 HeurStats dpcp_2_step_semigreedy_heur(const DPCPInst& dpcp, Col& col,
-                                      const Params& params,
-                                      std::optional<Pool>& pool) {
+                                      const Params& params, Pool* pool) {
   struct NullBuffer : std::streambuf {
     int overflow(int c) { return c; }
   } nullBuffer;

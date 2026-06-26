@@ -558,7 +558,7 @@ LP_STATE LP::gcp_solve(double timelimit, double ub) {
 }
 
 // Run heuristic solution of the DPCP instances
-HeurStats LP::run_heuristic(int heuristicType, std::optional<Pool>& pool) {
+HeurStats LP::run_heuristic(int heuristicType, Pool* pool) {
   HeurStats heurStats;
   switch (heuristicType) {
     case 0:
@@ -599,7 +599,7 @@ void LP::find_heuristic_solution() {
   pool.clear();
   pool.shrink_to_fit();
   pool.reserve(params.heuristicPoolMaxCols);
-  HeurStats heurStats = run_heuristic(params.heuristicInitial, pool);
+  HeurStats heurStats = run_heuristic(params.heuristicInitial, &pool);
   stats.initialHeurValue = heurStats.value;
   stats.initialHeurTime = heurStats.totalTime;
   stats.initialSemigreedyIters = heurStats.totalIters;
