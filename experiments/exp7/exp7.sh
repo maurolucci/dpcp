@@ -26,8 +26,8 @@ declare INHERIT_COLS="3"
 # Pricing parameters:
 declare PRICING_METHOD="4"
 declare ALPHA_PRI="0.2"
-declare GREEDY_MAX_COLS="1000"
-declare MAX_COLS_PER_ITER="10"
+declare GREEDY_MAX_COLS="100"
+declare MAX_COLS_PER_ITER="20"
 declare PRICING_EXACT_TIME="7200"
 
 # Branching parameters:
@@ -55,4 +55,10 @@ do
     --pricing-method $PRICING_METHOD --pricing-greedy-alpha $ALPHA_PRI \
     --pricing-greedy-max-cols $GREEDY_MAX_COLS --pricing-max-cols-per-iter $MAX_COLS_PER_ITER \
     --pricing-exact-time $PRICING_EXACT_TIME --branching-variable $BRANCHING_VARIABLE
+
+    time $BIN -s compact -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE \
+    --heur-initial $HEURISTIC_INITIAL --heur-2step-variant $VARIANT \
+    --heur-semigreedy-alpha $HEURISTIC_INITIAL_ALPHA --heur-semigreedy-iter $HEURISTIC_INITIAL_REPETITIONS \
+    --heur-semigreedy-time $HEURISTIC_INITIAL_MAXTIME
+
 done < "$INSTANCES"
