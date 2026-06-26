@@ -598,7 +598,7 @@ void LP::find_heuristic_solution() {
   coloring.reset_coloring();
   pool.clear();
   pool.shrink_to_fit();
-  pool.reserve(params.heuristicPoolMaxCols);
+  pool.reserve(params.inheritPoolMaxCols);
   HeurStats heurStats = run_heuristic(params.heuristicInitial, &pool);
   stats.initialHeurValue = heurStats.value;
   stats.initialHeurTime = heurStats.totalTime;
