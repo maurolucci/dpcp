@@ -199,7 +199,7 @@ Stats solve_ilp(DPCPInst& _dpcp, const Params& params, std::ostream& log,
 
   if (state == OPTIMAL || state == FEASIBLE) {
     // Recover coloring
-    Coloring col;
+    Col col;
     for (auto v : boost::make_iterator_range(vertices(dpcp.get_graph())))
       for (size_t k = 0; k < ncolors; ++k)
         if (cplex.getValue(x[dpcp.get_current_id(v)][k]) > 0.5)
