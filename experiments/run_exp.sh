@@ -8,6 +8,6 @@ for exp in "${experiments[@]}"
 do
     echo "Running experiment: $exp"
     cd $exp
-    nohup ./${exp}.sh &
+    ./${exp}.sh
     cd ..
 done
