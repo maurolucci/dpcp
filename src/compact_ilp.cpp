@@ -11,13 +11,26 @@
 
 #include "heur.hpp"
 
-Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
-                std::ostream& debugLog, Col& col) {
+Stats solve_ilp(DPCPInst& _dpcp, const Params& params, std::ostream& log,
+                std::ostream& debugLog, Col& _col) {
   Stats stats;
   HeurStats heurStats;
 
   // Initial time
   auto startTime = std::chrono::high_resolution_clock::now();
+
+  // Make a copy of dpcp to avoid modifying the original instance
+  DPCPInst dpcp(_dpcp);
+
+  // Preprocess the instance
+  dpcp.preprocess(true, params.preprocessing);
+  if (dpcp.is_infeasible_instance()) {
+    stats.state = INFEASIBLE;
+    stats.time = std::chrono::duration<double>(
+                     std::chrono::high_resolution_clock::now() - startTime)
+                     .count();
+    return stats;
+  }
 
   // Try to find an initial coloring with the heuristic
   Col initialCol;
@@ -152,8 +165,9 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
                      std::chrono::duration<double>(
                          std::chrono::high_resolution_clock::now() - startTime)
                          .count());
-  cplex.setParam(IloCplex::Param::Parallel, 1);  // Deterministic mode
-  cplex.setParam(IloCplex::Param::Threads, 1);   // Single thread
+  cplex.setParam(IloCplex::Param::Parallel, 1);      // Deterministic mode
+  cplex.setParam(IloCplex::Param::Threads, 1);       // Single thread
+  cplex.setParam(IloCplex::Param::WorkMem, 5120.0);  // Memory limit in MB
   // cplex.setParam(IloCplex::Param::MIP::Strategy::HeuristicEffort, 0);
 
   // Solve
@@ -185,11 +199,16 @@ Stats solve_ilp(DPCPInst& dpcp, const Params& params, std::ostream& log,
 
   if (state == OPTIMAL || state == FEASIBLE) {
     // Recover coloring
+    Coloring col;
     for (auto v : boost::make_iterator_range(vertices(dpcp.get_graph())))
       for (size_t k = 0; k < ncolors; ++k)
         if (cplex.getValue(x[dpcp.get_current_id(v)][k]) > 0.5)
           col.set_color(dpcp, dpcp.get_current_id(v), k);
     assert(col.check_coloring(dpcp));
+
+    // Translate coloring to original instance
+    _col = col.translate_coloring(dpcp, _dpcp);
+    assert(_col.check_coloring(_dpcp));
   }
 
   // Complete stats

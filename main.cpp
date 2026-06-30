@@ -368,7 +368,6 @@ int main(int argc, const char** argv) {
           lowLog << "Solving instance " << path << " with compact ILP"
                  << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        dpcp.preprocess(true, params.preprocessing);
         stats = solve_ilp(dpcp, params, lowLog, debugLog, col);
       } else if (solver == "heur") {
         if (params.is_verbose())
