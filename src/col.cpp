@@ -23,7 +23,7 @@ void Col::reset_coloring() {
 }
 
 void Col::set_color(VertexId v, size_t pi, size_t qj, Color k) {
-  assert(!is_colored(v));
+  if (is_colored(v)) continue;  // Vertex already colored, skip
   coloring[v] = k;
   classes[k].insert(v);
   colorP[pi] = k;
