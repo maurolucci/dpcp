@@ -405,8 +405,8 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
     y_coefs[dpcp.get_current_id(v)] = dualsP[dpcp.get_P_part(v)];
   IloNumArray w_coefs(cxenv, dpcp.get_nQ());
   for (size_t qj = 0; qj < dpcp.get_nQ(); ++qj) w_coefs[qj] = -dualsQ[qj];
-  cplex.setLinearCoefs(cxobj, y, y_coefs);
-  cplex.setLinearCoefs(cxobj, w, w_coefs);
+  cxobj.setLinearCoefs(y, y_coefs);
+  cxobj.setLinearCoefs(w, w_coefs);
 
   // Reset stable
   stab.stable.clear();
