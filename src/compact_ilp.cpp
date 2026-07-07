@@ -194,7 +194,8 @@ Stats solve_ilp(DPCPInst& _dpcp, const Params& params, std::ostream& log,
       break;
   }
 
-  if (state == OPTIMAL || state == FEASIBLE) {
+  if (state == OPTIMAL ||
+      (state == TIME_EXCEEDED && cplex.getSolnPoolNsolns())) {
     // Recover coloring
     Col col;
     for (auto v : boost::make_iterator_range(vertices(dpcp.get_graph())))
@@ -218,7 +219,8 @@ Stats solve_ilp(DPCPInst& _dpcp, const Params& params, std::ostream& log,
   stats.nodes = static_cast<int>(cplex.getNnodes());
   stats.lb = cplex.getBestObjValue();
   stats.ub = -1;
-  if (state == OPTIMAL || state == FEASIBLE) {
+  if (state == OPTIMAL ||
+      (state == TIME_EXCEEDED && cplex.getSolnPoolNsolns())) {
     stats.ub = static_cast<int>(cplex.getObjValue() + 0.5);
     stats.gap = cplex.getMIPRelativeGap();
   }
