@@ -2,7 +2,7 @@
 
 # exp12: Evaluation of B&P for CFCP on closed neighborhoods of DIMAC instances
 
-declare TIME_LIMIT="7200"
+declare TIME_LIMIT="3600"
 declare TREE_SEARCH="1"
 declare VERBOSE="2"
 
