@@ -98,6 +98,8 @@ void PricingEnv::exact_init() {
     snprintf(name, sizeof(name), "w_%ld", qj);
     w[qj] = IloBoolVar(cxenv, name);
   }
+  cxmodel.add(y);
+  cxmodel.add(w);
 
   // Objective
   IloExpr obj(cxenv);
