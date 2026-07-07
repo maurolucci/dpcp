@@ -413,6 +413,9 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
   stab.qs.clear();
   stab.cost = 0.0;
 
+  // Re-extract model after coefficient changes
+  cplex.extract(cxmodel);
+
   // Solve
   cplex.setParam(IloCplex::Param::TimeLimit, exactTimeLimit);
   cplex.solve();
