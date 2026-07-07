@@ -406,7 +406,8 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
   for (size_t qj = 0; qj < dpcp.get_nQ(); ++qj) w_coefs[qj] = -dualsQ[qj];
   cxobj.setLinearCoefs(y, y_coefs);
   cxobj.setLinearCoefs(w, w_coefs);
-  cxmodel.add(cxobj);
+  cplex.delete(cxmodel);
+  cplex.extract(cxmodel);
 
   // Reset stable
   stab.stable.clear();
@@ -415,7 +416,6 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
   stab.cost = 0.0;
 
   // Solve
-  cplex.extract(cxmodel);
   cplex.setParam(IloCplex::Param::TimeLimit, exactTimeLimit);
   cplex.solve();
 
