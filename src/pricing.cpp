@@ -149,7 +149,7 @@ void PricingEnv::exact_init() {
 
   cxmodel.add(cxcons);
 
-  // Re-export model
+  // Export model
   cplex.extract(cxmodel);
 
   // Set parameters
@@ -412,9 +412,6 @@ std::pair<StableEnv, PRICING_STATE> PricingEnv::exact_solve(
   stab.ps.clear();
   stab.qs.clear();
   stab.cost = 0.0;
-
-  // Re-extract model after coefficient changes
-  cplex.extract(cxmodel);
 
   // Solve
   cplex.setParam(IloCplex::Param::TimeLimit, exactTimeLimit);
