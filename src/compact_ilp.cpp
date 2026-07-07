@@ -183,10 +183,7 @@ Stats solve_ilp(DPCPInst& _dpcp, const Params& params, std::ostream& log,
       state = INFEASIBLE;
       break;
     case IloCplex::CplexStatus::AbortTimeLim:
-      if (cplex.getSolnPoolNsolns())
-        state = FEASIBLE;
-      else
-        state = TIME_EXCEEDED;
+      state = TIME_EXCEEDED;
       break;
     case IloCplex::CplexStatus::MemLimFeas:
     case IloCplex::CplexStatus::MemLimInfeas:
