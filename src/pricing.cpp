@@ -54,6 +54,7 @@ PricingEnv::PricingEnv(DPCPInst& dpcpRef, double exactTimeLimit)
       exactTimeLimit(exactTimeLimit),
       cxenv(),
       cxmodel(cxenv),
+      cxobj(cxenv),
       y(cxenv, num_vertices(dpcp.get_graph())),
       w(cxenv, dpcp.get_nQ()),
       cxcons(cxenv),
@@ -149,7 +150,7 @@ void PricingEnv::exact_init() {
 
   cxmodel.add(cxcons);
 
-  // Export model
+  // Extract model
   cplex.extract(cxmodel);
 
   // Set parameters
