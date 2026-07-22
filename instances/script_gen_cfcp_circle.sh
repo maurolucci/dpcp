@@ -1,7 +1,7 @@
 #!/bin/bash
 
 declare -a N=("18" "12" "9")
-declare -a R=("20" "32" "46")
+declare -a R=("20" "35" "50")
 declare num="5"
 
 SRC="gen_circle_cfc.py"
