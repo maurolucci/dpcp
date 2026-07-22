@@ -36,7 +36,7 @@ while IFS= read -r LINE
 do
     echo "Processing instance: $LINE"
     # Baseline #0: exact, no initial heuristic
-    time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/p0/" --relax --heur-initial $HEURISTIC_INITIAL --heur-root 0 --feas-root 0 --feas-nodes 0 --inherit-cols 0 --pricing-method 0 --pricing-exact-time $TIME_PRI --time $TIME
+    time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/p0/" --relax --heur-initial $HEURISTIC_INITIAL --heur-nodes 0 --feas-root 0 --feas-nodes 0 --inherit-cols 0 --pricing-method 0 --pricing-exact-time $TIME_PRI --time $TIME
     # Pricing #0: exact
     time $BIN -s byp -f "$INPUT/$LINE" -o "$OUT/p1/" --relax --heur-initial $HEURISTIC_INITIAL --heur-nodes $HEUR_NODES --heur-2step-variant $VARIANT --feas-root 0 --feas-nodes 0 --inherit-cols 0 --pricing-method 0 --pricing-exact-time $TIME_PRI --time $TIME
     # Pricing #1: greedy + exact
