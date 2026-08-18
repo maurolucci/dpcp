@@ -69,7 +69,7 @@ exactcolors/graph.o exactcolors/lpcplex.o exactcolors/bbsafe.o \
 exactcolors/mwis_grdy.o exactcolors/heap.o \
 exactcolors/mwis.o exactcolors/mwis_sewell/mwss_ext.o \
 exactcolors/mwis_sewell/wstable.o exactcolors/color_backup.o exactcolors/greedy.o
-	$(CC) -o $@ $^ $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS) $(BOOSTLIB)
+	$(CC) -o $@ $^ $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS) $(GUROBIFLAGS) $(BOOSTLIB)
 
 clean:
 	rm -f *.o dpcp test
