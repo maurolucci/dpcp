@@ -13,12 +13,15 @@ CONCERTINCDIR = $(CONCERTDIR)/include
 CPLEXINCDIR   = $(CPLEXDIR)/include
 CPLEXLIBDIR   = $(CPLEXDIR)/lib/$(SYSTEM)/$(LIBFORMAT)
 CONCERTLIBDIR = $(CONCERTDIR)/lib/$(SYSTEM)/$(LIBFORMAT)
+GUROBI_HOME = /opt/gurobi1203/linux64
 BOOSTLIB = -lboost_program_options
 
 CPLEXFLAGS = $(CPLEXINFLAGS) $(CPLEXLIBFLAGS) $(CPLEXLNFLAGS)
 CPLEXINFLAGS = -I$(CPLEXINCDIR) -I$(CONCERTINCDIR)
 CPLEXLIBFLAGS = -L$(CPLEXLIBDIR) -L$(CONCERTLIBDIR)  
 CPLEXLNFLAGS = -lconcert -lilocplex -lcplex -ldl 
+GUROBIFLAGS = -I$(GUROBI_HOME)/include -L$(GUROBI_HOME)/lib \
+	-lgurobi_c++ -lgurobi120 -lpthread -lm
 
 
 all: dpcp
@@ -35,7 +38,7 @@ heur.o: src/heur.cpp include/heur.hpp include/col.hpp include/graph.hpp include/
 compact_ilp.o: src/compact_ilp.cpp include/compact_ilp.hpp \
 include/graph.hpp include/stats.hpp include/col.hpp include/cplex_env.hpp \
 include/params.hpp include/heur.hpp
-	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
+	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS) $(GUROBIFLAGS)
 
 pricing.o: src/pricing.cpp include/pricing.hpp include/graph.hpp include/stats.hpp include/random.hpp
 	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS)
@@ -57,7 +60,7 @@ include/col.hpp include/feas.hpp include/params.hpp include/heur.hpp
 main.o: main.cpp include/bp.hpp include/lp.hpp include/graph.hpp \
 include/col.hpp include/compact_ilp.hpp include/stats.hpp include/params.hpp \
 include/feas.hpp
-	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS) $(BOOSTLIB)
+	$(CC) -c -o $@ $< $(CCOPT) $(CCINFLAGS) $(CPLEXFLAGS) $(GUROBIFLAGS) $(BOOSTLIB)
 
 dpcp: main.o bp.o lp.o col.o compact_ilp.o graph.o stats.o pricing.o heur.o feas.o \
 exactcolors/color.o exactcolors/color_version.h exactcolors/util.o \

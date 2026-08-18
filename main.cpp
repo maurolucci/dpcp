@@ -71,7 +71,7 @@ int main(int argc, const char** argv) {
   desc.add_options()("help,h", "show this help");
   desc.add_options()("solver,s", po::value<std::string>()->required(),
                      "solver, can be any of "
-                     "[byp, compact, heur, feas-enum, feas-ilp]");
+                     "[byp, compact, gurobi, heur, feas-enum, feas-ilp]");
   desc.add_options()(
       "graph,f",
       po::value<std::vector<std::string>>()->required()->multitoken(),
@@ -368,7 +368,13 @@ int main(int argc, const char** argv) {
           lowLog << "Solving instance " << path << " with compact ILP"
                  << std::endl;
         DPCPInst dpcp(graph, P, Q);
-        stats = solve_ilp(dpcp, params, lowLog, debugLog, col);
+        stats = solve_ilp_cplex(dpcp, params, lowLog, debugLog, col);
+      } else if (solver == "gurobi") {
+        if (params.is_verbose())
+          lowLog << "Solving instance " << path << " with compact ILP (Gurobi)"
+                 << std::endl;
+        DPCPInst dpcp(graph, P, Q);
+        stats = solve_ilp_gurobi(dpcp, params, lowLog, debugLog, col);
       } else if (solver == "heur") {
         if (params.is_verbose())
           lowLog << "Solving instance " << path << " with DPCP heuristic"
