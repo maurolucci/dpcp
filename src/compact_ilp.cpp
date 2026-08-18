@@ -251,7 +251,7 @@ class StreamLogger : public GRBCallback {
     try {
       if (where == GRB_CB_MESSAGE) {
         // Retrieve the log message string from Gurobi
-        std::string msg = getStringInfo(GRB_CB_MSG);
+        std::string msg = getStringInfo(MSG_STRING);
         stream_ << msg;  // Stream to your ostream destination
         stream_.flush();
       }
