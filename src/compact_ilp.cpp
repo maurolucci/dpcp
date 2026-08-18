@@ -170,7 +170,7 @@ Stats solve_ilp_cplex(DPCPInst& _dpcp, const Params& params, std::ostream& log,
   cplex.setParam(IloCplex::Param::Parallel, 1);      // Deterministic mode
   cplex.setParam(IloCplex::Param::Threads, 1);       // Single thread
   cplex.setParam(IloCplex::Param::WorkMem, 4096.0);  // Memory limit in MB
-  cplex.setParam(IloCplex::Param::Limits::TreeMemory,
+  cplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory,
                  5120.0);  // Tree memory limit in MB
   // cplex.setParam(IloCplex::Param::MIP::Strategy::HeuristicEffort, 0);
 
@@ -251,7 +251,7 @@ class StreamLogger : public GRBCallback {
     try {
       if (where == GRB_CB_MESSAGE) {
         // Retrieve the log message string from Gurobi
-        std::string msg = getStringInfo(GRB_CB_MESSAGE_MSG_STRING);
+        std::string msg = getStringInfo(GRB_CB_MSG_STRING);
         stream_ << msg;  // Stream to your ostream destination
         stream_.flush();
       }
