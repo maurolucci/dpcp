@@ -63,5 +63,10 @@ do
     --heur-initial $HEURISTIC_INITIAL --heur-2step-variant $VARIANT \
     --heur-semigreedy-alpha $HEURISTIC_INITIAL_ALPHA --heur-semigreedy-iter $HEURISTIC_INITIAL_REPETITIONS \
     --heur-semigreedy-time $HEURISTIC_INITIAL_MAXTIME
+
+    time $BIN -s gurobi -f "$INPUT/$LINE" -o "$OUT/" -t $TIME_LIMIT --verbose $VERBOSE \
+    --heur-initial $HEURISTIC_INITIAL --heur-2step-variant $VARIANT \
+    --heur-semigreedy-alpha $HEURISTIC_INITIAL_ALPHA --heur-semigreedy-iter $HEURISTIC_INITIAL_REPETITIONS \
+    --heur-semigreedy-time $HEURISTIC_INITIAL_MAXTIME
     
 done < "$INSTANCES"
