@@ -1,0 +1,15 @@
+freq_c18_r20_i0.dpcp
+freq_c18_r20_i1.dpcp
+freq_c18_r20_i2.dpcp
+freq_c18_r20_i3.dpcp
+freq_c18_r20_i4.dpcp
+freq_c12_r35_i0.dpcp
+freq_c12_r35_i1.dpcp
+freq_c12_r35_i2.dpcp
+freq_c12_r35_i3.dpcp
+freq_c12_r35_i4.dpcp
+freq_c9_r50_i0.dpcp
+freq_c9_r50_i1.dpcp
+freq_c9_r50_i2.dpcp
+freq_c9_r50_i3.dpcp
+freq_c9_r50_i4.dpcp
