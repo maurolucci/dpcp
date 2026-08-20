@@ -2,6 +2,19 @@
 
 Branch-and-Price and ILP implementations for DPCP (double partition coloring problem) and CFCP (conflict-free coloring problem).
 
+## Related Work
+
+This repository corresponds to the work:
+
+Double Partition Coloring problem: a unified approach for conflict-free coloring of hypergraphs and other coloring problems in graphs
+
+Authors:
+
+- Mauro Lucci (UNR, CONICET) - mlucci@fceia.unr.edu.ar
+- Graciela Nasini (UNR, CONICET) - nasini@fceia.unr.edu.ar
+- Paola Tolomei (UNR, CONICET) - ptolomei@fceia.unr.edu.ar
+- Luis Miguel Torres (EPN) - luis.torres@epn.edu.ec
+
 ## Requirements
 
 - Linux
