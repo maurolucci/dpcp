@@ -193,7 +193,7 @@ def main():
         points = gen_mesh_points(side, nsteps)
         circles = gen_circles(side, centers, radius)
         num_vertices, num_edges, edges = build_hypergraph(circles, points)
-        name = f"circle_n{ncenters}_r{radius}_i{i}"
+        name = f"freq_c{ncenters}_r{radius}_i{i}"
         write_hypergraph(
             out + "/" + name + ".cfc",
             (num_vertices, num_edges, edges),

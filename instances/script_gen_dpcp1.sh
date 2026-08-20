@@ -24,7 +24,7 @@ do
 		    python3 $SRC $N $p $naa $nbb $num $OUT
 		    for i in $(seq 0 $((num - 1)))
 		    do
-		        echo "r_n${N}_p${p}_nA${naa}_nB${nbb}_i${i}.dpcp" >> "$OUT/instances.txt"
+		        echo "r_N${N}_p${p}_n${naa}_m${nbb}_i${i}.dpcp" >> "$OUT/instances.txt"
 		    done
         done
     done

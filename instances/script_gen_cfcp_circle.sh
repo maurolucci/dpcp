@@ -18,7 +18,7 @@ do
 	python3 $SRC $n $r $num $OUT
 	for i in $(seq 0 $((num - 1)))
 	do
-		python3 $CONV "$OUT/circle_n${n}_r${r}_i${i}"
-		echo "circle_n${n}_r${r}_i${i}.dpcp" >> "$OUT/instances.txt"
+		python3 $CONV "$OUT/freq_c${n}_r${r}_i${i}"
+		echo "freq_c${n}_r${r}_i${i}.dpcp" >> "$OUT/instances.txt"
 	done
 done

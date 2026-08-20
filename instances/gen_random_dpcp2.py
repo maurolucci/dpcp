@@ -18,20 +18,20 @@ import argparse
 import random   
 
 parser = argparse.ArgumentParser(description="Genera instancias aleatorias de DPCP.")
-parser.add_argument("n", help="Número de vértices del grafo", type=int)
+parser.add_argument("N", help="Número de vértices del grafo", type=int)
 parser.add_argument("p", help="Densidad de aristas", type=float)
-parser.add_argument("nP", help="Cardinalidad de la primera partición", type=int)
-parser.add_argument("nQ", help="Cardinalidad de la segunda partición", type=int)
+parser.add_argument("n", help="Cardinalidad de la primera partición", type=int)
+parser.add_argument("m", help="Cardinalidad de la segunda partición", type=int)
 parser.add_argument("path", help="Ruta hacia la carpeta de salida")
 args = parser.parse_args()
 
-n = args.n
+n = args.N
 p = args.p
-nP = args.nP
-nQ = args.nQ
+nP = args.n
+nQ = args.m
 
 path = args.path
-nombre_base = f'{path}/n{n}_p{p}_nA{nP}_nB{nQ}_unique'
+nombre_base = f'{path}/r_N{n}_p{p}_n{nP}_m{nQ}_unique'
 
 # Creación de la instancia de DPCP
 
