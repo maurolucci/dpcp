@@ -1,20 +1,22 @@
 # cfcol
 
-Branch-and-Price implementation for DPCP (double partition coloring problem) and CFCP (conflict-free coloring problem).
+Branch-and-Price and ILP implementations for DPCP (double partition coloring problem) and CFCP (conflict-free coloring problem).
 
 ## Requirements
 
 - Linux
 - g++ with C++20 support
-- IBM ILOG CPLEX and Concert
 - Boost Program Options
+- IBM ILOG CPLEX and Concert
+- Gurobi (for the Gurobi-based ILP solver)
 
-The Makefile assumes CPLEX/Concert paths installed at:
+Path assumptions are defined in [Makefile](Makefile):
 
-- /opt/ibm/ILOG/CPLEX_Studio2211/cplex
-- /opt/ibm/ILOG/CPLEX_Studio2211/concert
+- CPLEXDIR=/opt/ibm/ILOG/CPLEX_Studio2211/cplex
+- CONCERTDIR=/opt/ibm/ILOG/CPLEX_Studio2211/concert
+- GUROBI_HOME=/opt/gurobi1203/linux64
 
-If your installation is different, edit [Makefile](Makefile).
+If your installation paths are different, update those variables before building.
 
 ## Build
 
@@ -25,19 +27,29 @@ From the project root:
 	cd ..
 	make
 
-This generates the dpcp executable in the root directory.
+This builds the executable dpcp in the project root.
 
-## Input Format
+## Instance Prefix and Format
 
-Each instance is passed by file prefix. For a prefix X, the following files must exist:
+Input is provided as a prefix without the final extension.
+For a prefix X, the solver reads:
 
 - X.graph
 - X.partP
 - X.partQ
 
-Example prefix:
+In this repository, most generated instances include .dpcp in the prefix itself.
+For example, the prefix:
 
-- instances/test
+- instances/dpcp/er-2/r_N110_p0.25_n22_m22_i0.dpcp
+
+corresponds to:
+
+- instances/dpcp/er-2/r_N110_p0.25_n22_m22_i0.dpcp.graph
+- instances/dpcp/er-2/r_N110_p0.25_n22_m22_i0.dpcp.partP
+- instances/dpcp/er-2/r_N110_p0.25_n22_m22_i0.dpcp.partQ
+
+Detailed format documentation is available in [instances/README.md](instances/README.md).
 
 ## Run
 
@@ -45,56 +57,72 @@ General usage:
 
 	./dpcp -s SOLVER -f PREFIX1 [PREFIX2 ...] [options]
 
-Available solvers:
+Solvers documented here:
 
 - byp
 - compact
+- gurobi
 - heur
-- feas-enum
-- feas-ilp
 
-Examples:
+## Real Examples
 
-	./dpcp -s byp -f instances/test_small
+Single small DPCP instance:
 
-	./dpcp -s byp -f instances/test_small instances/test_medium -t 600 -n 3
+	./dpcp -s byp -f instances/dpcp/small-tests/single_P_part_size1.dpcp
 
-	./dpcp -s compact -f instances/test_small -o out/
+Random DPCP instance from er-2:
+
+	./dpcp -s byp -f instances/dpcp/er-2/r_N110_p0.25_n22_m22_i0.dpcp -t 600
+
+CFCP-derived instance set in one run:
+
+	./dpcp -s compact -f instances/cfcp/open/myciel4.dpcp instances/cfcp/open/queen6_6.dpcp -n 2
+
+Gurobi-based compact ILP with output directory:
+
+	./dpcp -s gurobi -f instances/cfcp/open/huck.dpcp -o out/ -t 1200
 
 ## Main Parameters
 
-- -s, --solver: solver type
-- -f, --graph: list of instance prefixes
-- -o, --out: optional output directory
-- -t, --time: time limit in seconds (default 900)
-- -v, --verbose: verbosity level 0..2
-- -n, --repeat: number of repetitions
-- --relax: solve root node only
-- --ub: initial upper bound
+- -s, --solver: solver name
+- -f, --graph: list of input prefixes (without .graph/.partP/.partQ)
+- -o, --out: output directory (optional)
+- -t, --time: global time limit in seconds (default 900)
+- -n, --repeat: number of repetitions (default 1)
+- -v, --verbose: verbosity level (0, 1, 2; default 1)
+- --ub: initial upper bound (default DBL_MAX)
+- --relax: solve only the root node
+- --relax-time: LP relaxation time limit in seconds when using --relax (default 0 means ignored)
 - --preproc-off: disable preprocessing
 
-Branch-and-Price parameters:
+Heuristic and pricing controls:
 
+- --heur-initial: 0 none, 1 greedy 1-step, 2 greedy 2-step, 3 semi-greedy 2-step
+- --heur-nodes: 0 none, 1 greedy 1-step, 2 greedy 2-step, 3 semi-greedy 2-step
+- --heur-2step-variant: 1 DEG, 2 CDEG, 3 SCDEG
+- --heur-semigreedy-alpha
+- --heur-semigreedy-iter
+- --heur-semigreedy-time
 - --tree-search: 1 best-bound, 2 dfs
-- --heur-root, --heur-nodes: node heuristic type
-- --feas-root, --feas-nodes: feasibility check type
-- --inherit-cols: column inheritance strategy
-- --pricing-method: pricing strategy
-- --pricing-greedy-max-cols: number of greedy pricing attempts
-- --pricing-max-cols-per-iter: max columns added per pricing iteration
-- --pricing-greedy-alpha: greedy pricing alpha
-- --pricing-exact-time: max time for exact pricing
+- --inherit-cols: 0..4 inheritance strategy
+- --inherit-pool-max-cols
+- --dummy-weight
+- --pricing-method: 0..5
+- --pricing-greedy-max-cols
+- --pricing-max-cols-per-iter
+- --pricing-greedy-alpha
+- --pricing-exact-time
 - --branching-variable: 1 FMS, 2 LNTT
 
-For the full list:
+For the complete and authoritative list:
 
 	./dpcp --help
 
 ## Output
 
-If -o is not provided, output is printed to stdout.
+If -o is not provided, logs and stats are printed to stdout.
 
-If -o DIR is provided, these subdirectories are created:
+If -o DIR is provided, the following subdirectories are created:
 
 - DIR/log
 - DIR/debug
@@ -103,14 +131,31 @@ If -o DIR is provided, these subdirectories are created:
 - DIR/col
 - DIR/iter
 
+Output files are named per run as:
+
+- instance-stem-solver-run.log
+- instance-stem-solver-run.debug
+- instance-stem-solver-run.stat
+- instance-stem-solver-run.sol
+- instance-stem-solver-run.col
+- instance-stem-solver-run.iter
+
+If a stat file for the same instance-solver-run already exists, execution is skipped and stored stats are printed.
+
+## Notes on Gurobi
+
+- The solver option -s gurobi runs the compact ILP implementation backed by Gurobi.
+- The project still links against CPLEX/Concert in the main build, so both toolchains must be correctly configured in [Makefile](Makefile).
+- Gurobi runtime libraries must be visible to the linker and loader on your system.
+
 ## Project Structure
 
-- [main.cpp](main.cpp): program entry point and argument parsing
-- [src](src): algorithm implementation
+- [main.cpp](main.cpp): entry point and argument parsing
+- [src](src): core algorithms
 - [include](include): headers
-- [exactcolors](exactcolors): external code for coloring/MWIS routines
-- [instances](instances): test instances
-- [experiments](experiments): scripts and experimental analysis
+- [exactcolors](exactcolors): coloring and MWIS routines
+- [instances](instances): instance sets and generators
+- [experiments](experiments): experiment scripts and analysis
 - [Makefile](Makefile): build configuration
 
 ## License
