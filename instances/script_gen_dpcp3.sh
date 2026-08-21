@@ -20,6 +20,6 @@ do
 	python3 $SRC $N $p $NA $nb $num $OUT
 	for i in $(seq 0 $((num - 1)))
 	do
-		echo "r_N${N}_p${p}_n${NA}_m${nb}_i${i}.dpcp" >> "$OUT/instances.txt"
+		echo "r_V${N}_p${p}_n${NA}_m${nb}_i${i}.dpcp" >> "$OUT/instances.txt"
 	done
 done

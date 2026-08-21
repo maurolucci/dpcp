@@ -9,14 +9,14 @@ This directory contains DPCP instances split into four files per prefix:
 
 Example prefix:
 
-- `r_N110_p0.25_n22_m22_i0`
+- `r_V110_p0.25_n22_m22_i0`
 
 Associated files:
 
-- `r_N110_p0.25_n22_m22_i0.dpcp.graph`
-- `r_N110_p0.25_n22_m22_i0.dpcp.partP`
-- `r_N110_p0.25_n22_m22_i0.dpcp.partQ`
-- `r_N110_p0.25_n22_m22_i0.dpcp.dict`
+- `r_V110_p0.25_n22_m22_i0.dpcp.graph`
+- `r_V110_p0.25_n22_m22_i0.dpcp.partP`
+- `r_V110_p0.25_n22_m22_i0.dpcp.partQ`
+- `r_V110_p0.25_n22_m22_i0.dpcp.dict`
 
 All vertex and partition identifiers are non-negative integers with 0-based indexing.
 
@@ -28,9 +28,9 @@ Describes the simple undirected graph.
 
 First line:
 
-`N:m`
+`V:m`
 
-- `N`: number of vertices (expected IDs: `0, 1, ..., N-1`)
+- `V`: number of vertices (expected IDs: `0, 1, ..., V-1`)
 - `m`: number of edges
 
 ### Body
@@ -51,9 +51,9 @@ Describes the first partition of vertices, with `n` parts.
 
 First line:
 
-`N:n`
+`V:n`
 
-- `N`: number of vertices (must match `.graph`)
+- `V`: number of vertices (must match `.graph`)
 - `n`: number of parts in `P`
 
 ### Body
@@ -74,9 +74,9 @@ Describes the second partition of vertices, with `m` parts.
 
 First line:
 
-`N:m`
+`V:m`
 
-- `N`: number of vertices (must match `.graph`)
+- `V`: number of vertices (must match `.graph`)
 - `m`: number of parts in `Q`
 
 ### Body
@@ -97,15 +97,15 @@ Stores the mapping of each vertex to its double label `(pi, qj)`.
 
 First line:
 
-`N:n:m`
+`V:n:m`
 
-- `N`: number of vertices
+- `V`: number of vertices
 - `n`: number of parts in `P`
 - `m`: number of parts in `Q`
 
 ### Body
 
-Then `N` lines follow:
+Then `V` lines follow:
 
 `v pi qj`
 
@@ -119,7 +119,7 @@ This file is redundant with respect to `.partP` and `.partQ`, but it is useful f
 
 For a well-formed instance:
 
-1. The headers containing `N` must match (`.graph`, `.partP`, `.partQ`, and also `.dict` if present).
+1. The headers containing `V` must match (`.graph`, `.partP`, `.partQ`, and also `.dict` if present).
 2. In `.partP`, each vertex must appear exactly once across all parts.
 3. In `.partQ`, each vertex must appear exactly once across all parts.
 4. If `.dict` exists, for each vertex `v`, the pair `(pi, qj)` must match its membership in `.partP` and `.partQ`.
